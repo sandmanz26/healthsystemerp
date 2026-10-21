@@ -1,0 +1,92 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+@import "@fontsource-variable/plus-jakarta-sans";
+
+/*
+ * Medisphere theme on top of HeroUI v3.
+ * Teal accent: calm, clinical, and distinct from the blue most SaaS dashboards use.
+ * Colours are OKLCH so light/dark variants keep the same perceived hue.
+ */
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+:root,
+.light,
+[data-theme="light"] {
+  --radius: 0.75rem;
+  --accent: oklch(0.56 0.1 186);
+  --accent-foreground: oklch(0.99 0 0);
+  --focus: oklch(0.56 0.1 186);
+  --background: oklch(0.975 0.004 186);
+  --surface-secondary: oklch(0.96 0.006 186);
+  --surface-tertiary: oklch(0.935 0.008 186);
+}
+
+.dark,
+[data-theme="dark"] {
+  --accent: oklch(0.72 0.11 186);
+  --accent-foreground: oklch(0.2 0.02 186);
+  --focus: oklch(0.72 0.11 186);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "tnum" 1;
+}
+
+/* Numbers in tables and worklists line up. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Printing a ticket / receipt / label: only the .print-area is printed. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+  }
+}
+
+/*
+ * Chart palette (dataviz reference palette, slots 1–3 — validated all-pairs for CVD in
+ * both modes). Charts reference roles, never raw hex.
+ */
+:root {
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-grid: color-mix(in oklch, var(--foreground) 10%, transparent);
+  --chart-axis: var(--muted);
+}
+.dark,
+[data-theme="dark"] {
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+}
