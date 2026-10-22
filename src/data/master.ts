@@ -102,7 +102,7 @@ interface StaffRow {
 const STAFF_ROWS: StaffRow[] = [
   { id: "d1", role: "doctor", unitId: "clinic-fm", specialty: "Family Medicine", us: ["Dr. Michael Chen, MD", "Family Medicine Physician"], uk: ["Dr James Whitfield", "GP, UTC Clinical Lead"] },
   { id: "d2", role: "doctor", unitId: "ed", specialty: "Emergency Medicine", us: ["Dr. Emily Rodriguez, MD", "Emergency Physician"], uk: ["Dr Sophie Turner", "Consultant in Emergency Medicine"], expires: inDays(24) },
-  { id: "d3", role: "doctor", unitId: "clinic-im", specialty: "Internal Medicine", us: ["Dr. Robert Kim, MD", "Hospitalist"], uk: ["Dr Anil Gupta", "Consultant in Acute Medicine"] },
+  { id: "d3", role: "doctor", unitId: "clinic-im", specialty: "Internal Medicine", us: ["Dr. Robert Kim, MD", "Internal Medicine Physician"], uk: ["Dr Anil Gupta", "Consultant in Acute Medicine"] },
   { id: "d4", role: "doctor", unitId: "clinic-peds", specialty: "Pediatrics", us: ["Dr. Laura Bennett, MD", "Pediatrician"], uk: ["Dr Hannah Clarke", "Consultant Paediatrician"] },
   { id: "d5", role: "doctor", unitId: "clinic-ob", specialty: "Obstetrics & Gynecology", us: ["Dr. Angela Brooks, MD", "Obstetrician-Gynecologist"], uk: ["Miss Rachel Evans", "Consultant Obstetrician"] },
   { id: "d6", role: "doctor", unitId: "clinic-surg", specialty: "General Surgery", us: ["Dr. David Thompson, MD, FACS", "General Surgeon"], uk: ["Mr Thomas Wright", "Consultant General Surgeon"] },

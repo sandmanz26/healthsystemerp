@@ -131,7 +131,7 @@ export function groupEncounter(enc: Encounter, region: Region): GroupResult | nu
   const concept = dxByCode(region, primary.code)
   if (!concept) return null
   const secondary = enc.diagnoses.filter((d) => !d.primary).map((d) => dxByCode(region, d.code)?.key)
-  if (region === "uk") return hrgFor(concept.key, secondary.some((k) => k && (MCC.has(k) || CC.has(k))))
+  if (region === "uk") return hrgFor(enc, concept.key, secondary.some((k) => k && (MCC.has(k) || CC.has(k))))
   const row = DRG[concept.key]
   if (!row) return null
   const tier = secondary.some((k) => k && MCC.has(k)) ? 0 : secondary.some((k) => k && CC.has(k)) ? 1 : 2
@@ -153,9 +153,20 @@ const HRG: Record<string, [string, string, number]> = {
   cholelithiasis: ["GA10", "Laparoscopic cholecystectomy", 4800],
 }
 
-function hrgFor(key: string, complex: boolean): GroupResult | null {
+function hrgFor(enc: Encounter, key: string, complex: boolean): GroupResult | null {
+  // Non-admitted activity has its own currencies: outpatient attendances (WF01A follow-up /
+  // WF01B first) and emergency medicine (VB01Z–VB11Z, set by investigations & treatments).
+  if (enc.kind === "outpatient") {
+    const first = !enc.referralNumber
+    return { code: first ? "WF01B" : "WF01A", name: `Non-admitted face-to-face attendance, ${first ? "first" : "follow-up"}`, tariff: first ? 180 : 95 }
+  }
+  if (enc.kind === "emergency") return { code: "VB", name: "Emergency medicine HRG (VB01Z–VB11Z by investigations & treatments)", tariff: enc.triage && enc.triage <= 2 ? 420 : 240 }
   const row = HRG[key]
-  if (!row) return null
+  if (!row) {
+    // Outside the local subset: indicative value from length of stay; SUS+ assigns the final HRG.
+    const days = Math.max(1, Math.round(((enc.endedAt ? new Date(enc.endedAt).getTime() : Date.now()) - new Date(enc.startedAt ?? enc.createdAt).getTime()) / 86400000))
+    return { code: "HRG4+", name: "Assigned by the NHS HRG4+ grouper on SUS+ (indicative value from spell length)", tariff: 900 + days * 450 }
+  }
   const [family, title, tariff] = row
   return { code: family, name: `${title}${complex ? " (with CC)" : ""}`, tariff: Math.round(tariff * (complex ? 1.35 : 1)) }
 }

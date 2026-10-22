@@ -658,7 +658,7 @@ function makeOutpatientToday(ctx: Ctx, patients: Patient[]) {
   const startOfDay = new Date(now).setHours(0, 1, 0, 0)
   const dayFit = Math.min(1, (now - startOfDay) / (190 * MIN))
   for (const [unitId, count, prefix] of plan) {
-    const doc = unitId === "clinic-im" ? "d13" : doctorFor(ctx, unitId)
+    const doc = unitId === "clinic-im" ? "d3" : doctorFor(ctx, unitId)
     const scenarios = OUTPATIENT_SCENARIOS[unitId]
     for (let i = 0; i < count; i++) {
       const s = scenarios[i % scenarios.length]
