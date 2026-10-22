@@ -13,7 +13,7 @@
 import { Button } from "@heroui/react"
 import { AlertOctagon } from "lucide-react"
 import { useMemo, useState } from "react"
-import { TRIAGE_BG } from "@/components/clinical/triage-tag"
+import { TRIAGE_BG } from "@/components/clinical/labels"
 import { Dialog } from "@/components/ui/dialog"
 import { SelectInput, TextInput } from "@/components/ui/fields"
 import { ageOf, news2, sepsisBundle, sepsisScreen, TRIAGE_SCALES, triageInfo } from "@/domain/clinical"

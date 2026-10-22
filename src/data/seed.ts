@@ -6,7 +6,7 @@
  * courses, but no real person. Codes, identifiers and workflows are the real ones.
  */
 import { DX_MAP, LAB_MAP, PANEL_MAP, PX_MAP, RAD_MAP, TARIFFS, panelTests, rangeFor, type TariffKey, FREQ_MAP } from "@/domain/catalog"
-import { flagResult } from "@/domain/clinical"
+import { flagResult, sepsisBundle } from "@/domain/clinical"
 import { DENIAL_REASONS, expectedFfs, groupEncounter, grouperFor } from "@/domain/finance"
 import { nhsCheckDigit } from "@/domain/interop"
 import { MODULES, type ModuleId } from "@/domain/modules"
@@ -506,10 +506,10 @@ function closeFinance(ctx: Ctx, enc: Encounter, at: number, settle: boolean) {
   let status: ClaimStatus = !settle
     ? "draft"
     : ageDays > 20
-      ? r < 0.72 ? "paid" : r < 0.84 ? "accepted" : r < 0.94 ? "denied" : "appealed"
+      ? r < 0.84 ? "paid" : r < 0.92 ? "accepted" : r < 0.96 ? "denied" : "appealed"
       : ageDays > 7
-        ? r < 0.35 ? "submitted" : r < 0.7 ? "accepted" : r < 0.85 ? "paid" : "denied"
-        : r < 0.35 ? "draft" : r < 0.7 ? "coded" : "submitted"
+        ? r < 0.35 ? "submitted" : r < 0.7 ? "accepted" : r < 0.95 ? "paid" : "denied"
+        : ageDays > 3 ? (r < 0.15 ? "coded" : "submitted") : r < 0.3 ? "draft" : r < 0.65 ? "coded" : "submitted"
   // NHS spells are submitted to SUS+, not paid individually.
   if (uk && enc.payer === "nhs" && (status === "paid" || status === "denied" || status === "appealed")) status = "accepted"
   const noAuth = !uk && enc.kind === "inpatient" && enc.payer === "commercial" && !enc.authNumber
@@ -713,6 +713,24 @@ function makeEmergencyNow(ctx: Ctx, patients: Patient[]) {
     [5, 150, "in-progress"],
     [7, 260, "awaiting-admission"],
   ]
+  // Patients who already left today — they make up today's four-hour / door-to-provider figures.
+  const pool = ER_SCENARIOS.filter((x) => x.dx !== "stroke" && x.dx !== "sepsis")
+  for (let i = 0; i < 14; i++) {
+    const s = pool[i % pool.length]
+    const patient = pickPatient(ctx, patients, s)
+    const createdAt = now - (60 + i * 32) * MIN * fit - 5 * HOUR * fit
+    const los = rng.int(110, i % 6 === 5 ? 290 : 235)
+    const end = Math.min(createdAt + los * MIN * fit, now - 10 * MIN)
+    const doc = i % 2 ? "d2" : "d12"
+    const enc = baseEncounter(ctx, `ert${i}`, patient, "emergency", "ed", doc, createdAt, "finished", s)
+    Object.assign(enc, { triage: s.triage, startedAt: isoAt(createdAt + rng.int(6, 38) * MIN * fit), endedAt: isoAt(end), diagnoses: diagnosesFrom(ctx, s), procedures: proceduresFrom(ctx, s), disposition: "home", exchange: "synced" })
+    enc.notes.push(noteFrom(s, createdAt + 30 * MIN * fit, doc, "ed"))
+    data.encounters.push(enc)
+    const inv = openInvoice(ctx, enc)
+    tariff(ctx, inv, createdAt, edTariff(s.triage))
+    addOrders(ctx, enc, patient, s, createdAt + 25 * MIN * fit, "validated", doc)
+    closeFinance(ctx, enc, end, false)
+  }
   board.forEach(([si, mins, status], i) => {
     const s = ER_SCENARIOS[si]
     const patient = pickPatient(ctx, patients, s, ctx.active)
@@ -725,7 +743,8 @@ function makeEmergencyNow(ctx: Ctx, patients: Patient[]) {
       enc.vitals.push(vitalsFrom(s, createdAt + 4 * MIN * fit, "n3", rng))
     }
     if (status === "in-progress" || status === "awaiting-admission") {
-      enc.startedAt = isoAt(createdAt + 9 * MIN * fit)
+      // Door-to-provider varies with acuity and how busy the department was on arrival.
+      enc.startedAt = isoAt(createdAt + (s.triage && s.triage <= 2 ? rng.int(2, 9) : rng.int(12, 34)) * MIN * fit)
       enc.notes.push(noteFrom(s, createdAt + 18 * MIN * fit, doc, "ed"))
       enc.diagnoses = diagnosesFrom(ctx, s)
       enc.procedures = proceduresFrom(ctx, s)
@@ -770,7 +789,8 @@ function makeInpatientsNow(ctx: Ctx, patients: Patient[]) {
       // Telemetry patients get telemetry beds; MRSA-risk abscess gets an isolation room.
       const bed = (s.dx === "hf" || s.dx === "syncope" || s.dx === "chest-pain" ? beds.find((b) => b.bedType === "telemetry" && b.status === "available") : s.dx === "cellulitis" && unitId === "5e" ? beds.find((b) => b.bedType === "isolation" && b.status === "available") : undefined) ?? beds.find((b) => b.status === "available" && b.bedType !== "isolation")!
       const patient = pickPatient(ctx, patients, s, ctx.active)
-      const los = s.observation ? 0 : rng.int(1, 5)
+      // Post-op day-1 cases were admitted yesterday; everyone else 1–5 days ago.
+      const los = s.observation ? 0 : s.complaint.startsWith("Post-op day 1") ? 1 : rng.int(1, 5)
       const start = now - los * DAY - rng.int(3, 14) * HOUR
       const doc = s.doctor ?? "d3"
       const nurse = nurseFor(ctx, unitId)
@@ -791,7 +811,9 @@ function makeInpatientsNow(ctx: Ctx, patients: Patient[]) {
       for (let h = 48; h >= 0; h -= 4) {
         if (now - h * HOUR < start) continue
         const elapsed = (now - h * HOUR - start) / (now - start)
-        enc.vitals.push(vitalsFrom(s, now - h * HOUR - 30 * MIN, nurse, rng, worse ? -0.35 * elapsed : 0.15 + 0.75 * elapsed))
+        // ICU patients improve slowly — they are still on organ support.
+        const progress = worse ? -0.35 * elapsed : unitId === "icu" ? 0.05 + 0.35 * elapsed : 0.15 + 0.75 * elapsed
+        enc.vitals.push(vitalsFrom(s, now - h * HOUR - 30 * MIN, nurse, rng, progress))
       }
       // Nursing assessments on admission and daily.
       const age = ageYears(patient, now)
@@ -824,7 +846,7 @@ function makeInpatientsNow(ctx: Ctx, patients: Patient[]) {
       // The septic shock patient in ICU completed the bundle.
       if (s.dx === "sepsis") {
         const t0 = start - 2 * HOUR
-        enc.sepsis = { identifiedAt: isoAt(t0), identifiedBy: "n3", septicShock: true, done: Object.fromEntries(["lactate", "cultures", "antibiotics", "fluids", "repeat-lactate", "vasopressors", "reassess", "oxygen", "urine"].map((id, j) => [id, isoAt(t0 + (20 + j * 25) * MIN)])) }
+        enc.sepsis = { identifiedAt: isoAt(t0), identifiedBy: "n3", septicShock: true, done: Object.fromEntries(sepsisBundle(region).items.map((item, j) => [item.id, isoAt(t0 + (region === "uk" ? 8 + j * 8 : 20 + j * 25) * MIN)])) }
       }
       if (s.dx === "cellulitis" && unitId === "5e") patient.flags = [...new Set([...(patient.flags ?? []), "contact-isolation" as const])]
       bed.status = "occupied"

@@ -1,6 +1,8 @@
 /**
- * Staff, licences (STR/SIP) and the duty roster. A clinician with an expired SIP must not
- * practise, so licence status is visible next to every name.
+ * Medical staff & workforce: licence / registration status (state board or GMC/NMC/GPhC/HCPC),
+ * NPI and DEA registration (US), resuscitation certification (BLS/ACLS in the US, Resuscitation
+ * Council UK ILS/ALS) and the 12-hour duty roster. A clinician with a lapsed licence must not
+ * practise, so its status sits next to every name.
  */
 import { Button, Chip, Tabs } from "@heroui/react"
 import { BadgeAlert, CalendarDays, ChevronLeft, ChevronRight, UserCheck, Users } from "lucide-react"
@@ -9,59 +11,74 @@ import { DataTable, type Column } from "@/components/ui/data-table"
 import { Page, PageHeader } from "@/components/ui/page"
 import { Panel } from "@/components/ui/panel"
 import { Stat } from "@/components/ui/stat"
+import { isValidNpi } from "@/domain/interop"
 import { ROLES } from "@/domain/roles"
 import type { ShiftCode, Staff } from "@/domain/types"
 import { cn } from "@/lib/cn"
 import { dayKey, formatDate } from "@/lib/format"
+import { shiftAt } from "@/lib/shift"
+import { useNow } from "@/lib/use-now"
 import { useActions, useStore } from "@/store"
-import { useUnitName } from "@/store/selectors"
+import { useRegion, useUnitName } from "@/store/selectors"
 
 const SHIFT: Record<ShiftCode, { label: string; hours: string; className: string }> = {
-  P: { label: "Pagi", hours: "07–14", className: "bg-accent-soft text-accent-soft-foreground" },
-  S: { label: "Sore", hours: "14–21", className: "bg-warning-soft text-warning-soft-foreground" },
-  M: { label: "Malam", hours: "21–07", className: "bg-[oklch(0.35_0.06_270)] text-white" },
-  L: { label: "Libur", hours: "", className: "bg-default text-muted" },
+  D: { label: "Day", hours: "07:00–19:00", className: "bg-accent-soft text-accent-soft-foreground" },
+  N: { label: "Night", hours: "19:00–07:00", className: "bg-[oklch(0.35_0.06_270)] text-white" },
+  OFF: { label: "Off", hours: "", className: "bg-default text-muted" },
 }
-const CYCLE: ShiftCode[] = ["P", "S", "M", "L"]
+const CYCLE: ShiftCode[] = ["D", "N", "OFF"]
 const DAY = 86400000
-const WEEKDAY = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"]
+const WEEKDAY = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 
-function licenceState(iso?: string): { label: string; color: "success" | "warning" | "danger" | "default" } {
-  if (!iso) return { label: "—", color: "default" }
-  const days = Math.round((new Date(iso).getTime() - Date.now()) / DAY)
-  if (days < 0) return { label: `Kedaluwarsa ${formatDate(iso)}`, color: "danger" }
-  if (days <= 60) return { label: `${days} hari lagi`, color: "warning" }
-  return { label: formatDate(iso), color: "success" }
+type Tone = "success" | "warning" | "danger" | "default"
+
+function expiryState(iso: string | undefined, now: number): { label: string; color: Tone; days: number } {
+  if (!iso) return { label: "—", color: "default", days: Infinity }
+  const days = Math.round((new Date(iso).getTime() - now) / DAY)
+  if (days < 0) return { label: `Expired ${formatDate(iso)}`, color: "danger", days }
+  if (days <= 60) return { label: `${days} days left`, color: "warning", days }
+  return { label: formatDate(iso), color: "success", days }
 }
 
-/** Which shift covers the current hour. */
-function currentShift(): ShiftCode {
-  const h = new Date().getHours()
-  return h >= 7 && h < 14 ? "P" : h >= 14 && h < 21 ? "S" : "M"
+function ExpiryChip({ iso, now }: { iso?: string; now: number }) {
+  const s = expiryState(iso, now)
+  if (s.color === "default") return <span className="text-muted">—</span>
+  return (
+    <Chip size="sm" variant="soft" color={s.color} className="num whitespace-nowrap">
+      {s.label}
+    </Chip>
+  )
 }
 
 export default function HrPage() {
   const staff = useStore((s) => s.staff)
   const roster = useStore((s) => s.roster)
   const unitName = useUnitName()
+  const region = useRegion()
+  const now = useNow(60_000)
   const { setShift } = useActions()
+  const us = region === "us"
   const [weekStart, setWeekStart] = useState(() => {
     const d = new Date()
     d.setHours(0, 0, 0, 0)
-    d.setDate(d.getDate() - ((d.getDay() + 6) % 7))
+    // US rosters run Sunday–Saturday; UK rotas Monday–Sunday.
+    d.setDate(d.getDate() - (region === "us" ? d.getDay() : (d.getDay() + 6) % 7))
     return d
   })
   const days = Array.from({ length: 7 }, (_, i) => new Date(weekStart.getTime() + i * DAY))
   const rosterMap = useMemo(() => new Map(roster.map((r) => [`${r.staffId}:${r.date}`, r.shift])), [roster])
-  const rostered = staff.filter((s) => roster.some((r) => r.staffId === s.id))
-  const clinical = staff.filter((s) => s.sipExpires)
-  const expiring = clinical.filter((s) => ["warning", "danger"].includes(licenceState(s.sipExpires).color) || ["warning", "danger"].includes(licenceState(s.strExpires).color))
-  const onDuty = rostered.filter((s) => rosterMap.get(`${s.id}:${dayKey()}`) === currentShift())
+  const rostered = useMemo(() => staff.filter((s) => roster.some((r) => r.staffId === s.id)), [staff, roster])
+  const licensed = staff.filter((s) => s.license)
+  const flagged = staff.filter((s) => [s.license?.expires, s.deaExpires, s.resusCertExpires].some((d) => ["warning", "danger"].includes(expiryState(d, now).color)))
+  // A night shift that started yesterday evening is still on duty before 07:00.
+  const current = shiftAt(now)
+  const shiftDay = current.code === "N" && new Date(now).getHours() < 7 ? dayKey(now - DAY) : dayKey(now)
+  const onDuty = rostered.filter((s) => rosterMap.get(`${s.id}:${shiftDay}`) === current.code)
 
   const columns: Column<Staff>[] = [
     {
       id: "name",
-      header: "Nama",
+      header: "Name",
       isRowHeader: true,
       sortValue: (s) => s.name,
       cell: (s) => (
@@ -74,55 +91,104 @@ export default function HrPage() {
         </div>
       ),
     },
-    { id: "role", header: "Peran", sortValue: (s) => s.role, cell: (s) => <Chip size="sm" variant="soft">{ROLES[s.role].label}</Chip> },
-    { id: "unit", header: "Unit", cell: (s) => <span className="text-sm">{unitName(s.unitId)}</span> },
-    { id: "phone", header: "Telepon", cell: (s) => <span className="tabular text-sm">{s.phone}</span> },
     {
-      id: "str",
-      header: "STR",
-      sortValue: (s) => s.strExpires ?? "9",
-      cell: (s) => {
-        const l = licenceState(s.strExpires)
-        return l.color === "default" ? <span className="text-muted">—</span> : <Chip size="sm" variant="soft" color={l.color}>{l.label}</Chip>
-      },
+      id: "role",
+      header: "Role · unit",
+      sortValue: (s) => s.role,
+      cell: (s) => (
+        <div className="space-y-0.5">
+          <Chip size="sm" variant="soft">
+            {ROLES[s.role].label}
+          </Chip>
+          <div className="text-xs text-muted">{unitName(s.unitId)}</div>
+        </div>
+      ),
     },
     {
-      id: "sip",
-      header: "SIP",
-      sortValue: (s) => s.sipExpires ?? "9",
-      cell: (s) => {
-        const l = licenceState(s.sipExpires)
-        return l.color === "default" ? <span className="text-muted">—</span> : <Chip size="sm" variant="soft" color={l.color}>{l.label}</Chip>
-      },
+      id: "license",
+      header: us ? "License" : "Registration",
+      sortValue: (s) => s.license?.expires ?? "9",
+      cell: (s) =>
+        s.license ? (
+          <div className="space-y-0.5">
+            <div className="num text-[11px] text-muted">
+              {s.license.body} {s.license.number}
+            </div>
+            <ExpiryChip iso={s.license.expires} now={now} />
+          </div>
+        ) : (
+          <span className="text-muted">—</span>
+        ),
     },
+    ...(us
+      ? [
+          {
+            id: "npi",
+            header: "NPI",
+            cell: (s: Staff) =>
+              s.npi ? (
+                <div className="flex items-center gap-1.5">
+                  <span className="num text-sm">{s.npi}</span>
+                  {isValidNpi(s.npi) ? (
+                    <Chip size="sm" variant="soft" color="success" title="Luhn check digit (prefix 80840) valid">
+                      Valid
+                    </Chip>
+                  ) : (
+                    <Chip size="sm" variant="soft" color="danger">
+                      Invalid
+                    </Chip>
+                  )}
+                </div>
+              ) : (
+                <span className="text-muted">—</span>
+              ),
+          },
+          { id: "dea", header: "DEA registration", sortValue: (s: Staff) => s.deaExpires ?? "9", cell: (s: Staff) => <ExpiryChip iso={s.deaExpires} now={now} /> },
+        ]
+      : []),
+    { id: "resus", header: us ? "BLS / ACLS" : "ILS / ALS", sortValue: (s) => s.resusCertExpires ?? "9", cell: (s) => <ExpiryChip iso={s.resusCertExpires} now={now} /> },
+    { id: "phone", header: "Phone", cell: (s) => <span className="num text-sm">{s.phone}</span> },
   ]
 
   return (
     <Page>
-      <PageHeader title="SDM & Jadwal Jaga" description="Direktori staf, masa berlaku STR/SIP, dan roster shift." />
+      <PageHeader
+        title={us ? "Medical Staff & Workforce" : "Workforce & Rota"}
+        description={
+          us
+            ? "Staff directory, credentialing (state license, NPI, DEA, BLS/ACLS) and the 12-hour nursing schedule."
+            : "Staff directory, professional registration (GMC, NMC, GPhC, HCPC), resuscitation training and the 12-hour rota."
+        }
+      />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Total staf" value={staff.length} icon={Users} />
-        <Stat label={`Bertugas sekarang (shift ${SHIFT[currentShift()].label.toLowerCase()})`} value={onDuty.length} icon={UserCheck} tone="accent" />
-        <Stat label="STR/SIP ≤ 60 hari / kedaluwarsa" value={expiring.length} icon={BadgeAlert} tone={expiring.length ? "danger" : "success"} />
-        <Stat label="Tenaga klinis berlisensi" value={clinical.length} icon={CalendarDays} />
+        <Stat label="Total staff" value={staff.length} icon={Users} />
+        <Stat label={`On duty now (${SHIFT[current.code].label.toLowerCase()} shift)`} value={onDuty.length} icon={UserCheck} tone="accent" />
+        <Stat label="Credentials ≤ 60 days / lapsed" value={flagged.length} icon={BadgeAlert} tone={flagged.length ? "danger" : "success"} hint={us ? "License, DEA or BLS/ACLS" : "Registration or ILS/ALS"} />
+        <Stat label={us ? "Licensed clinicians" : "Registered professionals"} value={licensed.length} icon={CalendarDays} />
       </div>
       <Tabs>
         <Tabs.ListContainer>
-          <Tabs.List aria-label="SDM">
-            <Tabs.Tab id="roster">Jadwal jaga<Tabs.Indicator /></Tabs.Tab>
-            <Tabs.Tab id="directory">Direktori & lisensi<Tabs.Indicator /></Tabs.Tab>
+          <Tabs.List aria-label="Workforce">
+            <Tabs.Tab id="roster">
+              {us ? "Schedule" : "Rota"}
+              <Tabs.Indicator />
+            </Tabs.Tab>
+            <Tabs.Tab id="directory">
+              {us ? "Directory & credentials" : "Directory & registration"}
+              <Tabs.Indicator />
+            </Tabs.Tab>
           </Tabs.List>
         </Tabs.ListContainer>
         <Tabs.Panel id="roster" className="pt-4">
           <Panel
-            title={`Minggu ${formatDate(days[0].toISOString())} – ${formatDate(days[6].toISOString())}`}
-            description="Klik sel untuk mengganti shift (P → S → M → L)."
+            title={`Week of ${formatDate(days[0].toISOString())} – ${formatDate(days[6].toISOString())}`}
+            description="Select a cell to change the shift (D → N → OFF)."
             actions={
               <div className="flex gap-1">
-                <Button isIconOnly size="sm" variant="tertiary" aria-label="Minggu sebelumnya" onPress={() => setWeekStart((d) => new Date(d.getTime() - 7 * DAY))}>
+                <Button isIconOnly size="sm" variant="tertiary" aria-label="Previous week" onPress={() => setWeekStart((d) => new Date(d.getTime() - 7 * DAY))}>
                   <ChevronLeft className="size-4" />
                 </Button>
-                <Button isIconOnly size="sm" variant="tertiary" aria-label="Minggu berikutnya" onPress={() => setWeekStart((d) => new Date(d.getTime() + 7 * DAY))}>
+                <Button isIconOnly size="sm" variant="tertiary" aria-label="Next week" onPress={() => setWeekStart((d) => new Date(d.getTime() + 7 * DAY))}>
                   <ChevronRight className="size-4" />
                 </Button>
               </div>
@@ -132,10 +198,10 @@ export default function HrPage() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[760px] text-sm">
                 <thead>
-                  <tr className="border-b border-separator text-xs text-muted">
-                    <th className="px-4 py-2 text-left font-medium">Staf</th>
+                  <tr className="label-caps border-b border-separator text-muted">
+                    <th className="px-4 py-2 text-left font-semibold">Staff</th>
                     {days.map((d) => (
-                      <th key={d.toISOString()} className={cn("px-2 py-2 font-medium", dayKey(d) === dayKey() && "text-accent")}>
+                      <th key={d.toISOString()} className={cn("px-2 py-2 font-semibold", dayKey(d) === dayKey(now) && "text-accent")}>
                         {WEEKDAY[d.getDay()]} {d.getDate()}
                       </th>
                     ))}
@@ -155,9 +221,9 @@ export default function HrPage() {
                           <td key={key} className="px-1 py-1.5 text-center">
                             <button
                               type="button"
-                              aria-label={`${s.name} ${key}: ${code ? SHIFT[code].label : "kosong"}`}
-                              onClick={() => setShift(s.id, key, CYCLE[(CYCLE.indexOf(code ?? "L") + 1) % CYCLE.length])}
-                              className={cn("w-full rounded-lg px-1 py-1.5 text-xs font-semibold transition hover:ring-2 hover:ring-accent/40", code ? SHIFT[code].className : "bg-surface-secondary text-muted")}
+                              aria-label={`${s.name} ${key}: ${code ? SHIFT[code].label : "unassigned"}`}
+                              onClick={() => setShift(s.id, key, CYCLE[(CYCLE.indexOf(code ?? "OFF") + 1) % CYCLE.length])}
+                              className={cn("num w-full rounded-lg px-1 py-1.5 text-xs font-semibold transition hover:ring-2 hover:ring-accent/40", code ? SHIFT[code].className : "bg-surface-secondary text-muted")}
                             >
                               {code ?? "—"}
                             </button>
@@ -172,7 +238,7 @@ export default function HrPage() {
             <div className="flex flex-wrap gap-3 border-t border-separator px-4 py-2 text-xs text-muted">
               {CYCLE.map((c) => (
                 <span key={c} className="flex items-center gap-1.5">
-                  <span className={cn("rounded px-1.5 font-semibold", SHIFT[c].className)}>{c}</span>
+                  <span className={cn("num rounded px-1.5 font-semibold", SHIFT[c].className)}>{c}</span>
                   {SHIFT[c].label} {SHIFT[c].hours}
                 </span>
               ))}
@@ -181,7 +247,7 @@ export default function HrPage() {
         </Tabs.Panel>
         <Tabs.Panel id="directory" className="pt-4">
           <Panel flush>
-            <DataTable label="Direktori staf" rows={staff} columns={columns} rowKey={(s) => s.id} defaultSort={{ column: "sip", direction: "ascending" }} />
+            <DataTable label="Staff directory" rows={staff} columns={columns} rowKey={(s) => s.id} minWidth={us ? 1120 : 900} defaultSort={{ column: "license", direction: "ascending" }} />
           </Panel>
         </Tabs.Panel>
       </Tabs>

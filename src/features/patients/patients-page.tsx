@@ -15,7 +15,7 @@ import type { Patient, PayerType } from "@/domain/types"
 import { formatDate } from "@/lib/format"
 import { useStore } from "@/store"
 import { useRegion } from "@/store/selectors"
-import { codeStatusLabel } from "@/components/clinical/wristband"
+import { codeStatusLabel } from "@/components/clinical/labels"
 import { matchPatient } from "@/domain/search"
 import { PatientForm } from "./patient-form"
 

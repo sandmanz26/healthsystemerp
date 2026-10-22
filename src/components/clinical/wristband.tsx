@@ -10,19 +10,12 @@ import { Link } from "react-router-dom"
 import { ageLabel } from "@/domain/clinical"
 import { PAYER_LABEL } from "@/domain/finance"
 import { formatNhsNumber } from "@/domain/interop"
-import type { CodeStatus, Patient, PayerType } from "@/domain/types"
+import type { Patient, PayerType } from "@/domain/types"
 import { cn } from "@/lib/cn"
 import { formatDate } from "@/lib/format"
 import { useRegion } from "@/store/selectors"
 import { Barcode } from "./barcode"
-
-/** Code status as written on the band and banner, per market. */
-export function codeStatusLabel(status: CodeStatus, region: "us" | "uk"): string {
-  if (status === "full") return region === "us" ? "Full code" : "For CPR"
-  if (status === "comfort") return region === "us" ? "Comfort care" : "End-of-life care"
-  if (region === "uk") return "DNACPR"
-  return status === "dnr-dni" ? "DNR / DNI" : "DNR"
-}
+import { codeStatusLabel } from "./labels"
 
 interface WristbandProps {
   patient: Patient

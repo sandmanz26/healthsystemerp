@@ -2,14 +2,7 @@ import { triageInfo, TRIAGE_SCALES } from "@/domain/clinical"
 import type { TriageLevel } from "@/domain/types"
 import { cn } from "@/lib/cn"
 import { useRegion } from "@/store/selectors"
-
-export const TRIAGE_BG: Record<TriageLevel, string> = {
-  1: "bg-triage-1 text-white",
-  2: "bg-triage-2 text-[oklch(0.22_0.05_55)]",
-  3: "bg-triage-3 text-[oklch(0.25_0.05_95)]",
-  4: "bg-triage-4 text-[oklch(0.18_0.04_150)]",
-  5: "bg-triage-5 text-white",
-}
+import { TRIAGE_BG } from "./labels"
 
 /** Triage level as the physical tag tied to the patient (colour + number + label). ESI in the US, MTS in the UK. */
 export function TriageTag({ level }: { level?: TriageLevel }) {
