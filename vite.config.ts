@@ -8,11 +8,13 @@ export default defineConfig({
   base: "./",
   plugins: [react(), tailwindcss()],
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    // "@v2" is the frozen copy of the previous design served at /v2 for side-by-side comparison.
+    alias: { "@v2": path.resolve(__dirname, "./v2/src"), "@": path.resolve(__dirname, "./src") },
   },
   build: {
     chunkSizeWarningLimit: 700,
     rollupOptions: {
+      input: { main: path.resolve(__dirname, "index.html"), v2: path.resolve(__dirname, "v2/index.html") },
       output: {
         // Vendor code changes rarely; separate chunks keep feature chunks small and cacheable.
         manualChunks(id) {

@@ -1,0 +1,424 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource-variable/bricolage-grotesque";
+@import "@fontsource-variable/jetbrains-mono";
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * Medisphere design language — "Bedside Chart"
+ *
+ * The interface borrows from objects every hospital worker already reads at a
+ * glance: chart paper, patient wristbands, bedside monitors, triage tags, queue
+ * tickets and the coloured dividers of a medical-record binder. See docs/DESIGN.md.
+ *
+ *   Light — clean white with medical blue (default) or monochrome (hitam-putih).
+ *   Dark  — "jaga malam": low-glare navy for night shifts.
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
+@custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
+
+@theme {
+  --font-sans: "Plus Jakarta Sans Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bricolage Grotesque Variable", "Plus Jakarta Sans Variable", ui-sans-serif, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+
+  /* Category index colours — the binder dividers. Used as thin accents only. */
+  --color-cat-core: oklch(0.72 0.02 90);
+  --color-cat-front: oklch(0.76 0.14 75);
+  --color-cat-clinical: oklch(0.7 0.13 165);
+  --color-cat-support: oklch(0.68 0.13 295);
+  --color-cat-finance: oklch(0.72 0.12 50);
+  --color-cat-operations: oklch(0.68 0.11 245);
+  --color-cat-quality: oklch(0.68 0.15 12);
+  --color-cat-integration: oklch(0.75 0.1 210);
+
+  /* Bedside-monitor conventions (constant in both themes — monitors are always dark). */
+  --color-monitor: oklch(0.16 0.02 200);
+  --color-monitor-line: oklch(0.26 0.03 190);
+  --color-mon-hr: #3ddc84;
+  --color-mon-spo2: #45c8f5;
+  --color-mon-bp: #ff6b6b;
+  --color-mon-rr: #f5d547;
+  --color-mon-temp: #ffa94d;
+  --color-mon-text: #e7f2ef;
+
+  /* Wristband alert colours (US state hospital association standard; UK NPSA red for allergy). */
+  --color-band-male: oklch(0.68 0.12 240);
+  --color-band-female: oklch(0.76 0.11 350);
+  --color-band-allergy: oklch(0.6 0.21 25);
+  --color-band-fall: oklch(0.83 0.16 90);
+  --color-band-dnr: oklch(0.5 0.17 305);
+
+  /* Triage colours: Manchester red/orange/yellow/green/blue (also used for ESI 1–5). */
+  --color-triage-1: oklch(0.58 0.21 25);
+  --color-triage-2: oklch(0.72 0.17 55);
+  --color-triage-3: oklch(0.86 0.16 95);
+  --color-triage-4: oklch(0.68 0.15 150);
+  --color-triage-5: oklch(0.62 0.13 250);
+
+  /* Binder chrome (sidebar). */
+  --color-chrome: var(--chrome);
+  --color-chrome-foreground: var(--chrome-foreground);
+  --color-chrome-muted: var(--chrome-muted);
+  --color-chrome-active: var(--chrome-active);
+  --color-chrome-active-foreground: var(--chrome-active-foreground);
+  --color-chrome-border: var(--chrome-border);
+  --color-paper: var(--background);
+}
+
+/* ── Light: clean white + medical blue (default) ──────────────────────────── */
+:root,
+.light,
+[data-theme="light"] {
+  --radius: 0.625rem;
+  --field-radius: 0.625rem;
+  --border-width: 1px;
+  --field-border-width: 1px;
+
+  --background: oklch(0.982 0.004 255);
+  --foreground: oklch(0.22 0.025 262);
+  --surface: oklch(1 0 0);
+  --surface-secondary: oklch(0.968 0.006 255);
+  --surface-tertiary: oklch(0.942 0.009 255);
+  --overlay: oklch(1 0 0);
+  --muted: oklch(0.53 0.022 262);
+  --default: oklch(0.95 0.008 255);
+  --default-foreground: var(--foreground);
+  --border: oklch(0.91 0.009 255);
+  --separator: oklch(0.935 0.007 255);
+  --field-background: oklch(1 0 0);
+  --field-border: oklch(0.885 0.01 255);
+
+  --accent: oklch(0.55 0.2 260);
+  --accent-foreground: oklch(0.99 0 0);
+  --focus: oklch(0.6 0.19 260);
+  --success: oklch(0.62 0.15 152);
+  --warning: oklch(0.78 0.15 75);
+  --danger: oklch(0.6 0.21 25);
+
+  --surface-shadow: 0 0 0 0 transparent;
+  --overlay-shadow: 0 18px 40px -12px oklch(0.22 0.03 262 / 0.18), 0 0 0 1px oklch(0.91 0.009 255);
+
+  --chrome: oklch(1 0 0);
+  --chrome-foreground: oklch(0.22 0.025 262);
+  --chrome-muted: oklch(0.55 0.02 262);
+  --chrome-active: oklch(0.95 0.03 258);
+  --chrome-active-foreground: oklch(0.45 0.19 260);
+  --chrome-border: oklch(0.91 0.009 255);
+  --grid-minor: oklch(0.6 0.12 258 / 0.05);
+  --grid-major: oklch(0.6 0.12 258 / 0.09);
+}
+
+/* ── Dark: night shift, blue ──────────────────────────────────────────────── */
+.dark,
+[data-theme="dark"] {
+  --background: oklch(0.165 0.014 262);
+  --foreground: oklch(0.95 0.005 255);
+  --surface: oklch(0.2 0.016 262);
+  --surface-secondary: oklch(0.235 0.017 262);
+  --surface-tertiary: oklch(0.27 0.018 262);
+  --overlay: oklch(0.22 0.016 262);
+  --muted: oklch(0.7 0.02 258);
+  --default: oklch(0.265 0.017 262);
+  --default-foreground: var(--foreground);
+  --border: oklch(0.3 0.018 262);
+  --separator: oklch(0.265 0.016 262);
+  --field-background: oklch(0.19 0.015 262);
+  --field-border: oklch(0.33 0.018 262);
+
+  --accent: oklch(0.68 0.17 258);
+  --accent-foreground: oklch(0.16 0.02 262);
+  --focus: oklch(0.7 0.16 258);
+  --success: oklch(0.72 0.15 152);
+  --warning: oklch(0.82 0.14 78);
+  --danger: oklch(0.67 0.19 24);
+
+  --overlay-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.6), 0 0 0 1px oklch(0.3 0.018 262);
+
+  --chrome: oklch(0.185 0.015 262);
+  --chrome-foreground: oklch(0.93 0.006 255);
+  --chrome-muted: oklch(0.66 0.02 258);
+  --chrome-active: oklch(0.27 0.05 260);
+  --chrome-active-foreground: oklch(0.85 0.1 258);
+  --chrome-border: oklch(0.27 0.016 262);
+  --grid-minor: oklch(0.7 0.1 258 / 0.05);
+  --grid-major: oklch(0.7 0.1 258 / 0.09);
+}
+
+/* ── Monochrome (hitam-putih): same layout, neutral greys, black accent ──────── */
+[data-accent="mono"] {
+  --background: oklch(0.982 0 0);
+  --foreground: oklch(0.18 0 0);
+  --surface: oklch(1 0 0);
+  --surface-secondary: oklch(0.965 0 0);
+  --surface-tertiary: oklch(0.94 0 0);
+  --overlay: oklch(1 0 0);
+  --muted: oklch(0.5 0 0);
+  --default: oklch(0.95 0 0);
+  --border: oklch(0.9 0 0);
+  --separator: oklch(0.93 0 0);
+  --field-border: oklch(0.87 0 0);
+  --accent: oklch(0.18 0 0);
+  --accent-foreground: oklch(0.99 0 0);
+  --focus: oklch(0.35 0 0);
+  --chrome: oklch(1 0 0);
+  --chrome-foreground: oklch(0.18 0 0);
+  --chrome-muted: oklch(0.5 0 0);
+  --chrome-active: oklch(0.18 0 0);
+  --chrome-active-foreground: oklch(0.99 0 0);
+  --chrome-border: oklch(0.9 0 0);
+  --grid-minor: oklch(0.5 0 0 / 0.05);
+  --grid-major: oklch(0.5 0 0 / 0.08);
+}
+.dark[data-accent="mono"],
+[data-theme="dark"][data-accent="mono"] {
+  --background: oklch(0.15 0 0);
+  --foreground: oklch(0.96 0 0);
+  --surface: oklch(0.19 0 0);
+  --surface-secondary: oklch(0.225 0 0);
+  --surface-tertiary: oklch(0.26 0 0);
+  --overlay: oklch(0.21 0 0);
+  --muted: oklch(0.7 0 0);
+  --default: oklch(0.255 0 0);
+  --border: oklch(0.29 0 0);
+  --separator: oklch(0.255 0 0);
+  --field-background: oklch(0.18 0 0);
+  --field-border: oklch(0.32 0 0);
+  --accent: oklch(0.96 0 0);
+  --accent-foreground: oklch(0.15 0 0);
+  --focus: oklch(0.85 0 0);
+  --chrome: oklch(0.17 0 0);
+  --chrome-foreground: oklch(0.94 0 0);
+  --chrome-muted: oklch(0.66 0 0);
+  --chrome-active: oklch(0.96 0 0);
+  --chrome-active-foreground: oklch(0.15 0 0);
+  --chrome-border: oklch(0.26 0 0);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--background);
+  color: var(--foreground);
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "ss01" 1;
+}
+
+h1,
+h2,
+h3,
+.font-display {
+  font-family: var(--font-display);
+  font-optical-sizing: auto;
+  letter-spacing: -0.015em;
+}
+
+/* Numbers that must line up or be read like an instrument: RM, times, values. */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+.num {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* Small-caps label used on form-like headings: "TANDA VITAL", "ANTREAN". */
+.label-caps {
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+/* Chart / ECG paper. */
+.bg-grid {
+  background-image:
+    linear-gradient(var(--grid-major) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-major) 1px, transparent 1px),
+    linear-gradient(var(--grid-minor) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-minor) 1px, transparent 1px);
+  background-size:
+    40px 40px,
+    40px 40px,
+    8px 8px,
+    8px 8px;
+}
+
+/* Diagonal hatching = "not usable right now" (bed in cleaning / maintenance). */
+.bg-hatch {
+  background-image: repeating-linear-gradient(-45deg, currentColor 0 1px, transparent 1px 7px);
+}
+
+/* ── HeroUI surface overrides: paper cards with hairlines instead of shadows ── */
+.card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+.chip {
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border-radius: 6px;
+}
+/* Soft chips read as rubber stamps: tinted fill + inked edge. */
+.chip--soft {
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, currentColor 28%, transparent);
+}
+
+.button {
+  border-radius: 10px;
+  font-weight: 600;
+}
+.button--primary {
+  box-shadow: inset 0 1px 0 oklch(1 0 0 / 0.14), 0 1px 2px oklch(0.2 0.03 200 / 0.25);
+}
+
+/* Ledger tables: no pill header, mono caps column labels, hairline rows. */
+.table-root--secondary .table__column {
+  background: transparent;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  border-radius: 0 !important;
+}
+.table-root--secondary .table__column::after {
+  content: none;
+}
+.table-root--secondary .table__row .table__cell {
+  border-bottom-color: var(--separator);
+}
+
+.tabs__tab {
+  font-weight: 600;
+}
+
+/* Thermal queue ticket: notched sides cut with a mask. */
+.ticket {
+  --notch: 6px;
+  mask:
+    radial-gradient(circle at 0 50%, transparent var(--notch), #000 calc(var(--notch) + 0.5px)) left / 51% 100% no-repeat,
+    radial-gradient(circle at 100% 50%, transparent var(--notch), #000 calc(var(--notch) + 0.5px)) right / 51% 100% no-repeat;
+}
+
+/* Triage tag: pointed left edge with a punched hole. */
+.triage-tag {
+  clip-path: polygon(10px 0, 100% 0, 100% 100%, 10px 100%, 0 50%);
+  -webkit-mask: radial-gradient(circle at 9px 50%, transparent 2.5px, #000 3px);
+  mask: radial-gradient(circle at 9px 50%, transparent 2.5px, #000 3px);
+}
+
+/*
+ * Chart palette (dataviz reference palette, slots 1–3 — validated all-pairs for CVD in
+ * both modes). Charts reference roles, never raw hex.
+ */
+:root {
+  --chart-1: #2a78d6;
+  --chart-2: #eb6834;
+  --chart-3: #1baf7a;
+  --chart-grid: color-mix(in oklch, var(--foreground) 10%, transparent);
+  --chart-axis: var(--muted);
+}
+.dark,
+[data-theme="dark"] {
+  --chart-1: #3987e5;
+  --chart-2: #d95926;
+  --chart-3: #199e70;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .pulse-dot {
+    animation: pulse-dot 2s ease-in-out infinite;
+  }
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}
+
+/* Printing a ticket / receipt / label: only the .print-area is printed. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+  }
+}
+
+/* Primary tabs as chart folder tabs: the selected tab joins the paper below it. */
+.tabs:not(.tabs--secondary) > .tabs__list-container {
+  background: transparent;
+  border-radius: 0;
+  border-bottom: 1px solid var(--border);
+}
+.tabs:not(.tabs--secondary) .tabs__list {
+  gap: 2px;
+  padding: 0;
+  min-width: 0;
+}
+.tabs:not(.tabs--secondary) .tabs__tab {
+  width: auto;
+  height: 40px;
+  margin-bottom: -1px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 12px 12px 0 0;
+  color: var(--muted);
+}
+.tabs:not(.tabs--secondary) .tabs__tab:hover {
+  color: var(--foreground);
+}
+.tabs:not(.tabs--secondary) .tabs__tab[data-selected="true"] {
+  background: var(--surface);
+  border-color: var(--border);
+  color: var(--foreground);
+  box-shadow: inset 0 3px 0 var(--accent);
+}
+.tabs:not(.tabs--secondary) .tabs__indicator {
+  display: none;
+}
+
+/*
+ * In monochrome the module-category dividers turn grey too. Clinical colours (wristband
+ * markers, triage, monitor, status) keep their colour on purpose: they carry safety meaning.
+ */
+[data-accent="mono"] {
+  --color-cat-core: oklch(0.8 0 0);
+  --color-cat-front: oklch(0.45 0 0);
+  --color-cat-clinical: oklch(0.25 0 0);
+  --color-cat-support: oklch(0.55 0 0);
+  --color-cat-finance: oklch(0.65 0 0);
+  --color-cat-operations: oklch(0.35 0 0);
+  --color-cat-quality: oklch(0.72 0 0);
+  --color-cat-integration: oklch(0.6 0 0);
+}

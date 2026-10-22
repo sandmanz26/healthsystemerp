@@ -31,6 +31,20 @@ Design direction follows the vendored [`frontend-design-direction`](.claude/skil
 Process docs: [`docs/RESEARCH.md`](docs/RESEARCH.md) (US vs UK/EU requirements, gap review,
 sources) and [`docs/PLAN.md`](docs/PLAN.md) (plan → roast → v2 → v3).
 
+## Design comparison: `/` vs `/v2`
+
+The site serves two versions side by side so the design pass can be compared:
+
+| URL | Version |
+|---|---|
+| `/` | Current design — after applying the `frontend-design-direction` skill |
+| `/v2/` | Previous design, frozen at commit `d54fde3` (source in `v2/src`, aliased `@v2/*`) |
+
+Both are entries of the same Vite build (`vite.config.ts` → `rollupOptions.input`), use the same
+demo data on the same origin, and `/v2` without a trailing slash redirects to `/v2/`. `v2/` is a
+snapshot: it is typechecked and linted with the app, but not unit-tested or maintained further —
+delete the folder and the `v2` entry once the comparison is done.
+
 ## Run
 
 ```bash
