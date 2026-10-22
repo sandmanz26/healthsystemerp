@@ -117,7 +117,7 @@ export function PrescriptionSection({ encounter, patient, readOnly }: { encounte
               const item = items.get(l.itemId)
               const stock = item ? stockOf(item) : 0
               return (
-                <div key={i} className="grid gap-2 rounded-xl bg-surface-secondary p-3 md:grid-cols-[minmax(200px,2fr)_1fr_1fr_1fr_80px_80px_auto]">
+                <div key={i} className="grid gap-2 rounded-lg bg-surface-secondary p-3 md:grid-cols-[minmax(200px,2fr)_1fr_1fr_1fr_80px_80px_auto]">
                   <SelectInput
                     label="Medication"
                     placeholder="Search formulary…"

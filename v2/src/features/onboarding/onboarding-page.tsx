@@ -120,7 +120,7 @@ export default function OnboardingPage() {
                     className={cn("flex flex-col gap-4 rounded-[18px] border bg-surface p-5 text-left transition", active ? "border-foreground shadow-[inset_4px_0_0_var(--accent)]" : "border-border hover:border-foreground/40")}
                   >
                     <div className="flex items-start gap-3">
-                      <span className={cn("num grid h-11 min-w-11 shrink-0 place-items-center rounded-xl px-2 text-sm font-bold", active ? "bg-foreground text-background" : "border border-dashed border-border text-muted")}>{info.short}</span>
+                      <span className={cn("num grid h-11 min-w-11 shrink-0 place-items-center rounded-lg px-2 text-sm font-bold", active ? "bg-foreground text-background" : "border border-dashed border-border text-muted")}>{info.short}</span>
                       <span className="min-w-0 flex-1">
                         <span className="block font-display text-xl font-semibold">{info.name}</span>
                         <span className="block text-sm text-muted">
@@ -139,7 +139,7 @@ export default function OnboardingPage() {
                         </div>
                       ))}
                     </dl>
-                    <span className="num text-[11px] text-muted">
+                    <span className="num text-xs text-muted">
                       FHIR R4 · {info.fhirProfile} · HL7 v2.5.1 · {info.locale}
                     </span>
                   </button>
@@ -177,7 +177,7 @@ export default function OnboardingPage() {
                 </div>
                 <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
                   {CATEGORY_ORDER.filter((c) => c !== "core").map((c) => (
-                    <span key={c} className="flex items-center gap-1.5 text-[11px] text-muted">
+                    <span key={c} className="flex items-center gap-1.5 text-xs text-muted">
                       <span className={cn("size-2 rounded-sm", CATEGORY_COLOR[c])} />
                       {CATEGORY_LABEL[c]}
                     </span>
@@ -201,7 +201,7 @@ export default function OnboardingPage() {
                         aria-pressed={active}
                         className={cn("flex items-center gap-4 rounded-[14px] border bg-surface p-4 text-left transition", active ? "border-foreground shadow-[inset_4px_0_0_var(--accent)]" : "border-border hover:border-foreground/40")}
                       >
-                        <span className={cn("grid size-11 shrink-0 place-items-center rounded-xl", active ? "bg-foreground text-background" : "border border-dashed border-border text-muted")}>
+                        <span className={cn("grid size-11 shrink-0 place-items-center rounded-lg", active ? "bg-foreground text-background" : "border border-dashed border-border text-muted")}>
                           <Icon className="size-5" aria-hidden />
                         </span>
                         <span className="min-w-0 flex-1">
@@ -252,7 +252,7 @@ export default function OnboardingPage() {
               </Card>
             </div>
             {note && (
-              <div role="status" className="rounded-xl bg-accent-soft px-4 py-2.5 text-sm text-accent-soft-foreground">
+              <div role="status" className="rounded-lg bg-accent-soft px-4 py-2.5 text-sm text-accent-soft-foreground">
                 {note}
               </div>
             )}

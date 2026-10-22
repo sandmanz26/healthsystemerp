@@ -15,10 +15,10 @@ import { orderExams } from "./rad-utils"
 /** Exam list with modality, CPT and UB-04 revenue code. */
 export function ExamList({ order }: { order: ServiceOrder }) {
   return (
-    <ul className="divide-y divide-separator rounded-xl border border-border">
+    <ul className="divide-y divide-separator rounded-lg border border-border">
       {orderExams(order).map((e) => (
         <li key={e.code} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm">
-          <span className="num rounded bg-surface-secondary px-1.5 text-[11px] font-semibold">{e.modality}</span>
+          <span className="num rounded bg-surface-secondary px-1.5 text-xs font-semibold">{e.modality}</span>
           <span className="font-medium">{e.name}</span>
           <Code system="CPT" code={`${e.cpt} · rev ${e.revCode}`} className="ml-auto" />
         </li>
@@ -48,7 +48,7 @@ export function AuthPanel({ order }: { order: ServiceOrder }) {
   const { setOrderAuth } = useActions()
   if (!order.auth) return null
   return (
-    <div className="space-y-2 rounded-xl border border-border p-3 text-sm">
+    <div className="space-y-2 rounded-lg border border-border p-3 text-sm">
       <div className="flex items-center justify-between gap-2">
         <span className="font-medium">Prior authorization</span>
         <AuthChip auth={order.auth} />

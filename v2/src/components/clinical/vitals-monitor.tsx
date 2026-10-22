@@ -60,13 +60,13 @@ export function VitalsMonitor({ vitals, history = [], label, compact }: VitalsMo
   const scoreTone = !score ? "bg-white/10 text-mon-text" : score.risk === "high" ? "bg-mon-bp text-black" : score.risk === "medium" ? "bg-mon-rr text-black" : "bg-mon-hr/90 text-black"
 
   return (
-    <div className="@container overflow-hidden rounded-xl bg-monitor text-mon-text ring-1 ring-black/20">
+    <div className="@container overflow-hidden rounded-lg bg-monitor text-mon-text ring-1 ring-black/20">
       <div className="flex items-center justify-between gap-2 border-b border-monitor-line px-3 py-2">
         <span className="label-caps flex items-center gap-2 text-mon-text/70">
           <span className="pulse-dot size-1.5 rounded-full bg-mon-hr" aria-hidden />
           Monitor{label ? ` · ${label}` : ""}
         </span>
-        <span className="num text-[11px] text-mon-text/60">{vitals ? formatTime(vitals.at) : "—"}</span>
+        <span className="num text-xs text-mon-text/60">{vitals ? formatTime(vitals.at) : "—"}</span>
       </div>
       {!vitals ? (
         <p className="px-3 py-6 text-center text-sm text-mon-text/60">No vital signs recorded yet.</p>
@@ -86,7 +86,7 @@ export function VitalsMonitor({ vitals, history = [], label, compact }: VitalsMo
                   <div className={cn("num mt-1 font-semibold leading-none", p.color, compact ? "text-2xl" : "text-[28px]")}>
                     {raw === undefined ? "—" : p.key === "systolic" ? `${raw}/${vitals.diastolic ?? "–"}` : p.show ? p.show(raw) : raw}
                   </div>
-                  <div className="num mt-0.5 text-[10px] text-mon-text/50">{p.unit()}</div>
+                  <div className="num mt-0.5 text-xs text-mon-text/50">{p.unit()}</div>
                   <Sparkline values={values} stroke={p.stroke} />
                 </div>
               )
@@ -98,11 +98,11 @@ export function VitalsMonitor({ vitals, history = [], label, compact }: VitalsMo
                 <span className={cn("num rounded-md px-2 py-0.5 text-[26px] font-bold leading-none", scoreTone)}>{score ? score.score : "—"}</span>
                 {score && <span className="label-caps pb-1 text-mon-text/60">{score.risk} risk</span>}
               </div>
-              {score && <p className="mt-1.5 text-[11px] leading-snug text-mon-text/70">{score.response}</p>}
+              {score && <p className="mt-1.5 text-xs leading-snug text-mon-text/70">{score.response}</p>}
             </div>
           </div>
           {(vitals.onOxygen || (vitals.consciousness && vitals.consciousness !== "A") || vitals.painScore !== undefined) && (
-            <div className="num flex flex-wrap items-center gap-3 border-t border-monitor-line px-3 py-2 text-[11px]">
+            <div className="num flex flex-wrap items-center gap-3 border-t border-monitor-line px-3 py-2 text-xs">
               {vitals.onOxygen && <span className="text-mon-spo2">Supplemental O₂</span>}
               {vitals.consciousness && vitals.consciousness !== "A" && <span className="font-bold text-mon-bp">ACVPU {vitals.consciousness}</span>}
               {vitals.painScore !== undefined && <span className="text-mon-text/70">Pain {vitals.painScore}/10</span>}

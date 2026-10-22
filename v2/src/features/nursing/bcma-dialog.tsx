@@ -122,7 +122,7 @@ export function BcmaDialog({ entry, onClose }: { entry: MarEntry; onClose: () =>
 
       {!override ? (
         <div className="grid gap-4 sm:grid-cols-2">
-          <div className={cn("space-y-2 rounded-xl border p-3", bandOk ? "border-success" : bandWrong ? "border-danger" : "border-border")}>
+          <div className={cn("space-y-2 rounded-lg border p-3", bandOk ? "border-success" : bandWrong ? "border-danger" : "border-border")}>
             <div className="label-caps flex items-center gap-1.5 text-muted">
               <ScanBarcode className="size-3.5" aria-hidden /> Step 1 · Scan wristband
             </div>
@@ -130,7 +130,7 @@ export function BcmaDialog({ entry, onClose }: { entry: MarEntry; onClose: () =>
             {patient && (
               <div className="rounded-lg bg-surface-secondary p-2">
                 <Barcode value={patient.mrn} height={28} />
-                <div className="num mt-1 text-[11px] text-muted">MRN {patient.mrn}</div>
+                <div className="num mt-1 text-xs text-muted">MRN {patient.mrn}</div>
               </div>
             )}
             {bandOk && (
@@ -139,7 +139,7 @@ export function BcmaDialog({ entry, onClose }: { entry: MarEntry; onClose: () =>
               </p>
             )}
           </div>
-          <div className={cn("space-y-2 rounded-xl border p-3", doseOk ? "border-success" : doseWrong ? "border-danger" : "border-border", !bandOk && "opacity-60")}>
+          <div className={cn("space-y-2 rounded-lg border p-3", doseOk ? "border-success" : doseWrong ? "border-danger" : "border-border", !bandOk && "opacity-60")}>
             <div className="label-caps flex items-center gap-1.5 text-muted">
               <ScanBarcode className="size-3.5" aria-hidden /> Step 2 · Scan dose
             </div>
@@ -147,7 +147,7 @@ export function BcmaDialog({ entry, onClose }: { entry: MarEntry; onClose: () =>
             {item?.barcode ? (
               <div className="rounded-lg bg-surface-secondary p-2">
                 <Barcode value={item.barcode} height={28} />
-                <div className="num mt-1 text-[11px] text-muted">{item.barcode}</div>
+                <div className="num mt-1 text-xs text-muted">{item.barcode}</div>
               </div>
             ) : (
               <p className="text-xs text-warning">No barcode on file — use override.</p>
@@ -160,13 +160,13 @@ export function BcmaDialog({ entry, onClose }: { entry: MarEntry; onClose: () =>
           </div>
         </div>
       ) : (
-        <div className="space-y-3 rounded-xl border border-warning p-3">
+        <div className="space-y-3 rounded-lg border border-warning p-3">
           <p className="text-xs text-warning-soft-foreground">Overrides are logged with your name and reported in the BCMA compliance audit. Verify identity with two identifiers (name + date of birth) before giving.</p>
           <SelectInput label="Override reason" value={overrideReason} onChange={setOverrideReason} options={OVERRIDE_REASONS.map((r) => ({ value: r, label: r }))} isRequired placeholder="Select a reason" />
         </div>
       )}
 
-      <fieldset className="space-y-1.5 rounded-xl bg-surface-secondary p-3">
+      <fieldset className="space-y-1.5 rounded-lg bg-surface-secondary p-3">
         <legend className="label-caps mb-1 text-muted">Rights of medication administration</legend>
         {rights.map((r) => (
           <div key={r.label} className="flex items-center gap-2 text-sm">

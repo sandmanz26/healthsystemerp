@@ -111,7 +111,7 @@ export default function HrPage() {
       cell: (s) =>
         s.license ? (
           <div className="space-y-0.5">
-            <div className="num text-[11px] text-muted">
+            <div className="num text-xs text-muted">
               {s.license.body} {s.license.number}
             </div>
             <ExpiryChip iso={s.license.expires} now={now} />
@@ -160,7 +160,7 @@ export default function HrPage() {
             : "Staff directory, professional registration (GMC, NMC, GPhC, HCPC), resuscitation training and the 12-hour rota."
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label="Total staff" value={staff.length} icon={Users} />
         <Stat label={`On duty now (${SHIFT[current.code].label.toLowerCase()} shift)`} value={onDuty.length} icon={UserCheck} tone="accent" />
         <Stat label="Credentials ≤ 60 days / lapsed" value={flagged.length} icon={BadgeAlert} tone={flagged.length ? "danger" : "success"} hint={us ? "License, DEA or BLS/ACLS" : "Registration or ILS/ALS"} />

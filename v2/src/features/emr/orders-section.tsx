@@ -43,7 +43,7 @@ export function OrdersSection({ encounter, readOnly }: { encounter: Encounter; r
               <span className="flex items-center gap-2">
                 {o.kind === "lab" ? <FlaskConical className="size-4 text-muted" aria-hidden /> : <ScanLine className="size-4 text-muted" aria-hidden />}
                 {orderTitle(o)}
-                {codes.length > 0 && <span className="num text-[11px] font-normal text-muted">CPT {codes.join(", ")}</span>}
+                {codes.length > 0 && <span className="num text-xs font-normal text-muted">CPT {codes.join(", ")}</span>}
               </span>
             }
             description={`Ordered ${formatDateTime(o.orderedAt)}${o.resultedAt ? ` · resulted ${formatDateTime(o.resultedAt)}` : ""}${o.clinicalNote ? ` · ${o.clinicalNote}` : ""}`}
@@ -135,19 +135,19 @@ function OrderForm({ encounter, kind }: { encounter: Encounter; kind: OrderKind 
                   <ToggleButton key={c.code} size="sm" isSelected={selected.includes(c.code)} onChange={() => toggle(c.code)} aria-label={`${c.name} (${c.meta})`}>
                     {kind === "lab" && <span className="num font-bold">{c.code}</span>}
                     {c.name}
-                    {kind === "rad" && <span className="num text-[11px] opacity-70">{c.cpt}</span>}
+                    {kind === "rad" && <span className="num text-xs opacity-70">{c.cpt}</span>}
                   </ToggleButton>
                 ))}
             </div>
           </div>
         ))}
         {chosen.length > 0 && (
-          <ul className="space-y-1 rounded-xl bg-surface-secondary px-3 py-2 text-sm">
+          <ul className="space-y-1 rounded-lg bg-surface-secondary px-3 py-2 text-sm">
             {chosen.map((c) => (
               <li key={c.code} className="flex flex-wrap items-center gap-2">
                 <span className="font-medium">{c.name}</span>
-                <span className="num text-[11px] text-muted">{c.meta}</span>
-                {kind === "lab" && <span className="num text-[11px] text-muted">· {panelTests(c.code).length} analyte(s)</span>}
+                <span className="num text-xs text-muted">{c.meta}</span>
+                {kind === "lab" && <span className="num text-xs text-muted">· {panelTests(c.code).length} analyte(s)</span>}
                 {c.badges.map((b) => (
                   <Chip key={b.label} size="sm" variant="soft" color={b.color}>
                     {b.label}

@@ -135,7 +135,7 @@ export default function BillingPage() {
           )
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label="Self-pay balances" value={open.length} hint={formatMoney(open.reduce((s, i) => s + invoiceBalance(i), 0))} icon={Receipt} tone="warning" onClick={() => setFilter("open")} />
         <Stat label="Collected today" value={formatMoney(collected)} icon={Banknote} tone="success" onClick={() => setFilter("paid")} />
         <Stat label="Self-pay still in care" value={inCare.length} hint={`Running ${formatMoney(inCare.reduce((s, i) => s + invoiceTotal(i), 0))}`} icon={Wallet} />

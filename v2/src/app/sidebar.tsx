@@ -1,92 +1,97 @@
 /**
- * The binder. Modules are grouped like the coloured dividers of a medical-record folder;
- * the active page is highlighted in the accent colour. The footer shows the
- * facility's module "slots" — the modular concept made visible.
+ * Open-plane sidebar: the product, the facility it is scoped to, search, the enabled
+ * modules grouped by category, and the user at the foot. It sits on the page ground with
+ * no panel of its own; the active page is a neutral pill.
  */
-import { Puzzle } from "lucide-react"
+import { Button } from "@heroui/react"
+import { Lock, Puzzle, Search } from "lucide-react"
 import { NavLink } from "react-router-dom"
-import { CATEGORY_LABEL, CATEGORY_ORDER, MODULES } from "@v2/domain/modules"
+import { CATEGORY_LABEL, CATEGORY_ORDER } from "@v2/domain/modules"
 import { REGIONS, type Region } from "@v2/domain/region"
 import { cn } from "@v2/lib/cn"
-import { useStore } from "@v2/store"
+import { useActions, useStore } from "@v2/store"
 import { useEnabledModules, useRegion } from "@v2/store/selectors"
 import { Logo } from "./logo"
-import { CATEGORY_COLOR, NAV, isNavVisible, navLabel, type NavItem } from "./navigation"
+import { NAV, isNavVisible, navLabel, type NavItem } from "./navigation"
+import { AppearanceMenu, Notifications, RoleSwitcher } from "./topbar"
 
 const GROUPS = ["home", ...CATEGORY_ORDER] as const
 
-export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
+export function Sidebar({ onNavigate, onOpenSearch }: { onNavigate?: () => void; onOpenSearch?: () => void }) {
   const enabled = useEnabledModules()
   const role = useStore((s) => s.session.role)
   const facility = useStore((s) => s.facility)
   const region = useRegion()
+  const { lock } = useActions()
   const visible = NAV.filter((n) => isNavVisible(n, enabled, role))
-  const optional = MODULES.filter((m) => !m.core)
 
   return (
-    <nav aria-label="Main navigation" className="flex h-full flex-col border-r border-chrome-border bg-chrome text-chrome-foreground">
-      <div className="px-5 pb-5 pt-6">
+    <nav aria-label="Main navigation" className="flex h-full flex-col bg-background text-foreground">
+      <div className="px-4 pb-3 pt-5">
         <Logo />
-        <div className="mt-5 rounded-xl border border-chrome-border px-3 py-2">
-          <div className="truncate text-sm font-semibold" title={facility.name}>
+        <div className="mt-3 px-2 text-xs text-muted">
+          <div className="truncate text-[13px] text-foreground" title={facility.name}>
             {facility.name}
           </div>
-          <div className="num flex items-center gap-1.5 text-[11px] text-chrome-muted">
-            <span className="truncate">
-              {facility.city} · {region === "us" ? "CCN" : "ODS"} {facility.code}
-            </span>
-            <span className="ml-auto shrink-0 rounded border border-chrome-border px-1 font-semibold" title={REGIONS[region].name}>
-              {REGIONS[region].short}
-            </span>
+          <div className="num truncate">
+            {region === "us" ? "CCN" : "ODS"} {facility.code} · {REGIONS[region].name}
           </div>
         </div>
+        {onOpenSearch && (
+          <button
+            type="button"
+            onClick={onOpenSearch}
+            className="mt-3 flex h-8 w-full items-center gap-2 rounded-md border border-field-border bg-surface px-2.5 text-sm text-muted hover:border-foreground/30"
+          >
+            <Search className="size-4" aria-hidden />
+            <span className="flex-1 text-left">Search</span>
+            <span className="text-xs">Ctrl K</span>
+          </button>
+        )}
       </div>
-      <div className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
+      <div className="flex-1 space-y-4 overflow-y-auto px-3 pb-4">
         {GROUPS.map((group) => {
           const items = visible.filter((n) => n.group === group)
           if (!items.length) return null
           return (
             <div key={group}>
-              {group !== "home" && (
-                <div className="mb-1 flex items-center gap-2 px-3">
-                  <span className={cn("h-3 w-1 rounded-full", CATEGORY_COLOR[group])} aria-hidden />
-                  <span className="label-caps text-chrome-muted">{CATEGORY_LABEL[group]}</span>
-                </div>
-              )}
+              {group !== "home" && <div className="mb-0.5 px-3 text-[13px] text-muted">{CATEGORY_LABEL[group]}</div>}
               <ul className="space-y-0.5">
                 {items.map((item) => (
                   <li key={item.path}>
-                    <BinderTab item={item} region={region} onNavigate={onNavigate} />
+                    <NavRow item={item} region={region} onNavigate={onNavigate} />
                   </li>
                 ))}
               </ul>
             </div>
           )
         })}
+        {(role === "admin" || role === "manager") && (
+          <NavLink
+            to="/modules"
+            onClick={onNavigate}
+            className={({ isActive }) => cn("flex h-8 items-center gap-2.5 rounded-md px-3 text-sm", isActive ? "bg-chrome-active font-medium" : "text-foreground/80 hover:bg-chrome-active/60")}
+          >
+            <Puzzle className="size-4 shrink-0" aria-hidden />
+            Modules
+          </NavLink>
+        )}
       </div>
-      {(role === "admin" || role === "manager") && (
-        <NavLink to="/modules" onClick={onNavigate} className="group mx-3 mb-4 block rounded-xl border border-chrome-border p-3 transition hover:border-chrome-muted/60">
-          <div className="flex items-center justify-between">
-            <span className="label-caps text-chrome-muted">Module slots</span>
-            <span className="num text-xs">
-              {optional.filter((m) => enabled.has(m.id)).length}/{optional.length}
-            </span>
-          </div>
-          <div className="mt-2 flex gap-[3px]" aria-hidden>
-            {optional.map((m) => (
-              <span key={m.id} className={cn("h-4 flex-1 rounded-[2px]", enabled.has(m.id) ? CATEGORY_COLOR[m.category] : "bg-chrome-muted/20")} />
-            ))}
-          </div>
-          <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-chrome-foreground/90 group-hover:text-chrome-foreground">
-            <Puzzle className="size-3.5" aria-hidden /> Add or manage modules
-          </div>
-        </NavLink>
-      )}
+      <div className="border-t border-border px-3 py-3">
+        <RoleSwitcher />
+        <div className="mt-1 flex items-center gap-1 px-1">
+          <Notifications />
+          <AppearanceMenu />
+          <Button isIconOnly size="sm" variant="ghost" aria-label="Lock workstation" onPress={lock}>
+            <Lock className="size-4" />
+          </Button>
+        </div>
+      </div>
     </nav>
   )
 }
 
-function BinderTab({ item, region, onNavigate }: { item: NavItem; region: Region; onNavigate?: () => void }) {
+function NavRow({ item, region, onNavigate }: { item: NavItem; region: Region; onNavigate?: () => void }) {
   const Icon = item.icon
   return (
     <NavLink
@@ -94,13 +99,10 @@ function BinderTab({ item, region, onNavigate }: { item: NavItem; region: Region
       end={item.path === "/"}
       onClick={onNavigate}
       className={({ isActive }) =>
-        cn(
-          "relative flex items-center gap-3 rounded-xl py-2 pl-3 pr-3 text-sm font-medium transition-colors",
-          isActive ? "bg-chrome-active font-semibold text-chrome-active-foreground" : "text-chrome-foreground/80 hover:bg-surface-secondary hover:text-chrome-foreground",
-        )
+        cn("flex h-8 items-center gap-2.5 rounded-md px-3 text-sm transition-colors", isActive ? "bg-chrome-active font-medium text-foreground" : "text-foreground/80 hover:bg-chrome-active/60 hover:text-foreground")
       }
     >
-      <Icon className="size-[18px] shrink-0" aria-hidden />
+      <Icon className="size-4 shrink-0" aria-hidden />
       <span className="truncate">{navLabel(item, region)}</span>
     </NavLink>
   )

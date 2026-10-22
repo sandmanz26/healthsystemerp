@@ -219,7 +219,7 @@ function NextUp({ encounter: e, now, isClinician, queueAfter, onCall, onOpen, on
       <div className="flex flex-col items-center gap-2">
         <span className="label-caps text-muted">{called ? "Now calling" : "Next up"}</span>
         <QueueTicket number={e.queueNumber} tone="accent" size="lg" />
-        <span className="num text-[11px] text-muted">{queueAfter} more waiting</span>
+        <span className="num text-xs text-muted">{queueAfter} more waiting</span>
       </div>
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">

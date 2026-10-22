@@ -76,7 +76,7 @@ export default function InventoryPage() {
       id: "codes",
       header: region === "us" ? "ATC / NDC" : "ATC / GTIN",
       cell: (i) => (
-        <div className="num text-[11px] leading-relaxed text-muted">
+        <div className="num text-xs leading-relaxed text-muted">
           <div>{i.atc ? `ATC ${i.atc}` : "—"}</div>
           {i.barcode && <div>{region === "us" ? "NDC" : "GTIN"} {i.barcode}</div>}
         </div>
@@ -145,7 +145,7 @@ export default function InventoryPage() {
           </Button>
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label="Below par level" value={low.length} icon={AlertTriangle} tone={low.length ? "danger" : "success"} />
         <Stat label="Expiring ≤ 90 days" value={expiring.length} icon={CalendarX} tone={expiring.length ? "warning" : "default"} hint={expired.length ? `${expired.length} lot(s) already expired` : undefined} />
         <Stat label="Items stocked" value={inventory.length} icon={Boxes} />

@@ -66,7 +66,7 @@ export default function InpatientPage() {
           </Button>
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-5">
         <Stat label={us ? "Occupancy" : "Bed occupancy"} value={formatPercent((occupied / beds.length) * 100)} hint={`${occupied} of ${beds.length} staffed beds`} icon={BedDouble} tone="accent" />
         <Stat label="Clean / ready" value={count("available")} icon={BedSingle} tone="success" />
         <Stat label="Dirty (EVS)" value={count("cleaning")} icon={Sparkles} tone={count("cleaning") ? "warning" : "default"} />
@@ -116,7 +116,7 @@ export default function InpatientPage() {
                   {wardBeds.filter((b) => b.status === "occupied").length}/{wardBeds.length} occupied
                 </span>
               </h2>
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
+              <div className="grid items-start gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
                 {wardBeds.map((b) => (
                   <BedCard
                     key={b.id}
@@ -170,17 +170,15 @@ interface BedCardProps {
   onAdmit: () => void
 }
 
-const BLANKET: Record<BedStatus, string> = {
-  occupied: "bg-accent-soft text-foreground",
-  available: "border-2 border-dashed border-success/50 text-success",
-  cleaning: "bg-hatch text-warning/40",
-  maintenance: "bg-hatch text-danger/35",
-  reserved: "border-2 border-dotted border-border text-muted",
+const EMPTY_LABEL: Record<Exclude<BedStatus, "occupied" | "available">, string> = {
+  cleaning: "EVS cleaning",
+  reserved: "Assigned",
+  maintenance: "Blocked",
 }
 
 /**
- * One bed drawn from above: headboard, pillow, blanket. The blanket carries the patient;
- * its fill is the bed status (hatching = not usable right now).
+ * One bed: code, type and status, then the patient in it or what the bed can take next.
+ * A patient whose NEWS2 needs a response gets a status rule down the left edge.
  */
 function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) {
   const patients = usePatientMap()
@@ -198,16 +196,17 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
   const pastEdd = plan && new Date(plan.edd).getTime() < now - 12 * 3600000
 
   return (
-    <article className={cn("rounded-[14px] border bg-surface p-3", alarm ? (score.risk === "high" ? "border-danger" : "border-warning") : "border-border")}>
+    <article className={cn("relative overflow-hidden rounded-lg border border-border bg-surface p-3", !encounter && bed.status !== "available" && "bg-surface-secondary")}>
+      {alarm && <span className={cn("absolute inset-y-0 left-0 w-1", score.risk === "high" ? "bg-danger" : "bg-warning")} aria-hidden />}
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="num text-sm font-bold">{bed.code}</span>
-          <span className="label-caps text-muted">{BED_TYPE_LABEL[bed.bedType]}</span>
+          <span className="num text-sm font-semibold">{bed.code}</span>
+          <span className="text-[13px] text-muted">{BED_TYPE_LABEL[bed.bedType]}</span>
         </div>
         <div className="flex items-center gap-1">
           <BedStatusChip status={bed.status} />
           <Dropdown>
-            <Dropdown.Trigger aria-label={`Actions for ${bed.code}`} className="grid size-7 place-items-center rounded-lg hover:bg-surface-secondary">
+            <Dropdown.Trigger aria-label={`Actions for ${bed.code}`} className="grid size-7 place-items-center rounded-md hover:bg-surface-secondary">
               <MoreVertical className="size-4" />
             </Dropdown.Trigger>
             <Dropdown.Popover placement="bottom end">
@@ -243,54 +242,46 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
         </div>
       </div>
 
-      {/* The bed, from above */}
-      <div className="flex h-[104px] items-stretch gap-1.5 rounded-xl border border-border bg-surface-secondary p-1.5">
-        <div className="w-1.5 shrink-0 rounded-full bg-surface-tertiary" aria-hidden />
-        <div className="flex w-7 shrink-0 items-center" aria-hidden>
-          <div className="h-3/5 w-full rounded-md border border-border bg-surface" />
-        </div>
-        {encounter && patient ? (
-          <button type="button" onClick={() => onOpen(encounter)} className={cn("min-w-0 flex-1 rounded-lg px-2.5 py-1.5 text-left transition hover:brightness-[0.97]", BLANKET.occupied)}>
-            <div className="flex items-center gap-1.5">
-              <span className="truncate font-semibold">{patient.name}</span>
-              <MarkerDots patient={patient} />
-            </div>
-            <div className="num truncate text-[11px] text-muted">
-              {patient.gender === "female" ? "F" : "M"} · {ageLabel(patient.birthDate)} · <span className={cn(pastEdd && "font-semibold text-danger")}>LOS {los} d{plan && ` · EDD ${formatDate(plan.edd)}`}</span>
-            </div>
-            <div className="mt-0.5 line-clamp-1 text-xs">{encounter.diagnoses.find((d) => d.primary)?.display ?? encounter.chiefComplaint}</div>
-            <div className="mt-1 flex items-center gap-1.5">
-              <News2Chip vitals={latest} />
-              {encounter.admissionClass === "observation" && (
-                <Chip size="sm" color="warning" variant="soft" className="num whitespace-nowrap">
-                  OBS {obsHours(encounter, now)} h
-                </Chip>
-              )}
-              {plan?.medicallyReady && (
-                <Chip size="sm" color="success" variant="soft" className="whitespace-nowrap">
-                  {us ? "Ready" : "NCTR"}
-                </Chip>
-              )}
-              {us && imOverdue(encounter, now) && (
-                <Chip size="sm" color="danger" variant="soft" className="whitespace-nowrap">
-                  IM due
-                </Chip>
-              )}
-              <span className="truncate text-[11px] text-muted">{staff.get(encounter.practitionerId ?? "")?.name.replace(/,.*$/, "")}</span>
-            </div>
-          </button>
-        ) : (
-          <div className={cn("flex min-w-0 flex-1 items-center justify-center rounded-lg text-center", BLANKET[bed.status])}>
-            {bed.status === "available" ? (
-              <button type="button" onClick={onAdmit} className="label-caps h-full w-full rounded-lg hover:bg-success/10">
-                Clean · admit
-              </button>
-            ) : (
-              <span className="label-caps rounded bg-surface px-2 py-1 text-muted">{bed.status === "cleaning" ? "EVS cleaning" : bed.status === "reserved" ? "Assigned" : "Blocked"}</span>
-            )}
+      {encounter && patient ? (
+        <button type="button" onClick={() => onOpen(encounter)} className="block w-full min-w-0 rounded-md text-left hover:bg-surface-secondary">
+          <div className="flex items-center gap-1.5">
+            <span className="truncate font-semibold">{patient.name}</span>
+            <MarkerDots patient={patient} />
           </div>
-        )}
-      </div>
+          <div className="num truncate text-[13px] text-muted">
+            {patient.gender === "female" ? "F" : "M"} · {ageLabel(patient.birthDate)} · <span className={cn(pastEdd && "font-medium text-danger")}>LOS {los} d{plan && ` · EDD ${formatDate(plan.edd)}`}</span>
+          </div>
+          <div className="mt-0.5 line-clamp-1 text-[13px]">{encounter.diagnoses.find((d) => d.primary)?.display ?? encounter.chiefComplaint}</div>
+          <div className="mt-2 flex items-center gap-1.5">
+            <News2Chip vitals={latest} />
+            {encounter.admissionClass === "observation" && (
+              <Chip size="sm" color="warning" variant="soft" className="num whitespace-nowrap">
+                OBS {obsHours(encounter, now)} h
+              </Chip>
+            )}
+            {plan?.medicallyReady && (
+              <Chip size="sm" color="success" variant="soft" className="whitespace-nowrap">
+                {us ? "Ready" : "NCTR"}
+              </Chip>
+            )}
+            {us && imOverdue(encounter, now) && (
+              <Chip size="sm" color="danger" variant="soft" className="whitespace-nowrap">
+                IM due
+              </Chip>
+            )}
+            <span className="truncate text-xs text-muted">{staff.get(encounter.practitionerId ?? "")?.name.replace(/,.*$/, "")}</span>
+          </div>
+        </button>
+      ) : bed.status === "available" ? (
+        <div className="flex items-center py-1 justify-between gap-2">
+          <span className="text-sm font-medium text-success">Clean, ready to admit</span>
+          <Button size="sm" variant="secondary" onPress={onAdmit}>
+            Admit
+          </Button>
+        </div>
+      ) : (
+        <div className="flex items-center py-1 text-sm text-muted">{EMPTY_LABEL[bed.status as keyof typeof EMPTY_LABEL]}</div>
+      )}
     </article>
   )
 }

@@ -60,7 +60,7 @@ export function DiagnosisSection({ encounter, readOnly }: { encounter: Encounter
             {dx.map((d) => {
               const snomed = dxByCode(region, d.code)?.snomed
               return (
-                <li key={d.code} className="flex flex-wrap items-center gap-3 rounded-xl bg-surface-secondary px-3 py-2">
+                <li key={d.code} className="flex flex-wrap items-center gap-3 rounded-lg bg-surface-secondary px-3 py-2">
                   <Button
                     isIconOnly
                     size="sm"
@@ -74,7 +74,7 @@ export function DiagnosisSection({ encounter, readOnly }: { encounter: Encounter
                   <span className="tabular w-20 font-semibold">{d.code}</span>
                   <span className="min-w-0 flex-1 text-sm">
                     {d.display}
-                    <span className="num mt-0.5 block text-[11px] text-muted">
+                    <span className="num mt-0.5 block text-xs text-muted">
                       {info.dxSystem}
                       {snomed && ` · SNOMED CT ${snomed}`}
                     </span>

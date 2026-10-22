@@ -77,7 +77,7 @@ export function AssessmentDialog({ encounter, kind, patientName, onClose }: { en
               {item.options.map((o) => (
                 <ToggleButton key={o.label} size="sm" isSelected={answers[item.id] === o.points && answers[item.id] !== undefined} onChange={() => setAnswers((a) => ({ ...a, [item.id]: o.points }))}>
                   {o.label}
-                  <span className="num text-[11px] opacity-70">{o.points}</span>
+                  <span className="num text-xs opacity-70">{o.points}</span>
                 </ToggleButton>
               ))}
             </div>
@@ -87,7 +87,7 @@ export function AssessmentDialog({ encounter, kind, patientName, onClose }: { en
       <div
         role="status"
         className={cn(
-          "rounded-xl p-3 text-sm",
+          "rounded-lg p-3 text-sm",
           !complete ? "bg-surface-secondary text-muted" : tone === "danger" ? "bg-danger-soft text-danger-soft-foreground" : tone === "warning" ? "bg-warning-soft text-warning-soft-foreground" : "bg-success-soft text-success-soft-foreground",
         )}
       >

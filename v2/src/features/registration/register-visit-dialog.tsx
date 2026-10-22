@@ -131,7 +131,7 @@ export function RegisterVisitDialog({ isOpen, onOpenChange, patientId: initialPa
           </>
         }
       >
-        <div className="print-area rounded-2xl border border-dashed border-border p-5 text-center">
+        <div className="print-area rounded-lg border border-dashed border-border p-5 text-center">
           <div className="label-caps text-muted">{units.find((u) => u.id === registered.unitId)?.name}</div>
           <div className="my-3">
             <QueueTicket number={registered.queueNumber} tone="accent" size="lg" />

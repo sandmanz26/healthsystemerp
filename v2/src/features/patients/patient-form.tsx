@@ -197,7 +197,7 @@ export function PatientForm({ isOpen, onOpenChange, patient, initialName, onSave
       }
     >
       {duplicates.length > 0 && (
-        <div className="flex gap-2 rounded-xl bg-warning-soft p-3 text-sm text-warning-soft-foreground">
+        <div className="flex gap-2 rounded-lg bg-warning-soft p-3 text-sm text-warning-soft-foreground">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
           <div>
             <b>Possible duplicate record.</b> Existing:{" "}

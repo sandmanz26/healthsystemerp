@@ -95,7 +95,7 @@ export default function IntegrationsPage() {
         return (
           <div>
             <div className="text-sm">{r.name ?? "—"}</div>
-            <div className="num text-[11px] text-muted">{r.ref}</div>
+            <div className="num text-xs text-muted">{r.ref}</div>
           </div>
         )
       },
@@ -156,7 +156,7 @@ export default function IntegrationsPage() {
                   </div>
                   <div className="label-caps text-muted">{c.standard}</div>
                   <p className="text-sm text-muted">{c.description}</p>
-                  <p className="num truncate text-[11px] text-muted">{c.endpoint}</p>
+                  <p className="num truncate text-xs text-muted">{c.endpoint}</p>
                   <div className="num mt-1 flex gap-3 text-sm">
                     <span className="text-success">{mine.filter((j) => j.status === "synced").length} delivered</span>
                     <span className="text-muted">{mine.filter((j) => j.status === "pending").length} queued</span>
@@ -256,7 +256,7 @@ function MessagePreview({ job, connector, onClose }: { job: SyncJob; connector: 
       {payload ? (
         <div>
           <div className="label-caps mb-1.5 text-muted">{payload.kind}</div>
-          <pre className="num max-h-[60vh] overflow-auto whitespace-pre rounded-xl border border-border bg-surface-secondary p-3 text-[11.5px] leading-relaxed">{payload.text}</pre>
+          <pre className="num max-h-[60vh] overflow-auto whitespace-pre rounded-lg border border-border bg-surface-secondary p-3 text-xs leading-relaxed">{payload.text}</pre>
         </div>
       ) : (
         <p className="text-sm text-muted">Payload preview is available for HL7 ADT and FHIR Encounter messages. This {job.resource} message is shown by its metadata only.</p>

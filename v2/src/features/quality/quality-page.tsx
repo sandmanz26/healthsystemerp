@@ -107,7 +107,7 @@ export default function QualityPage() {
           <Chip size="sm" variant="soft" color={GRADE_INFO[i.grade].color} className="whitespace-nowrap">
             {GRADE_INFO[i.grade].label}
           </Chip>
-          <div className="num text-[11px] text-muted">
+          <div className="num text-xs text-muted">
             C{i.impact} × L{i.probability} = {i.impact * i.probability}
           </div>
         </div>
@@ -143,7 +143,7 @@ export default function QualityPage() {
           </Button>
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label="Reports this month" value={thisMonth.length} icon={ShieldAlert} hint={`${thisMonth.filter((i) => i.harm === "near-miss").length} near misses`} />
         <Stat label="High / extreme risk open" value={openHigh.length} icon={Siren} tone={openHigh.length ? "danger" : "success"} />
         <Stat label={`Measures on target (${latest ? periodLabel(latest) : "—"})`} value={`${latestRates.filter((r) => r.ok).length}/${measures.length}`} icon={Target} tone="accent" />
@@ -229,7 +229,7 @@ function RiskMatrix({ impact, probability, onChange }: { impact: number; probabi
             {[1, 2, 3, 4, 5].map((c) => (
               <th key={c} className="font-medium text-muted">
                 <div className="num">C{c}</div>
-                <div className="text-[10px]">{IMPACT_LABEL[c]}</div>
+                <div className="text-xs">{IMPACT_LABEL[c]}</div>
               </th>
             ))}
           </tr>
@@ -238,7 +238,7 @@ function RiskMatrix({ impact, probability, onChange }: { impact: number; probabi
           {[5, 4, 3, 2, 1].map((l) => (
             <tr key={l}>
               <th className="text-left font-medium text-muted">
-                <span className="num">L{l}</span> <span className="text-[10px]">{PROBABILITY_LABEL[l]}</span>
+                <span className="num">L{l}</span> <span className="text-xs">{PROBABILITY_LABEL[l]}</span>
               </th>
               {[1, 2, 3, 4, 5].map((c) => {
                 const g = riskGrade(l, c)
@@ -363,10 +363,10 @@ function ReportDialog({ onClose }: { onClose: () => void }) {
         </div>
         <RiskMatrix impact={impact} probability={probability} onChange={(c, l) => { setImpact(c); setProbability(l) }} />
       </div>
-      <div className={cn("rounded-xl p-3 text-sm", GRADE_CELL[grade])} role="status">
+      <div className={cn("rounded-lg p-3 text-sm", GRADE_CELL[grade])} role="status">
         <b>{GRADE_INFO[grade].label}.</b> {GRADE_INFO[grade].action}.
       </div>
-      <div className="flex items-start gap-2 rounded-xl border border-border p-3 text-sm">
+      <div className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm">
         <Megaphone className="mt-0.5 size-4 shrink-0 text-muted" aria-hidden />
         <div>
           <div className="font-medium">External reporting</div>

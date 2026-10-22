@@ -135,7 +135,7 @@ export default function ClaimsPage() {
         const d = encById.get(c.encounterId)?.diagnoses.find((x) => x.primary)
         return d ? (
           <div className="max-w-56 text-sm">
-            <span className="num text-[11px] text-muted">{REGIONS[region].dxSystem.split(" ")[0]} </span>
+            <span className="num text-xs text-muted">{REGIONS[region].dxSystem.split(" ")[0]} </span>
             <b className="num">{d.code}</b> <span className="line-clamp-1">{d.display}</span>
           </div>
         ) : (
@@ -152,7 +152,7 @@ export default function ClaimsPage() {
         ) : c.groupCode ? (
           <div className="num text-sm">
             {c.grouper} {c.groupCode}
-            {c.weight !== undefined && <div className="text-[11px] text-muted">RW {c.weight.toFixed(2)}</div>}
+            {c.weight !== undefined && <div className="text-xs text-muted">RW {c.weight.toFixed(2)}</div>}
           </div>
         ) : (
           <span className="text-muted">—</span>
@@ -167,7 +167,7 @@ export default function ClaimsPage() {
       cell: (c) => (
         <div className="space-y-0.5">
           <ClaimStatusChip status={c.status} />
-          {c.denial && (c.status === "denied" || c.status === "appealed") && <div className="num text-[11px] text-danger">{us ? "CARC " : ""}{c.denial.carc}</div>}
+          {c.denial && (c.status === "denied" || c.status === "appealed") && <div className="num text-xs text-danger">{us ? "CARC " : ""}{c.denial.carc}</div>}
         </div>
       ),
     },
@@ -183,7 +183,7 @@ export default function ClaimsPage() {
             : "Code spells in ICD-10 and OPCS-4, group to HRG4+, submit CDS to SUS+ and invoice private medical insurers."
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         {us ? (
           <>
             <Stat label="DNFB (not final billed)" value={count("draft") + count("coded")} hint={formatMoney(kpi.dnfb)} icon={FileHeart} tone="warning" onClick={() => setQueue("draft")} />

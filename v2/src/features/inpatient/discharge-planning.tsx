@@ -89,7 +89,7 @@ export function DischargePlanningBoard({ encounters, bedOf }: { encounters: Enco
                       {group?.gmlos !== undefined ? (
                         <>
                           <div className={cn("num", overGmlos && "font-semibold text-danger")}>{group.gmlos.toFixed(1)} d</div>
-                          <div className="num text-[11px] text-muted">MS-DRG {group.code}</div>
+                          <div className="num text-xs text-muted">MS-DRG {group.code}</div>
                         </>
                       ) : (
                         <span className="text-xs text-muted">Not grouped</span>

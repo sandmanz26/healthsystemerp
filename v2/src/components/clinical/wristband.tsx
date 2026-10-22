@@ -36,7 +36,7 @@ export function Wristband({ patient, payer, meta, aside, compact, linked = true 
   )
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-stretch">
-      <div className={cn("relative flex min-w-0 flex-1 items-stretch overflow-hidden rounded-2xl border border-border bg-surface", markers.length > 0 && "lg:rounded-r-md")}>
+      <div className={cn("relative flex min-w-0 flex-1 items-stretch overflow-hidden rounded-lg border border-border bg-surface", markers.length > 0 && "lg:rounded-r-md")}>
         {/* Barcode strip: the band is scanned before medication, specimens and blood. */}
         <div className="flex shrink-0 items-center gap-2 bg-foreground px-3 text-background">
           <span className="size-3 rounded-full border-2 border-white/80 bg-white/20" aria-hidden />
@@ -55,7 +55,7 @@ export function Wristband({ patient, payer, meta, aside, compact, linked = true 
               {patient.gender === "female" ? "F" : "M"} · {ageLabel(patient.birthDate)}
             </span>
           </div>
-          <div className="num flex flex-wrap gap-x-3 text-[11.5px] text-muted">
+          <div className="num flex flex-wrap gap-x-3 text-xs text-muted">
             <span>
               DOB <b className="font-semibold text-foreground">{formatDate(patient.birthDate)}</b>
             </span>

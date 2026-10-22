@@ -7,7 +7,7 @@ export function ShiftIndicator() {
   const now = useNow(30_000)
   const shift = shiftAt(now)
   return (
-    <div className="hidden items-center gap-3 rounded-xl border border-border bg-surface px-3 py-1.5 md:flex" title={`${Math.floor(shift.remainingMin / 60)} h ${shift.remainingMin % 60} min left in shift`}>
+    <div className="hidden items-center gap-3 rounded-lg border border-border bg-surface px-3 py-1.5 md:flex" title={`${Math.floor(shift.remainingMin / 60)} h ${shift.remainingMin % 60} min left in shift`}>
       <div className="leading-tight">
         <div className="label-caps text-muted">{shift.label} shift</div>
         <div className="num text-xs">

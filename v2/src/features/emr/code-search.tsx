@@ -59,7 +59,7 @@ export function CodeSearch<T extends CodeOption>({ codes, onPick, exclude = [], 
         </SearchField.Group>
       </SearchField>
       {results.length > 0 && (
-        <ul role="listbox" aria-label={label} className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-border bg-overlay shadow-lg">
+        <ul role="listbox" aria-label={label} className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-border bg-overlay shadow-lg">
           {results.map((c, i) => (
             <li key={c.code} role="option" aria-selected={i === active}>
               <button type="button" onMouseEnter={() => setActive(i)} onClick={() => pick(c)} className={cn("flex w-full gap-3 px-3 py-2 text-left text-sm", i === active && "bg-surface-secondary")}>
@@ -67,7 +67,7 @@ export function CodeSearch<T extends CodeOption>({ codes, onPick, exclude = [], 
                 <span className="min-w-0 flex-1">
                   {c.display}
                   {(system || c.snomed) && (
-                    <span className="num mt-0.5 block text-[11px] text-muted">
+                    <span className="num mt-0.5 block text-xs text-muted">
                       {system}
                       {system && c.snomed && " · "}
                       {c.snomed && `SNOMED CT ${c.snomed}`}

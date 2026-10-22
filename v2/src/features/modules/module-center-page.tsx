@@ -84,7 +84,7 @@ export default function ModuleCenterPage() {
       />
 
       {suggestions.length > 0 && (
-        <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-accent/30 bg-accent-soft/50 p-4 sm:flex-row sm:items-center">
+        <div className="mb-6 flex flex-col gap-3 rounded-lg border border-accent/30 bg-accent-soft/50 p-4 sm:flex-row sm:items-center">
           <Lightbulb className="size-5 shrink-0 text-accent" aria-hidden />
           <div className="flex-1 text-sm">
             <b>Next step for your {preset.name[region].toLowerCase()}:</b> once the starting modules run smoothly, similar facilities usually add{" "}
@@ -120,7 +120,7 @@ export default function ModuleCenterPage() {
           if (!items.length) return null
           return (
             <section key={category} className="space-y-3">
-              <h2 className="label-caps text-muted">{CATEGORY_LABEL[category]}</h2>
+              <h2 className="text-sm font-medium text-muted">{CATEGORY_LABEL[category]}</h2>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {items.map((m) => {
                   const state = modules[m.id]
@@ -145,7 +145,7 @@ export default function ModuleCenterPage() {
                       }
                       footer={
                         on && setup.length > 0 ? (
-                          <div className="space-y-1.5 rounded-xl bg-surface-secondary p-3">
+                          <div className="space-y-1.5 rounded-lg bg-surface-secondary p-3">
                             <div className="text-xs font-semibold text-muted">Go-live checklist</div>
                             {setup.map((s) => (
                               <Checkbox key={s.id} isSelected={state.setupDone.includes(s.id)} onChange={() => toggleSetupItem(m.id, s.id)}>
@@ -191,7 +191,7 @@ export default function ModuleCenterPage() {
             <div className="space-y-3 text-sm">
               <p>{moduleText(pending.id, region).summary}</p>
               {pending.extra.length > 0 && (
-                <div className="rounded-xl bg-warning-soft p-3 text-warning-soft-foreground">
+                <div className="rounded-lg bg-warning-soft p-3 text-warning-soft-foreground">
                   <b>Also turned on</b> because it is required:
                   <ul className="mt-1 list-inside list-disc">
                     {pending.extra.map((m) => (
@@ -225,7 +225,7 @@ export default function ModuleCenterPage() {
                 {name(pending.id)} will disappear for every user. <b>No data is deleted</b> — everything comes back when the module is turned on again.
               </p>
               {pending.work.length > 0 && (
-                <div className="rounded-xl bg-warning-soft p-3 text-warning-soft-foreground">
+                <div className="rounded-lg bg-warning-soft p-3 text-warning-soft-foreground">
                   <b>Work still in progress:</b>
                   <ul className="mt-1 list-inside list-disc">
                     {pending.work.map((w) => (

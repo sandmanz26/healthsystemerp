@@ -38,12 +38,20 @@ The site serves two versions side by side so the design pass can be compared:
 | URL | Version |
 |---|---|
 | `/` | Current design — after applying the `frontend-design-direction` skill |
-| `/v2/` | Previous design, frozen at commit `d54fde3` (source in `v2/src`, aliased `@v2/*`) |
+| `/v2/` | The same app (from commit `d54fde3`, source in `v2/src`, aliased `@v2/*`) restyled with the `taste-skill` app-screen run |
 
 Both are entries of the same Vite build (`vite.config.ts` → `rollupOptions.input`), use the same
-demo data on the same origin, and `/v2` without a trailing slash redirects to `/v2/`. `v2/` is a
-snapshot: it is typechecked and linted with the app, but not unit-tested or maintained further —
-delete the folder and the `v2` entry once the comparison is done.
+demo data on the same origin, and `/v2` without a trailing slash redirects to `/v2/`. `v2/` is
+typechecked and linted with the app, but not unit-tested — delete the folder and the `v2` entry
+once the comparison is done.
+
+`/v2` follows the dealt style **achromatic-ledger** (`draw.mjs --app`, seed 1441637784): Geist
+only, ink-black primary on a blue-grey chart-paper ground, an open-plane sidebar with no top bar on
+desktop, KPIs in one hairline-divided strip, underline tabs, pale status pills, no gradients,
+shadows or tracked caps. Its one data hue (`--data`) is reserved for the ED board's signature
+element, each patient's time against the acuity goal. Clinical colours (triage levels, wristband
+alert bands, monitor channels) stay as data. Open any screen pre-onboarded with
+`/v2/?demo=us|uk&role=<role>#/<path>`.
 
 ## Run
 

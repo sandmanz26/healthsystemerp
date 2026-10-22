@@ -33,7 +33,7 @@ export function EligibilityCard({ encounter, patient, region }: { encounter: Enc
   }
 
   return (
-    <div className="rounded-xl border border-border p-3 text-left">
+    <div className="rounded-lg border border-border p-3 text-left">
       <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="label-caps text-muted">{title}</span>
         {payerOn && (
@@ -59,7 +59,7 @@ export function EligibilityCard({ encounter, patient, region }: { encounter: Enc
             {us && patient.coverage && <span className="text-xs text-muted">{patient.coverage.payerName}</span>}
           </div>
           <p className="text-sm">{elig.summary}</p>
-          <p className="num text-[11px] text-muted">
+          <p className="num text-xs text-muted">
             {us ? "271 trace" : "Request ID"} {elig.reference} · {formatDateTime(elig.at)}
           </p>
         </div>
@@ -77,7 +77,7 @@ export function CostEstimate({ kind, payer, established, region }: { kind: "outp
 
   if (region === "us")
     return (
-      <div className="rounded-xl bg-warning-soft p-3 text-left text-sm text-warning-soft-foreground">
+      <div className="rounded-lg bg-warning-soft p-3 text-left text-sm text-warning-soft-foreground">
         <div className="mb-1 flex items-center gap-1.5 font-semibold">
           <CircleDollarSign className="size-4" aria-hidden /> {kind === "emergency" ? "Self-pay estimate" : "Good Faith Estimate"}
         </div>
@@ -95,7 +95,7 @@ export function CostEstimate({ kind, payer, established, region }: { kind: "outp
     )
 
   return (
-    <div className="rounded-xl bg-warning-soft p-3 text-left text-sm text-warning-soft-foreground">
+    <div className="rounded-lg bg-warning-soft p-3 text-left text-sm text-warning-soft-foreground">
       <div className="mb-1 flex items-center gap-1.5 font-semibold">
         <CircleDollarSign className="size-4" aria-hidden /> Chargeable overseas visitor
       </div>

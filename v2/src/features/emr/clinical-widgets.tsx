@@ -20,9 +20,9 @@ export function News2Chip({ vitals }: { vitals?: Vitals }) {
     )
   const color = score.risk === "high" ? "danger" : score.risk === "medium" ? "warning" : "success"
   return (
-    <Chip size="sm" color={color} variant={score.risk === "low" ? "soft" : "primary"} title={score.response} className="num whitespace-nowrap">
+    <Chip size="sm" color={color} variant={score.risk === "high" ? "primary" : "soft"} title={score.response} className="num whitespace-nowrap">
       NEWS2 {score.score}
-      {score.redFlag && score.risk !== "high" ? " ⚑" : ""}
+      {score.redFlag && score.risk !== "high" ? " · red score" : ""}
     </Chip>
   )
 }
@@ -65,7 +65,7 @@ export function OrderResults({ order }: { order: ServiceOrder }) {
               <tr key={r.testCode}>
                 <td className="py-1.5">
                   {t?.name ?? r.testCode}
-                  {t && <span className="num ml-2 text-[11px] text-muted">LOINC {loincFor(t, region)}</span>}
+                  {t && <span className="num ml-2 text-xs text-muted">LOINC {loincFor(t, region)}</span>}
                 </td>
                 <td className={cn("tabular py-1.5 font-semibold", r.flag !== "N" && "text-danger")}>
                   {r.value} <span className="text-xs font-normal text-muted">{r.unit}</span>

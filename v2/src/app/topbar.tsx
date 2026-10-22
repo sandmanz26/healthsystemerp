@@ -1,58 +1,41 @@
-import { Avatar, Button, Dropdown, Header, Kbd, Label, Popover, Tooltip } from "@heroui/react"
-import { Bell, Check, ChevronDown, Lock, Menu, Monitor, Moon, Search, Sun } from "lucide-react"
-import { useNavigate } from "react-router-dom"
+import { Avatar, Button, Dropdown, Header, Label, Popover } from "@heroui/react"
+import { Bell, Check, ChevronsUpDown, Menu, Monitor, Moon, Search, Sun } from "lucide-react"
+import { useLocation, useNavigate } from "react-router-dom"
 import { ROLES, ROLE_ORDER } from "@v2/domain/roles"
 import type { RoleId } from "@v2/domain/types"
 import { cn } from "@v2/lib/cn"
 import { formatRelative, initials } from "@v2/lib/format"
-import { usePrefs, type AccentPref, type ThemePref } from "@v2/lib/prefs"
+import { usePrefs, type ThemePref } from "@v2/lib/prefs"
 import { useActions, useStore } from "@v2/store"
-import { useSession } from "@v2/store/selectors"
-import { ShiftIndicator } from "./shift-indicator"
+import { useRegion, useSession } from "@v2/store/selectors"
+import { navForPath, navLabel } from "./navigation"
 
 const THEME_ICON = { light: Sun, dark: Moon, system: Monitor }
 const THEME_LABEL: Record<ThemePref, string> = { light: "Light", dark: "Dark (night shift)", system: "Match system" }
-const ACCENT_LABEL: Record<AccentPref, string> = { blue: "Blue & white", mono: "Monochrome" }
 
+/**
+ * Phone and tablet only (the desktop shell has no top bar): the screen's name, the menu and
+ * search. Everything else lives in the sidebar sheet.
+ */
 export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; onOpenSearch: () => void }) {
-  const { lock } = useActions()
-
+  const { pathname } = useLocation()
+  const region = useRegion()
+  const nav = navForPath(pathname)
   return (
-    <header className="no-print sticky top-0 z-30 flex h-[68px] items-center gap-3 border-b border-separator bg-background/90 px-4 backdrop-blur sm:px-8">
-      <Button isIconOnly variant="ghost" className="lg:hidden" aria-label="Open menu" onPress={onOpenMenu}>
+    <header className="no-print sticky top-0 z-30 flex h-12 items-center gap-1 border-b border-border bg-background px-2 lg:hidden">
+      <Button isIconOnly variant="ghost" aria-label="Open menu" onPress={onOpenMenu}>
         <Menu className="size-5" />
       </Button>
-
-      <button
-        type="button"
-        onClick={onOpenSearch}
-        className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-left text-sm text-muted transition hover:border-accent/60 sm:max-w-sm"
-      >
-        <Search className="size-4 shrink-0" aria-hidden />
-        <span className="truncate">Search patients or pages…</span>
-        <Kbd className="ml-auto hidden sm:inline-flex">
-          <Kbd.Abbr keyValue="ctrl" />
-          <Kbd.Content>K</Kbd.Content>
-        </Kbd>
-      </button>
-
-      <div className="ml-auto flex items-center gap-1">
-        <ShiftIndicator />
-        <Notifications />
-        <AppearanceMenu />
-        <Tooltip delay={300}>
-          <Button isIconOnly variant="ghost" aria-label="Lock screen" onPress={lock}>
-            <Lock className="size-5" />
-          </Button>
-          <Tooltip.Content>Lock screen (shared workstation)</Tooltip.Content>
-        </Tooltip>
-        <RoleSwitcher />
-      </div>
+      <span className="min-w-0 flex-1 truncate text-[15px] font-semibold">{nav ? navLabel(nav, region) : "Medisphere"}</span>
+      <Button isIconOnly variant="ghost" aria-label="Search patients or pages" onPress={onOpenSearch}>
+        <Search className="size-5" />
+      </Button>
+      <Notifications />
     </header>
   )
 }
 
-function Notifications() {
+export function Notifications() {
   const role = useStore((s) => s.session.role)
   const all = useStore((s) => s.notifications)
   const { markNotificationRead, markAllNotificationsRead } = useActions()
@@ -62,9 +45,9 @@ function Notifications() {
 
   return (
     <Popover>
-      <Button isIconOnly variant="ghost" aria-label={`Notifications, ${unread} unread`} className="relative">
-        <Bell className="size-5" />
-        {unread > 0 && <span className="tabular absolute right-1 top-1 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-danger-foreground">{unread}</span>}
+      <Button isIconOnly variant="ghost" size="sm" aria-label={`Notifications, ${unread} unread`} className="relative">
+        <Bell className="size-4" />
+        {unread > 0 && <span className="tabular absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-xs font-medium leading-4 text-white">{unread}</span>}
       </Button>
       <Popover.Content placement="bottom end" className="w-[min(92vw,380px)] p-0">
         <Popover.Dialog className="p-0">
@@ -82,17 +65,17 @@ function Notifications() {
               <li key={n.id}>
                 <button
                   type="button"
-                  className={cn("flex w-full gap-3 px-4 py-3 text-left hover:bg-surface-secondary", !n.read && "bg-accent-soft/40")}
+                  className={cn("flex w-full gap-3 px-4 py-3 text-left hover:bg-surface-secondary", !n.read && "bg-surface-secondary")}
                   onClick={() => {
                     markNotificationRead(n.id)
                     if (n.href) navigate(n.href)
                   }}
                 >
-                  <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", n.level === "danger" ? "bg-danger" : n.level === "warning" ? "bg-warning" : "bg-accent")} aria-hidden />
+                  <span className={cn("mt-1.5 size-2 shrink-0 rounded-full", n.level === "danger" ? "bg-danger" : n.level === "warning" ? "bg-warning" : "bg-muted")} aria-hidden />
                   <span className="min-w-0">
                     <span className="block text-sm font-medium">{n.title}</span>
                     <span className="block text-xs text-muted">{n.body}</span>
-                    <span className="mt-1 block text-[11px] text-muted">{formatRelative(n.at)}</span>
+                    <span className="mt-1 block text-xs text-muted">{formatRelative(n.at)}</span>
                   </span>
                 </button>
               </li>
@@ -108,23 +91,23 @@ function Notifications() {
  * Demo-only persona switcher. In production this is the logged-in user; here it lets
  * reviewers see how the same hospital looks to each role.
  */
-function RoleSwitcher() {
+export function RoleSwitcher() {
   const { role, user } = useSession()
   const { switchRole } = useActions()
   const navigate = useNavigate()
   return (
     <Dropdown>
-      <Dropdown.Trigger className="ml-1 flex items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-surface-secondary">
-        <Avatar size="sm" color="accent" variant="soft">
+      <Dropdown.Trigger className="flex w-full min-w-0 items-center gap-2.5 rounded-md px-2 py-1.5 text-left hover:bg-chrome-active">
+        <Avatar size="sm" variant="soft">
           <Avatar.Fallback>{initials(user?.name ?? "?")}</Avatar.Fallback>
         </Avatar>
-        <span className="hidden text-left leading-tight md:block">
-          <span className="block max-w-40 truncate text-sm font-medium">{user?.name}</span>
-          <span className="block text-xs text-muted">{ROLES[role].label}</span>
+        <span className="min-w-0 flex-1 leading-tight">
+          <span className="block truncate text-sm font-medium">{user?.name}</span>
+          <span className="block truncate text-xs text-muted">{ROLES[role].label}</span>
         </span>
-        <ChevronDown className="size-4 text-muted" aria-hidden />
+        <ChevronsUpDown className="size-4 shrink-0 text-muted" aria-hidden />
       </Dropdown.Trigger>
-      <Dropdown.Popover placement="bottom end" className="min-w-72">
+      <Dropdown.Popover placement="top start" className="min-w-72">
         <div className="px-3 pb-1 pt-2 text-xs font-medium text-muted">View as (demo)</div>
         <Dropdown.Menu
           aria-label="Switch role"
@@ -150,40 +133,23 @@ function RoleSwitcher() {
   )
 }
 
-/** Theme (light / dark / system) and colour scheme (blue / monochrome). */
-function AppearanceMenu() {
-  const { theme, setTheme, accent, setAccent } = usePrefs()
+/** Theme: light, dark (night shift, true neutrals) or match the system. */
+export function AppearanceMenu() {
+  const { theme, setTheme } = usePrefs()
   const ThemeIcon = THEME_ICON[theme]
   return (
     <Dropdown>
-      <Dropdown.Trigger aria-label="Appearance" className="grid size-10 place-items-center rounded-xl hover:bg-surface-secondary">
-        <ThemeIcon className="size-5" />
+      <Dropdown.Trigger aria-label="Theme" className="grid size-8 place-items-center rounded-md hover:bg-chrome-active">
+        <ThemeIcon className="size-4" />
       </Dropdown.Trigger>
-      <Dropdown.Popover placement="bottom end" className="min-w-56">
-        <Dropdown.Menu
-          aria-label="Appearance"
-          onAction={(key) => {
-            const [kind, value] = String(key).split(":")
-            if (kind === "theme") setTheme(value as ThemePref)
-            else setAccent(value as AccentPref)
-          }}
-        >
+      <Dropdown.Popover placement="top start" className="min-w-56">
+        <Dropdown.Menu aria-label="Theme" onAction={(key) => setTheme(String(key) as ThemePref)}>
           <Dropdown.Section>
-            <Header className="label-caps px-2 pb-1 pt-1.5 text-muted">Theme</Header>
+            <Header className="px-2 pb-1 pt-1.5 text-xs text-muted">Theme</Header>
             {(Object.keys(THEME_LABEL) as ThemePref[]).map((t) => (
-              <Dropdown.Item key={t} id={`theme:${t}`} textValue={THEME_LABEL[t]}>
+              <Dropdown.Item key={t} id={t} textValue={THEME_LABEL[t]}>
                 <Label>{THEME_LABEL[t]}</Label>
-                {theme === t && <Check className="ml-auto size-4 text-accent" aria-label="selected" />}
-              </Dropdown.Item>
-            ))}
-          </Dropdown.Section>
-          <Dropdown.Section>
-            <Header className="label-caps px-2 pb-1 pt-2 text-muted">Color</Header>
-            {(Object.keys(ACCENT_LABEL) as AccentPref[]).map((a) => (
-              <Dropdown.Item key={a} id={`accent:${a}`} textValue={ACCENT_LABEL[a]}>
-                <span className={a === "blue" ? "size-3 rounded-full bg-[oklch(0.55_0.2_260)]" : "size-3 rounded-full bg-[oklch(0.18_0_0)] ring-1 ring-border"} aria-hidden />
-                <Label>{ACCENT_LABEL[a]}</Label>
-                {accent === a && <Check className="ml-auto size-4 text-accent" aria-label="selected" />}
+                {theme === t && <Check className="ml-auto size-4" aria-label="selected" />}
               </Dropdown.Item>
             ))}
           </Dropdown.Section>

@@ -28,7 +28,7 @@ export function WorkRow({ to, title, sub, aside, lead }: { to: string; title: Re
         {lead}
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium">{title}</div>
-          {sub && <div className="truncate text-xs text-muted">{sub}</div>}
+          {sub && <div className="line-clamp-1 break-all text-xs text-muted">{sub}</div>}
         </div>
         {aside}
       </Link>

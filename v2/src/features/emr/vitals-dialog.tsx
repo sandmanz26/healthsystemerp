@@ -100,7 +100,7 @@ export function VitalsDialog({ encounterId, patientName, onClose }: VitalsDialog
           </Switch.Content>
         </Switch>
       </div>
-      <div className={cn("rounded-xl p-3 text-sm", !score ? "bg-surface-secondary text-muted" : score.risk === "high" ? "bg-danger-soft text-danger-soft-foreground" : score.risk === "medium" ? "bg-warning-soft text-warning-soft-foreground" : "bg-success-soft text-success-soft-foreground")} role="status">
+      <div className={cn("rounded-lg p-3 text-sm", !score ? "bg-surface-secondary text-muted" : score.risk === "high" ? "bg-danger-soft text-danger-soft-foreground" : score.risk === "medium" ? "bg-warning-soft text-warning-soft-foreground" : "bg-success-soft text-success-soft-foreground")} role="status">
         {score ? (
           <>
             <b>NEWS2 {score.score}</b> — {RISK_LABEL[score.risk]} clinical risk

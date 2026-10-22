@@ -175,7 +175,7 @@ export function TriageDialog({ encounter, patientName, onClose }: { encounter: E
               aria-checked={level === l}
               onClick={() => setLevel(l)}
               title={info.criteria}
-              className={cn("rounded-xl p-3 text-left transition", TRIAGE_BG[l], level === l ? "ring-2 ring-focus ring-offset-2" : "opacity-75 hover:opacity-100", suggested === l && level !== l && "outline-2 outline-dashed outline-foreground/40")}
+              className={cn("rounded-lg p-3 text-left transition", TRIAGE_BG[l], level === l ? "ring-2 ring-focus ring-offset-2" : "opacity-75 hover:opacity-100", suggested === l && level !== l && "outline-2 outline-dashed outline-foreground/40")}
             >
               <div className="num text-2xl font-extrabold leading-none">{l}</div>
               <div className="mt-1 text-sm font-semibold leading-tight">{info.label}</div>
@@ -261,7 +261,7 @@ interface EsiProps {
 function EsiDecisionPoints({ lsi, setLsi, highRisk, setHighRisk, resources, setResources, danger, suggested, onApply }: EsiProps) {
   const row = "flex flex-col gap-2 py-2.5 sm:flex-row sm:items-center sm:justify-between"
   return (
-    <div className="divide-y divide-separator rounded-xl border border-border px-4">
+    <div className="divide-y divide-separator rounded-lg border border-border px-4">
       <div className={row}>
         <div>
           <span className="label-caps mr-2 text-muted">A</span>
@@ -329,19 +329,19 @@ function SepsisBanner({ region, screen, encounter, systolic, onStart }: SepsisBa
   const source = region === "us" ? "Source: CMS SEP-1 (SIRS + organ dysfunction)" : "Source: NICE NG51 · UK Sepsis Trust red flags"
   if (encounter.sepsis)
     return (
-      <div className="rounded-xl border border-danger/50 bg-danger-soft p-3 text-sm text-danger-soft-foreground" role="status">
+      <div className="rounded-lg border border-danger/50 bg-danger-soft p-3 text-sm text-danger-soft-foreground" role="status">
         <b>{sepsisBundle(region).name} started</b> at <span className="num">{formatTime(encounter.sepsis.identifiedAt)}</span> (time zero){encounter.sepsis.septicShock ? " · septic shock" : ""}.
       </div>
     )
   if (!screen.positive)
     return screen.criteria.length ? (
-      <div className="rounded-xl bg-warning-soft p-3 text-sm text-warning-soft-foreground">
+      <div className="rounded-lg bg-warning-soft p-3 text-sm text-warning-soft-foreground">
         <b>{screen.label}</b>: {screen.criteria.join(" · ")}
         <span className="label-caps mt-1 block opacity-70">{source}</span>
       </div>
     ) : null
   return (
-    <div className="rounded-xl border border-danger bg-danger p-3 text-sm text-danger-foreground" role="alert">
+    <div className="rounded-lg border border-danger bg-danger p-3 text-sm text-danger-foreground" role="alert">
       <div className="flex items-start gap-2">
         <AlertOctagon className="mt-0.5 size-5 shrink-0" aria-hidden />
         <div className="min-w-0 flex-1">

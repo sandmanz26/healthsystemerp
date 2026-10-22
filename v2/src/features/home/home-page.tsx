@@ -78,39 +78,18 @@ export default function HomePage() {
   )
 }
 
-/** Header of the home page: the shift board at the nurses' station, on a faint grid. */
-function ShiftBoard({ greeting, role, description, facility }: { greeting: string; role: string; description: string; facility: string }) {
+/** Header of the home page: who is working, which shift, and when it hands over. */
+function ShiftBoard({ greeting, role, facility }: { greeting: string; role: string; description: string; facility: string }) {
   const now = useNow(30_000)
   const shift = shiftAt(now)
   const left = shift.remainingMin
   return (
-    <section className="bg-grid mb-7 flex flex-col gap-6 overflow-hidden rounded-[18px] border border-border bg-surface p-6 lg:flex-row lg:items-end lg:justify-between">
-      <div className="min-w-0">
-        <div className="label-caps text-muted">
-          {formatDateLong(new Date(now))} · {facility}
-        </div>
-        <h1 className="mt-2 text-[34px] font-semibold leading-[1.1] sm:text-[40px]">{greeting}</h1>
-        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
-          <span className="label-caps rounded-md bg-foreground px-2 py-0.5 text-background">{role}</span>
-          {description}.
-        </p>
-      </div>
-      <div className="w-full shrink-0 rounded-xl border border-border bg-background/70 p-4 backdrop-blur-sm lg:w-80">
-        <div className="flex items-baseline justify-between">
-          <span className="label-caps text-muted">{shift.label} shift</span>
-          <span className="num text-xs text-muted">
-            {shift.start}–{shift.end}
-          </span>
-        </div>
-        <div className="num mt-1 text-3xl font-semibold">{formatTime(new Date(now).toISOString())}</div>
-        <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-tertiary" aria-hidden>
-          <div className="h-full rounded-full bg-accent" style={{ width: `${Math.round(shift.progress * 100)}%` }} />
-        </div>
-        <div className="num mt-1.5 text-[11px] text-muted">
-          Handover in {Math.floor(left / 60)} h {left % 60} min
-        </div>
-      </div>
-    </section>
+    <header className="mb-6">
+      <h1 className="text-2xl font-semibold leading-tight">{greeting}</h1>
+      <p className="num mt-1 text-sm text-muted">
+        {role} · {shift.label} shift {shift.start}–{shift.end}, handover in {Math.floor(left / 60)} h {left % 60} min · {formatDateLong(new Date(now))} · {facility}
+      </p>
+    </header>
   )
 }
 
@@ -121,11 +100,11 @@ function When({ module, children }: { module: ModuleId; children: ReactNode }) {
 }
 
 function Grid({ children }: { children: ReactNode }) {
-  return <div className="grid gap-4 lg:grid-cols-2">{children}</div>
+  return <div className="gap-4 lg:columns-2 [&>*]:mb-4 [&>*]:break-inside-avoid">{children}</div>
 }
 
 function Stats({ children }: { children: ReactNode }) {
-  return <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">{children}</div>
+  return <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">{children}</div>
 }
 
 function useToday() {
@@ -669,7 +648,7 @@ function ManagerHome() {
                 </span>
                 <span className="num shrink-0 text-right text-sm">
                   <b className={ok ? "text-foreground" : "text-danger"}>{rate === undefined ? "—" : d.unit === "%" ? formatPercent(rate) : formatNumber(rate)}</b>
-                  <span className="block text-[11px] text-muted">
+                  <span className="block text-xs text-muted">
                     {d.direction === "min" ? "≥" : "≤"} {d.target}
                     {d.unit === "%" ? "%" : ` ${d.unit}`}
                   </span>
@@ -681,7 +660,7 @@ function ManagerHome() {
       </When>
 
       <Link to="/modules" className="block">
-        <div className="flex items-center gap-3 rounded-2xl border border-dashed border-accent/40 p-4 text-sm hover:bg-accent-soft/40">
+        <div className="flex items-center gap-3 rounded-lg border border-dashed border-accent/40 p-4 text-sm hover:bg-accent-soft/40">
           <Puzzle className="size-5 text-accent" aria-hidden />
           <span>
             See which modules are on and what to add next in the <b>{region === "uk" ? "Module Centre" : "Module Center"}</b>.

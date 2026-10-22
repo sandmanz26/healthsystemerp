@@ -20,7 +20,7 @@ import { orderPanels, tubeColour } from "./lab-utils"
 /** A code with its system, e.g. "LOINC 2524-7" — muted mono, never louder than the data. */
 export function Code({ system, code, className }: { system: string; code: string; className?: string }) {
   return (
-    <span className={cn("num whitespace-nowrap text-[11px] text-muted", className)}>
+    <span className={cn("num whitespace-nowrap text-xs text-muted", className)}>
       {system} {code}
     </span>
   )
@@ -33,7 +33,7 @@ export function TubeDot({ tube }: { tube: string }) {
 /** Tubes to draw for one order — what the phlebotomist labels at the bedside. */
 export function SpecimenList({ order }: { order: ServiceOrder }) {
   return (
-    <ul className="divide-y divide-separator rounded-xl border border-border">
+    <ul className="divide-y divide-separator rounded-lg border border-border">
       {orderPanels(order).map((p) => (
         <li key={p.code} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2.5 text-sm">
           <TubeDot tube={p.tube} />
@@ -69,7 +69,7 @@ export function LabResultEntry({ order, region, values, onChange }: { order: Ser
               placeholder={t.normalText}
               suffix={range?.unit || undefined}
               description={
-                <span className="num text-[11px]">
+                <span className="num text-xs">
                   Ref {rangeLabel(code, region) || "—"} · LOINC {loincFor(t, region)}
                 </span>
               }
@@ -135,7 +135,7 @@ export function CriticalCallForm({ order, region, staffName, defaultTo }: { orde
 
   if (order.criticalCall)
     return (
-      <div className="flex items-start gap-2 rounded-xl border border-border bg-surface-secondary p-3 text-sm">
+      <div className="flex items-start gap-2 rounded-lg border border-border bg-surface-secondary p-3 text-sm">
         <PhoneCall className="mt-0.5 size-4 shrink-0 text-success" aria-hidden />
         <div>
           <div>
@@ -147,7 +147,7 @@ export function CriticalCallForm({ order, region, staffName, defaultTo }: { orde
     )
 
   return (
-    <div className="space-y-3 rounded-xl bg-danger-soft p-3 text-sm text-danger-soft-foreground">
+    <div className="space-y-3 rounded-lg bg-danger-soft p-3 text-sm text-danger-soft-foreground">
       <div className="flex items-center gap-2 font-semibold">
         <AlertOctagon className="size-4" aria-hidden /> Critical value — call-back required
       </div>

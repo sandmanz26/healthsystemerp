@@ -45,7 +45,7 @@ export default function QueueDisplayPage() {
       </header>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {boards.map(({ unit, called, next, waiting }) => (
-          <section key={unit.id} className="rounded-2xl bg-surface p-6 ring-1 ring-white/10">
+          <section key={unit.id} className="rounded-lg bg-surface p-6 ring-1 ring-white/10">
             <h2 className="text-2xl font-semibold text-white/85">{unit.name}</h2>
             <div className="label-caps mt-5 text-white/50">Now serving</div>
             <div className="ticket num mt-2 inline-block bg-accent px-8 py-3 text-7xl font-bold tracking-tight text-accent-foreground [--notch:12px]" aria-live="polite">

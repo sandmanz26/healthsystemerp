@@ -82,7 +82,7 @@ export default function NursingPage() {
         description="Patients sorted by NEWS2, highest first. Overdue observations are flagged red per the NEWS2 escalation protocol."
         actions={<SelectInput label={us ? "Unit" : "Ward"} className="w-64" value={ward} onChange={(v) => setUnitFilter("nursing", v)} options={wards.map((w) => ({ value: w.id, label: w.name }))} />}
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-5">
         <Stat label="Patients" value={inWard.length} icon={HeartPulse} tone="accent" />
         <Stat label="NEWS2 ≥ 5" value={inWard.filter((x) => x.score >= 5).length} icon={AlertTriangle} tone={inWard.some((x) => x.score >= 5) ? "danger" : "success"} />
         <Stat label="Obs overdue" value={inWard.filter((x) => x.overdue).length} icon={Timer} tone={inWard.some((x) => x.overdue) ? "warning" : "success"} />

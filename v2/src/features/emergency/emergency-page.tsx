@@ -65,19 +65,19 @@ function Lane({ level, count, region, children }: { level: (typeof LANES)[number
   const info = level ? triageInfo(region, level) : undefined
   const target = info ? (info.targetMin === 0 ? "immediate" : region === "us" ? `goal ≤ ${info.targetMin} min` : `see within ${info.targetMin} min`) : ""
   return (
-    <section className={cn("flex gap-3", count === 0 && "opacity-60")} aria-label={level ? `${region === "us" ? "ESI" : "MTS"} ${level}` : "Waiting for triage"}>
+    <section className="flex gap-3" aria-label={level ? `${region === "us" ? "ESI" : "MTS"} ${level}` : "Waiting for triage"}>
       <div className={cn("w-1.5 shrink-0 rounded-full", LANE_RAIL[level])} aria-hidden />
       <div className="min-w-0 flex-1">
         <div className="mb-2 flex items-center gap-3">
           {level ? (
             <TriageTag level={level} />
           ) : (
-            <span className="label-caps flex items-center gap-2 text-foreground">
+            <span className="flex items-center gap-2 text-sm font-medium text-foreground">
               <span className="pulse-dot size-2 rounded-full bg-danger" />
               Waiting for triage
             </span>
           )}
-          <span className="num text-xs text-muted">
+          <span className="num text-[13px] text-muted">
             {count} {count === 1 ? "patient" : "patients"}
             {target && ` · ${target}`}
           </span>
@@ -100,11 +100,11 @@ function SepsisBadge({ encounter: e, now, region }: { encounter: Encounter; now:
   const late = dueAt !== undefined && now > dueAt
   return (
     <span
-      className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-semibold", done === items.length ? "bg-success-soft text-success-soft-foreground" : late ? "bg-danger text-danger-foreground" : "bg-danger-soft text-danger-soft-foreground")}
+      className={cn("inline-flex items-center gap-1.5 rounded px-2 py-0.5 text-xs font-medium", done === items.length ? "bg-success-soft text-success-soft-foreground" : late ? "bg-danger text-danger-foreground" : "bg-danger-soft text-danger-soft-foreground")}
       title={`${bundle.name} — time zero ${formatTime(e.sepsis.identifiedAt)}${next ? ` · next: ${next.label}` : ""}`}
     >
       <Timer className="size-3" aria-hidden />
-      <span className="label-caps">Sepsis</span>
+      <span>Sepsis</span>
       <span className="num">
         {done}/{items.length}
       </span>
@@ -139,18 +139,19 @@ function ErCard({ encounter: e, now, region, doctorName, canRetriage, onTriage, 
   const target = e.triage ? triageInfo(region, e.triage).targetMin : 0
   const breach = !us && inDept > ED_FOUR_HOUR_MIN
   const twelve = !us && inDept > TWELVE_HOURS_MIN
-  const fill = us ? (seen ? 100 : target === 0 ? 100 : Math.min(100, (inDept / target) * 100)) : Math.min(100, (inDept / ED_FOUR_HOUR_MIN) * 100)
+  const fill = us ? (seen ? 100 : !e.triage ? 0 : target === 0 ? 100 : Math.min(100, (inDept / target) * 100)) : Math.min(100, (inDept / ED_FOUR_HOUR_MIN) * 100)
   const alarm = us ? late !== null : breach
 
   return (
-    <article className={cn("flex flex-col gap-3 rounded-[14px] border bg-surface p-4 sm:flex-row", alarm || late !== null ? "border-danger/60" : "border-border")}>
+    <article className={cn("relative flex flex-col gap-3 overflow-hidden rounded-lg border border-border bg-surface p-4 sm:flex-row", alarm && "pl-5")}>
+      {alarm && <span className="absolute inset-y-0 left-0 w-1 bg-danger" aria-hidden />}
       <div className="min-w-0 flex-1">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="num rounded bg-surface-tertiary px-1.5 py-0.5 text-[11px] font-bold">{e.queueNumber}</span>
-          <h3 className="truncate text-[17px] font-semibold">{patient.name}</h3>
+          <span className="num rounded bg-surface-tertiary px-1.5 py-0.5 text-xs font-semibold">{e.queueNumber}</span>
+          <h3 className="truncate text-base font-semibold">{patient.name}</h3>
           <MarkerDots patient={patient} />
         </div>
-        <div className="num mt-0.5 text-[11.5px] text-muted">
+        <div className="num mt-0.5 text-[13px] text-muted">
           {patient.gender === "female" ? "F" : "M"} · {ageLabel(patient.birthDate)} · MRN {patient.mrn} · arrived {formatTime(e.createdAt)}
         </div>
         <p className="mt-2 text-sm">{e.chiefComplaint}</p>
@@ -159,30 +160,25 @@ function ErCard({ encounter: e, now, region, doctorName, canRetriage, onTriage, 
           <SepsisBadge encounter={e} now={now} region={region} />
           <PayerChip payer={e.payer} />
           <EncounterStatusChip status={e.status} />
-          {twelve && <span className="label-caps rounded bg-danger px-1.5 py-0.5 text-danger-foreground">12-hour wait</span>}
+          {twelve && <span className="rounded bg-danger px-1.5 py-0.5 text-xs font-medium text-danger-foreground">12-hour wait</span>}
           <span className="text-xs text-muted">{seen ? doctorName : us ? "Not yet seen by provider" : "Not yet seen by clinician"}</span>
         </div>
         {boardingMin !== undefined && (
           <div className={cn("num mt-2 flex items-center gap-1.5 text-xs", boardingMin > 240 ? "font-semibold text-danger" : "text-warning")}>
             <BedDouble className="size-3.5" aria-hidden />
             {us ? "Boarding" : "DTA, awaiting bed"} {formatDuration(boardingMin)}
-            <span className="label-caps text-muted">{us ? "CMS ED-2" : "decision to admit"}</span>
+            <span className="text-muted">{us ? "· CMS ED-2" : "· decision to admit"}</span>
           </div>
         )}
       </div>
       <div className="flex shrink-0 flex-row items-end justify-between gap-3 sm:w-44 sm:flex-col sm:items-stretch">
         <div>
-          <div className="label-caps text-muted">{us ? (seen ? "Door-to-provider" : "Waiting for provider") : "4-hour clock"}</div>
+          <div className="text-xs text-muted">{us ? (seen ? "Door-to-provider" : "Waiting for provider") : "4-hour clock"}</div>
           <div className={cn("num whitespace-nowrap font-semibold leading-tight", "text-2xl", (late !== null || breach) && "text-danger")}>
             {us ? formatDuration(seen ? d2p! : inDept) : formatDuration(inDept)}
           </div>
-          <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-surface-tertiary" aria-hidden>
-            <div
-              className={cn("h-full rounded-full", us ? (seen ? "bg-success" : late !== null ? "bg-danger" : "bg-warning") : breach ? "bg-danger" : fill > 75 ? "bg-warning" : "bg-success")}
-              style={{ width: `${fill}%` }}
-            />
-          </div>
-          <div className="num mt-1 text-[11px] text-muted">
+          <GoalBar fill={fill} state={us ? (seen ? "done" : late !== null ? "late" : "running") : breach ? "late" : "running"} />
+          <div className="num mt-1 text-xs text-muted">
             {us
               ? seen
                 ? `seen ${formatTime(e.startedAt!)} · LOS ${formatDuration(inDept)}`
@@ -208,6 +204,18 @@ function ErCard({ encounter: e, now, region, doctorName, canRetriage, onTriage, 
         </div>
       </div>
     </article>
+  )
+}
+
+/**
+ * Time against the acuity goal, the board's one reading in the data hue: the bar fills
+ * toward the goal and turns red only once it is passed; a patient already seen goes grey.
+ */
+function GoalBar({ fill, state }: { fill: number; state: "running" | "late" | "done" }) {
+  return (
+    <div className="mt-1.5 h-2 overflow-hidden rounded-sm bg-surface-tertiary" aria-hidden>
+      <div className={cn("h-full", state === "late" ? "bg-danger" : state === "done" ? "bg-muted/50" : "bg-data")} style={{ width: `${fill}%` }} />
+    </div>
   )
 }
 
@@ -266,7 +274,7 @@ export default function EmergencyPage() {
           )
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label="In department" value={board.length} hint={`${untriaged.length} waiting for triage`} icon={Users} tone={untriaged.length ? "danger" : "accent"} />
         {us ? (
           <>
@@ -282,7 +290,7 @@ export default function EmergencyPage() {
           </>
         )}
       </div>
-      <p className="label-caps mb-3 text-muted">
+      <p className="mb-3 text-[13px] text-muted">
         Triage: {SCALE_SHORT[region]}
         {us ? ` (${TRIAGE_SCALES.us.name}, ENA)` : " (3rd ed.) · Four-hour standard: NHS England UEC operational standard"}
       </p>

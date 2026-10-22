@@ -41,12 +41,13 @@ export function OrderWorklistPage({ kind }: { kind: OrderKind }) {
   const unitName = useUnitName()
   const region = useRegion()
   const now = useNow()
-  const [stage, setStage] = useState<Stage>("todo")
+  const lab = kind === "lab"
+  const mine = useMemo(() => orders.filter((o) => o.kind === kind && STAGE_OF[o.status]), [orders, kind])
+  // Open on the first stage with work in it, so the screen never starts on an empty list.
+  const [stage, setStage] = useState<Stage>(() => (["todo", "process", "validate"] as Stage[]).find((s) => mine.some((o) => STAGE_OF[o.status] === s)) ?? "todo")
   const [modality, setModality] = useState<ModalityFilter>("all")
   const [openId, setOpenId] = useState<string>()
-  const lab = kind === "lab"
 
-  const mine = useMemo(() => orders.filter((o) => o.kind === kind && STAGE_OF[o.status]), [orders, kind])
   const encById = useMemo(() => new Map(encounters.map((e) => [e.id, e])), [encounters])
   const inModality = (o: ServiceOrder) => lab || modality === "all" || orderModalities(o).includes(modality)
   const byStage = (s: Stage) => mine.filter((o) => STAGE_OF[o.status] === s && (s !== "done" || minutesSince(o.orderedAt, now) < 3 * 1440))
@@ -106,7 +107,7 @@ export function OrderWorklistPage({ kind }: { kind: OrderKind }) {
             <div className="space-y-0.5">
               {orderExams(o).map((e) => (
                 <div key={e.code} className="text-sm">
-                  <span className="num mr-1.5 rounded bg-surface-secondary px-1 text-[11px] font-semibold">{e.modality}</span>
+                  <span className="num mr-1.5 rounded bg-surface-secondary px-1 text-xs font-semibold">{e.modality}</span>
                   {e.name}
                   <div>
                     <Code system="CPT" code={`${e.cpt} · rev ${e.revCode}`} />
@@ -158,7 +159,7 @@ export function OrderWorklistPage({ kind }: { kind: OrderKind }) {
               : "Modality worklist and structured reporting. IR(ME)R justification is recorded on the request."
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label={lab ? "To collect" : "To scan"} value={byStage("todo").length} icon={Icon} tone="accent" onClick={() => setStage("todo")} />
         <Stat label={lab ? "In process" : "Awaiting report"} value={byStage("process").length} tone="warning" onClick={() => setStage("process")} />
         <Stat label="To verify" value={byStage("validate").length} tone={byStage("validate").length ? "warning" : "default"} onClick={() => setStage("validate")} />

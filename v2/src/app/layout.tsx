@@ -20,14 +20,14 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-full">
-      <aside className="no-print sticky top-0 hidden h-screen w-[260px] shrink-0 bg-chrome lg:block">
-        <Sidebar />
+      <aside className="no-print sticky top-0 hidden h-screen w-[240px] shrink-0 border-r border-border bg-background lg:block">
+        <Sidebar onOpenSearch={() => setSearchOpen(true)} />
       </aside>
 
       <Drawer.Backdrop isOpen={menuOpen} onOpenChange={setMenuOpen}>
-        <Drawer.Content placement="left" className="w-72 bg-chrome">
+        <Drawer.Content placement="left" className="w-72 bg-background">
           <Drawer.Dialog aria-label="Menu" className="h-full p-0">
-            <Sidebar onNavigate={() => setMenuOpen(false)} />
+            <Sidebar onNavigate={() => setMenuOpen(false)} onOpenSearch={() => { setMenuOpen(false); setSearchOpen(true) }} />
           </Drawer.Dialog>
         </Drawer.Content>
       </Drawer.Backdrop>

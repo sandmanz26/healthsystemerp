@@ -81,7 +81,7 @@ export default function RegistrationPage() {
         }
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label="Registered today" value={today.filter((e) => e.status !== "cancelled").length} icon={Users} tone="accent" />
         <Stat label="Waiting to be called" value={today.filter((e) => e.status === "registered" || e.status === "triaged").length} icon={Ticket} tone="warning" />
         <Stat label="Being seen" value={today.filter((e) => e.status === "in-progress" || e.status === "called").length} icon={UserRoundCheck} tone="success" />

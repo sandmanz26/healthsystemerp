@@ -13,7 +13,7 @@ interface EmptyProps {
 export function Empty({ icon: Icon = Inbox, title, description, action }: EmptyProps) {
   return (
     <div className="bg-grid flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
-      <span className="grid size-11 place-items-center rounded-xl border border-border bg-surface text-muted">
+      <span className="grid size-11 place-items-center rounded-lg border border-border bg-surface text-muted">
         <Icon className="size-5" aria-hidden />
       </span>
       <p className="font-display text-base font-semibold text-foreground">{title}</p>

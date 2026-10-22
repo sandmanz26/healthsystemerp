@@ -85,7 +85,7 @@ export default function SurgeryPage() {
           </Button>
         }
       />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label={us ? "Cases today" : "Cases on list"} value={today.filter((s) => s.status !== "cancelled").length} icon={Scissors} tone="accent" />
         <Stat label="In progress" value={today.filter((s) => ["sign-in", "time-out", "sign-out"].includes(s.status)).length} tone="warning" />
         <Stat label="Complete" value={today.filter((s) => s.status === "done").length} tone="success" />
@@ -127,7 +127,7 @@ export default function SurgeryPage() {
                             </Chip>
                           </div>
                           <div className="mt-1 font-medium">{s.procedure}</div>
-                          {s.procedureCode && <div className="num text-[11px] text-muted">{codeLabel(region, s.procedureCode)}</div>}
+                          {s.procedureCode && <div className="num text-xs text-muted">{codeLabel(region, s.procedureCode)}</div>}
                           <div className="text-sm text-muted">{patients.get(s.patientId)?.name}</div>
                           <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-muted">
                             {staff.get(s.surgeonId)?.name} · checklist {ticked}/{TOTAL_ITEMS}
@@ -199,7 +199,7 @@ function ChecklistPanel({ surgery, onClose }: { surgery: Surgery; onClose: () =>
       {us && surgery.auth === "denied" && <p className="rounded-lg bg-danger-soft px-3 py-2 text-xs text-danger-soft-foreground">Prior authorization denied — reschedule or obtain a signed financial waiver (ABN / NEMB).</p>}
       <p className="label-caps text-muted">{us ? "WHO Surgical Safety Checklist · Joint Commission Universal Protocol (UP.01.01–UP.01.03)" : "WHO Surgical Safety Checklist · NHS England NatSSIPs 2 (2023)"}</p>
       {WHO_CHECKLIST.map((p) => (
-        <section key={p.phase} className={cn("rounded-2xl border p-4", editable(p.phase) ? "border-accent" : "border-border opacity-90")}>
+        <section key={p.phase} className={cn("rounded-lg border p-4", editable(p.phase) ? "border-accent" : "border-border opacity-90")}>
           <div className="mb-2 flex items-baseline justify-between">
             <h3 className="font-semibold">{p.title}</h3>
             <span className="text-xs text-muted">{us ? p.when.replace("anaesthesia", "anesthesia") : p.when.replace("operating room", "theatre")}</span>

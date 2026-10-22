@@ -45,7 +45,7 @@ export function QueueRow({ ticket, patient, detail, badges, waited, waitLimit = 
           </Link>
           <MarkerDots patient={patient} />
         </div>
-        <div className="num truncate text-[11.5px] text-muted">
+        <div className="num truncate text-xs text-muted">
           {patient.gender === "female" ? "F" : "M"} · {ageLabel(patient.birthDate)} · MRN {patient.mrn}
         </div>
       </div>

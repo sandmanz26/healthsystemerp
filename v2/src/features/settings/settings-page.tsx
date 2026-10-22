@@ -86,7 +86,7 @@ export default function SettingsPage() {
         return (
           <span className="text-sm">
             {s?.name ?? a.userId}
-            {s && <span className="block text-[11px] text-muted">{ROLES[s.role].label}</span>}
+            {s && <span className="block text-xs text-muted">{ROLES[s.role].label}</span>}
           </span>
         )
       },

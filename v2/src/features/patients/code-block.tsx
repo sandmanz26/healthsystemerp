@@ -28,7 +28,7 @@ export function CodeBlock({ caption, code, note, maxHeight = 420 }: CodeBlockPro
     }
   }
   return (
-    <figure className="overflow-hidden rounded-xl border border-border bg-surface">
+    <figure className="overflow-hidden rounded-lg border border-border bg-surface">
       <figcaption className="flex items-center justify-between gap-2 border-b border-separator px-4 py-2">
         <div className="min-w-0">
           <div className="label-caps truncate text-muted">{caption}</div>
@@ -39,7 +39,7 @@ export function CodeBlock({ caption, code, note, maxHeight = 420 }: CodeBlockPro
           {copied ? "Copied" : "Copy"}
         </Button>
       </figcaption>
-      <pre className="num overflow-auto whitespace-pre bg-surface-secondary p-4 text-[11.5px] leading-relaxed" style={{ maxHeight }}>
+      <pre className="num overflow-auto whitespace-pre bg-surface-secondary p-4 text-xs leading-relaxed" style={{ maxHeight }}>
         <code>{code}</code>
       </pre>
     </figure>

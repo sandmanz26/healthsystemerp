@@ -1,8 +1,8 @@
 import { Card, Chip, Switch } from "@heroui/react"
 import { Check, Link2, Sparkles } from "lucide-react"
 import type { ReactNode } from "react"
-import { CATEGORY_COLOR, MODULE_ICON } from "@v2/app/navigation"
-import { CATEGORY_LABEL, moduleText, type ModuleDef, type ModuleId } from "@v2/domain/modules"
+import { MODULE_ICON } from "@v2/app/navigation"
+import { moduleText, type ModuleDef, type ModuleId } from "@v2/domain/modules"
 import type { Region } from "@v2/domain/region"
 import { cn } from "@v2/lib/cn"
 
@@ -24,20 +24,14 @@ export function ModuleCard({ module: base, region, enabled, onToggle, enabledSet
   const module = moduleText(base.id, region)
   const Icon = MODULE_ICON[module.id]
   return (
-    <div id={`module-${module.id}`} className="relative h-full pt-[22px]">
-      {/* Divider tab, coloured by category — the same colours as the sidebar binder. */}
-      <span className={cn("label-caps absolute left-4 top-0 flex h-[23px] items-center rounded-t-lg px-2.5 text-[oklch(0.2_0.02_262)]", CATEGORY_COLOR[module.category])}>
-        {CATEGORY_LABEL[module.category]}
-      </span>
-      <Card className={cn("h-full gap-3 rounded-tl-none p-4 transition", enabled ? "border-foreground/25" : "bg-surface/60", highlight && "ring-2 ring-accent")}>
+    <div id={`module-${module.id}`} className="relative h-full">
+      <Card className={cn("h-full gap-3 p-4 transition", !enabled && "bg-surface-secondary", highlight && "ring-2 ring-accent")}>
         <div className="flex items-start gap-3">
-          <span className={cn("grid size-11 shrink-0 place-items-center rounded-xl border", enabled ? "border-transparent bg-foreground text-background" : "border-dashed border-border text-muted")}>
-            <Icon className="size-5" aria-hidden />
-          </span>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <h3 className="text-[17px] font-semibold">{module.name}</h3>
-              {module.core && <span className="label-caps rounded border border-border px-1.5 py-0.5 text-muted">Core</span>}
+              <Icon className={cn("size-4 shrink-0", enabled ? "text-foreground" : "text-muted")} aria-hidden />
+              <h3 className="text-base font-semibold">{module.name}</h3>
+              {module.core && <span className="rounded border border-border px-1.5 py-0.5 text-xs text-muted">Core</span>}
               {badge}
             </div>
             <p className="mt-0.5 text-sm text-muted">{module.summary}</p>

@@ -55,7 +55,7 @@ export function PatientPicker({ onPick, onCreateNew, autoFocus, selectedId }: Pa
       </SearchField>
 
       {query.trim().length >= 2 && (
-        <ul className="max-h-72 divide-y divide-separator overflow-y-auto rounded-xl border border-border" role="listbox" aria-label="Patient search results">
+        <ul className="max-h-72 divide-y divide-separator overflow-y-auto rounded-lg border border-border" role="listbox" aria-label="Patient search results">
           {results.map((p, i) => (
             <li key={p.id} role="option" aria-selected={p.id === selectedId}>
               <button

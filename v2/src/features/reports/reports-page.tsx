@@ -129,7 +129,7 @@ export default function ReportsPage() {
         actions={<Segmented label="Period" value={days} onChange={setDays} options={[{ value: "7", label: "7 days" }, { value: "30", label: "30 days" }]} />}
       />
 
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label={kinds[0].label} value={formatNumber(inPeriod.filter((e) => e.kind === "outpatient").length)} icon={Activity} tone="accent" />
         <Stat label={kinds[1].label} value={formatNumber(inPeriod.filter((e) => e.kind === "emergency").length)} icon={Activity} />
         <Stat label={kinds[2].label} value={formatNumber(inPeriod.filter((e) => e.kind === "inpatient").length)} icon={BedDouble} />
@@ -206,7 +206,7 @@ export default function ReportsPage() {
                 <li key={d.code}>
                   <div className="flex items-baseline justify-between gap-2 text-sm">
                     <span className="truncate">
-                      <span className="num text-[11px] text-muted">{dxLabel} </span>
+                      <span className="num text-xs text-muted">{dxLabel} </span>
                       <b className="num">{d.code}</b> {d.display}
                     </span>
                     <span className="num font-semibold">{d.n}</span>
@@ -226,7 +226,7 @@ export default function ReportsPage() {
 
 function Indicator({ label, value, ideal, ok, icon: Icon }: { label: string; value: string; ideal: string; ok: boolean; icon: typeof BedDouble }) {
   return (
-    <div className="rounded-xl bg-surface-secondary p-3">
+    <div className="rounded-lg bg-surface-secondary p-3">
       <div className="flex items-center justify-between text-xs text-muted">
         <span className="flex items-center gap-1.5">
           <Icon className="size-3.5" aria-hidden /> {label}

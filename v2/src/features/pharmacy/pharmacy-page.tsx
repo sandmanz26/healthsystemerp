@@ -176,7 +176,7 @@ export default function PharmacyPage() {
   return (
     <Page>
       <PageHeader title="Pharmacy" description="Verification queue for orders from every unit. Turnaround over 60 minutes is flagged red." />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="stat-strip mb-6 grid grid-cols-2 lg:grid-cols-4">
         <Stat label="Pending verification" value={byStage("new").length} icon={ShieldAlert} tone="warning" onClick={() => setStage("new")} />
         <Stat label="In preparation" value={byStage("reviewed").length} icon={Pill} tone="accent" onClick={() => setStage("reviewed")} />
         <Stat label="Ready to dispense" value={byStage("prepared").length} icon={PackageCheck} tone="success" onClick={() => setStage("prepared")} />
@@ -294,8 +294,8 @@ function RxPanel({ rx, onClose }: { rx: Prescription; onClose: () => void }) {
                 </div>
                 {line.instructions && <div className="text-xs text-muted">Sig: {line.instructions}</div>}
                 <div className="flex flex-wrap gap-x-3">
-                  {item.atc && <span className="num text-[11px] text-muted">ATC {item.atc}</span>}
-                  {item.barcode && <span className="num text-[11px] text-muted">{region === "us" ? "NDC" : "GTIN"} {item.barcode}</span>}
+                  {item.atc && <span className="num text-xs text-muted">ATC {item.atc}</span>}
+                  {item.barcode && <span className="num text-xs text-muted">{region === "us" ? "NDC" : "GTIN"} {item.barcode}</span>}
                 </div>
                 <div className={cn("num text-xs", stock < line.qty ? "font-semibold text-danger" : "text-muted")}>
                   On hand {stock} {item.unit}
