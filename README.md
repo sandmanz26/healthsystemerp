@@ -26,7 +26,7 @@ chart paper, patient wristbands with alert bands, bedside monitors, triage tags,
 tickets and the dividers of a chart binder — on a clean white + blue palette (or black & white)
 with a low-glare night-shift theme. See [`docs/DESIGN.md`](docs/DESIGN.md).
 
-Design direction follows the vendored [`frontend-design-direction`](.claude/skills/frontend-design-direction/SKILL.md) skill; its contract, content-state table and rendered evidence are in [`docs/DESIGN.md` §7](docs/DESIGN.md) and [`docs/design-evidence/`](docs/design-evidence/).
+Two design skills are vendored in `.claude/skills/` (both MIT): [`taste-skill`](.claude/skills/taste-skill/SKILL.md) (art direction with a library of researched directions and a real-browser inspector: `node .claude/skills/taste-skill/scripts/inspect.mjs <url> --app`) and `frontend-design-direction`. Design direction follows the vendored [`frontend-design-direction`](.claude/skills/frontend-design-direction/SKILL.md) skill; its contract, content-state table and rendered evidence are in [`docs/DESIGN.md` §7](docs/DESIGN.md) and [`docs/design-evidence/`](docs/design-evidence/).
 
 Process docs: [`docs/RESEARCH.md`](docs/RESEARCH.md) (US vs UK/EU requirements, gap review,
 sources) and [`docs/PLAN.md`](docs/PLAN.md) (plan → roast → v2 → v3).

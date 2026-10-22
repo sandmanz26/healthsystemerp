@@ -3,3 +3,6 @@ dist
 *.local
 .DS_Store
 *.tsbuildinfo
+
+# taste-skill working output (direction sheets, inspector screenshots)
+.taste-skill/
