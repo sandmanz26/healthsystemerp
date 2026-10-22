@@ -78,3 +78,41 @@ headers, thin rules); status chips like ink stamps.
 - Signature components: `src/components/clinical/*`
 - Shell: `src/app/sidebar.tsx`, `src/app/topbar.tsx`, `src/app/shift-indicator.tsx`, `src/app/logo.tsx`
 - Page primitives: `src/components/ui/{page,panel,stat,empty}.tsx`
+
+## 7. Direction contract (frontend-design-direction skill)
+
+The project vendors the community skill `frontend-design-direction`
+(`.claude/skills/`, MIT, from `affaan-m/everything-claude-code`). Its contract for Medisphere:
+
+| | |
+|---|---|
+| Purpose | Clinical and revenue-cycle worklists: see who needs action next and act in one or two clicks. |
+| Audience | Physicians, nurses, patient access, pharmacy, lab, coders and executives — the same screens all shift, often on shared workstations and phones on rounds. |
+| Tone | **Dense, quiet, technical.** Ink on chart paper; colour only where hospitals already use it (alert bands, triage, monitors, status). |
+| Memorable detail | Bedside objects as UI (wristband, monitor, triage tag, queue ticket) and the standard printed next to every code (ICD-10-CM J18.9, LOINC 2524-7, ESI 2, HL7 ADT^A01). |
+| Primary action | The worklist action of the page (Call/Start, Triage, Administer, Verify, Submit), never a marketing header. |
+| Target viewports | 1440×900 workstation, 390×844 phone. |
+
+**Rules applied in this pass**
+
+- Page subtitles state the operating rule or the standard ("By ESI level, then arrival · red = past door-to-provider goal"), never what the UI does ("Click a bed to open the chart" was removed).
+- No hero blocks: the home page is a header strip; the shift clock lives only in the top bar; the worklist starts in the first viewport.
+- No cards inside cards (the home shift card inside a card was removed).
+- Status colours have two roles: bright **fills** and darker **ink** for small text, so text meets WCAG AA in the light themes.
+- Filters that narrow one list are a radio group (one tab stop, arrow keys), not tabs without panels.
+
+**Content states**
+
+| State | Trigger | Feedback | Safe next action |
+|---|---|---|---|
+| Loading | Route code downloading | Skeleton with the page's structure, `aria-busy` | — (no layout shift when content arrives) |
+| Empty | Nothing at this stage / no matches | Chart-paper empty panel naming what is missing | Other stages / filters stay visible; create action where relevant |
+| Error | Screen crashed or its code failed to download | Shell stays; cause and raw message shown | Try again · Reload · Home · Rebuild demo data |
+| Partial | Browser storage unavailable; some results or interface messages pending/failed | Banner "changes are not being saved on this device"; per-item status on lab and interface screens | Keep working this session; retry per message |
+| Success | Visit registered, order signed, dose given, claim submitted | Toast or confirmation with the identifier sent (e.g. ADT^A04) | Print ticket · Call next · Done |
+| Permission | Role without access, or module off | Names role and page, or module | Back to home; admins get a Module Center link |
+
+**Evidence** — `docs/design-evidence/report.json` with screenshots at both viewports, checked by
+`node .claude/skills/frontend-design-direction/scripts/check-evidence.js docs/design-evidence/report.json`.
+axe-core (WCAG 2 A/AA): 0 violations on 21 screens in the US pack under the roles that use them.
+Not yet tool-audited: the dark theme and the UK pack (reviewed visually).

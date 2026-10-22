@@ -26,6 +26,8 @@ chart paper, patient wristbands with alert bands, bedside monitors, triage tags,
 tickets and the dividers of a chart binder — on a clean white + blue palette (or black & white)
 with a low-glare night-shift theme. See [`docs/DESIGN.md`](docs/DESIGN.md).
 
+Design direction follows the vendored [`frontend-design-direction`](.claude/skills/frontend-design-direction/SKILL.md) skill; its contract, content-state table and rendered evidence are in [`docs/DESIGN.md` §7](docs/DESIGN.md) and [`docs/design-evidence/`](docs/design-evidence/).
+
 Process docs: [`docs/RESEARCH.md`](docs/RESEARCH.md) (US vs UK/EU requirements, gap review,
 sources) and [`docs/PLAN.md`](docs/PLAN.md) (plan → roast → v2 → v3).
 

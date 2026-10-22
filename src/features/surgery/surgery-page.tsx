@@ -78,7 +78,7 @@ export default function SurgeryPage() {
     <Page>
       <PageHeader
         title={us ? "Surgical services" : "Theatres"}
-        description={us ? "Case schedule per OR with the WHO Surgical Safety Checklist and Universal Protocol." : "Theatre list per theatre with the WHO Surgical Safety Checklist (NatSSIPs 2)."}
+        description={us ? "WHO Surgical Safety Checklist · Joint Commission Universal Protocol" : "WHO Surgical Safety Checklist · NatSSIPs 2"}
         actions={
           <Button variant="primary" onPress={() => setScheduling(true)}>
             <CalendarPlus className="size-4" aria-hidden /> {us ? "Schedule case" : "Book theatre case"}

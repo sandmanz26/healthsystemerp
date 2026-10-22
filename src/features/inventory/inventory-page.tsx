@@ -138,7 +138,7 @@ export default function InventoryPage() {
     <Page>
       <PageHeader
         title="Supply Chain"
-        description="Stock by lot with FEFO issue (first expiry, first out), par levels and requisitions."
+        description="Issue rule: FEFO (first expiry, first out)"
         actions={
           <Button variant="primary" onPress={() => setRequesting(true)}>
             <PackagePlus className="size-4" aria-hidden /> New requisition

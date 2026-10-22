@@ -65,7 +65,7 @@ export default function ModuleCenterPage() {
       <PageHeader
         eyebrow={region === "uk" ? "Module Centre" : "Module Center"}
         title="Build the system you need"
-        description={`Turn modules on when your team is ready. Modules that are off are hidden from everyone, and their data is kept. Market pack: ${REGIONS[region].name}.`}
+        description={`${REGIONS[region].name} pack · modules that are off are hidden; their data is kept`}
         actions={
           <div className="w-56">
             <ProgressBar value={onCount} maxValue={toggleable.length} aria-label="Modules on">

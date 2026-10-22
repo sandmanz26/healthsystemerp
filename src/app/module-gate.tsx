@@ -45,7 +45,16 @@ export function ModuleGate({ children }: { children: ReactNode }) {
   if (!isNavVisible(nav, enabled, role)) {
     return (
       <Page>
-        <Empty icon={ShieldOff} title="No access" description={`The ${ROLES[role].label} role does not have access to ${navLabel(nav, region)}. Contact your administrator if you need it.`} />
+        <Empty
+          icon={ShieldOff}
+          title="No access"
+          description={`The ${ROLES[role].label} role does not have access to ${navLabel(nav, region)}. Ask your administrator to grant it in Settings → Access control.`}
+          action={
+            <Link to="/">
+              <Button variant="secondary">Back to home</Button>
+            </Link>
+          }
+        />
       </Page>
     )
   }

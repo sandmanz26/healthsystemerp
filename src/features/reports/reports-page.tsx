@@ -125,7 +125,6 @@ export default function ReportsPage() {
     <Page>
       <PageHeader
         title="Reports & Analytics"
-        description="Calculated directly from clinical and financial activity — no re-keying."
         actions={<Segmented label="Period" value={days} onChange={setDays} options={[{ value: "7", label: "7 days" }, { value: "30", label: "30 days" }]} />}
       />
 

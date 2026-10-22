@@ -126,7 +126,7 @@ export default function IntegrationsPage() {
     <Page>
       <PageHeader
         title="Interface Monitor"
-        description={`Connection status and message log for every interface (simulated). Organization ${region === "us" ? "NPI" : "ODS"} ${region === "us" ? facility.orgId : facility.code} · ${REGIONS[region].fhirProfile}.`}
+        description={`Simulated endpoints · ${region === "us" ? "NPI" : "ODS"} ${region === "us" ? facility.orgId : facility.code} · ${REGIONS[region].fhirProfile}.`}
         actions={
           <Button variant="primary" onPress={() => { processPendingSync(); toast.success("Queue processed") }} isDisabled={!visible.some((j) => j.status === "pending")}>
             <CloudUpload className="size-4" aria-hidden /> Process queue now

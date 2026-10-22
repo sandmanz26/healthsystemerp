@@ -65,7 +65,7 @@ function Lane({ level, count, region, children }: { level: (typeof LANES)[number
   const info = level ? triageInfo(region, level) : undefined
   const target = info ? (info.targetMin === 0 ? "immediate" : region === "us" ? `goal ≤ ${info.targetMin} min` : `see within ${info.targetMin} min`) : ""
   return (
-    <section className={cn("flex gap-3", count === 0 && "opacity-60")} aria-label={level ? `${region === "us" ? "ESI" : "MTS"} ${level}` : "Waiting for triage"}>
+    <section className={cn("flex gap-3", count === 0 && "[&>*:first-child]:opacity-50")} aria-label={level ? `${region === "us" ? "ESI" : "MTS"} ${level}` : "Waiting for triage"}>
       <div className={cn("w-1.5 shrink-0 rounded-full", LANE_RAIL[level])} aria-hidden />
       <div className="min-w-0 flex-1">
         <div className="mb-2 flex items-center gap-3">
@@ -255,8 +255,8 @@ export default function EmergencyPage() {
         title={us ? "Emergency department" : "Emergency department (A&E)"}
         description={
           us
-            ? "Tracking board sorted by ESI level, then arrival. Red = past the door-to-provider goal for that acuity."
-            : "Tracking board sorted by MTS category, then arrival. Red = four-hour standard breached or MTS wait exceeded."
+            ? "By ESI level, then arrival · red = past door-to-provider goal"
+            : "By MTS category, then arrival · red = 4-hour breach or MTS wait exceeded"
         }
         actions={
           registrationOn && (

@@ -14,5 +14,5 @@ export const TRIAGE_BG: Record<TriageLevel, string> = {
   2: "bg-triage-2 text-[oklch(0.22_0.05_55)]",
   3: "bg-triage-3 text-[oklch(0.25_0.05_95)]",
   4: "bg-triage-4 text-[oklch(0.18_0.04_150)]",
-  5: "bg-triage-5 text-white",
+  5: "bg-triage-5 text-[oklch(0.18_0.05_250)]",
 }

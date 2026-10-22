@@ -24,14 +24,14 @@ export function PageHeader({ title, description, actions, eyebrow }: PageHeaderP
   const region = useRegion()
   const group = nav?.group ?? "home"
   return (
-    <header className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <header className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
-        <div className="mb-2 flex items-center gap-2">
+        <div className="mb-1.5 flex items-center gap-2">
           <span className={cn("h-3.5 w-1.5 rounded-sm", CATEGORY_COLOR[group])} aria-hidden />
           <span className="label-caps text-muted">{eyebrow ?? (group === "home" ? "Home" : `${CATEGORY_LABEL[group]} · ${nav ? navLabel(nav, region) : title}`)}</span>
         </div>
-        <h1 className="text-[28px] font-semibold leading-tight text-foreground sm:text-[32px]">{title}</h1>
-        {description && <p className="mt-1.5 max-w-3xl text-sm text-muted">{description}</p>}
+        <h1 className="text-[22px] font-semibold leading-tight text-foreground sm:text-[26px]">{title}</h1>
+        {description && <p className="mt-1 max-w-3xl text-[13px] text-muted">{description}</p>}
       </div>
       {actions && <div className="flex shrink-0 flex-wrap items-center gap-2">{actions}</div>}
     </header>
@@ -39,7 +39,7 @@ export function PageHeader({ title, description, actions, eyebrow }: PageHeaderP
 }
 
 export function Page({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn("mx-auto w-full max-w-[1440px] px-4 py-7 sm:px-8", className)}>{children}</div>
+  return <div className={cn("mx-auto w-full max-w-[1440px] px-4 py-5 sm:px-8", className)}>{children}</div>
 }
 
 interface SectionProps {

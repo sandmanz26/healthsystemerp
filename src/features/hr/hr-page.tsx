@@ -156,8 +156,8 @@ export default function HrPage() {
         title={us ? "Medical Staff & Workforce" : "Workforce & Rota"}
         description={
           us
-            ? "Staff directory, credentialing (state license, NPI, DEA, BLS/ACLS) and the 12-hour nursing schedule."
-            : "Staff directory, professional registration (GMC, NMC, GPhC, HCPC), resuscitation training and the 12-hour rota."
+            ? "State license · NPI · DEA · BLS/ACLS"
+            : "GMC · NMC · GPhC · HCPC · Resus Council ILS/ALS"
         }
       />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

@@ -120,7 +120,7 @@ export default function SettingsPage() {
 
   return (
     <Page>
-      <PageHeader title="Settings" description="Facility profile and market pack, units, role-based access and the access audit trail." />
+      <PageHeader title="Settings" />
       <Tabs>
         <Tabs.ListContainer>
           <Tabs.List aria-label="Settings">

@@ -175,7 +175,7 @@ export default function PharmacyPage() {
 
   return (
     <Page>
-      <PageHeader title="Pharmacy" description="Verification queue for orders from every unit. Turnaround over 60 minutes is flagged red." />
+      <PageHeader title="Pharmacy" description="All units · red after 60 min turnaround" />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Stat label="Pending verification" value={byStage("new").length} icon={ShieldAlert} tone="warning" onClick={() => setStage("new")} />
         <Stat label="In preparation" value={byStage("reviewed").length} icon={Pill} tone="accent" onClick={() => setStage("reviewed")} />

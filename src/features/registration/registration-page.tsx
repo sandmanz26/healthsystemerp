@@ -61,7 +61,7 @@ export default function RegistrationPage() {
     <Page>
       <PageHeader
         title="Registration & queue"
-        description="Today's queue for every clinic and the ED. Patients waiting more than 60 minutes are flagged red (outpatient wait-time measure)."
+        description="All clinics and the ED · red after 60 min waiting"
         actions={
           <>
             <Link to="/registration/display" target="_blank">

@@ -26,10 +26,12 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
       <button
         type="button"
         onClick={onOpenSearch}
-        className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-left text-sm text-muted transition hover:border-accent/60 sm:max-w-sm"
+        aria-label="Search patients or pages"
+        className="flex h-10 shrink-0 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-left text-sm text-muted transition hover:border-accent/60 sm:min-w-0 sm:max-w-sm sm:flex-1"
       >
         <Search className="size-4 shrink-0" aria-hidden />
-        <span className="truncate">Search patients or pages…</span>
+        {/* Below 640px the field collapses to its icon rather than truncating to "Sea…". */}
+        <span className="hidden truncate sm:inline">Search patients or pages…</span>
         <Kbd className="ml-auto hidden sm:inline-flex">
           <Kbd.Abbr keyValue="ctrl" />
           <Kbd.Content>K</Kbd.Content>

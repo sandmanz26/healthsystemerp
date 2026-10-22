@@ -120,7 +120,7 @@ export function VitalsStrip({ vitals }: { vitals?: Vitals }) {
   const item = (label: string, value: string | number | undefined, color: string, bad?: boolean) =>
     value === undefined ? null : (
       <span className={cn("whitespace-nowrap", color, bad && "rounded bg-white/10 px-1")}>
-        <span className="opacity-60">{label} </span>
+        <span className="opacity-85">{label} </span>
         <b>{value}</b>
       </span>
     )

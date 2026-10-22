@@ -79,7 +79,7 @@ export default function NursingPage() {
     <Page>
       <PageHeader
         title="Nursing"
-        description="Patients sorted by NEWS2, highest first. Overdue observations are flagged red per the NEWS2 escalation protocol."
+        description="Highest NEWS2 first · observation frequency per RCP NEWS2 (2017)"
         actions={<SelectInput label={us ? "Unit" : "Ward"} className="w-64" value={ward} onChange={(v) => setUnitFilter("nursing", v)} options={wards.map((w) => ({ value: w.id, label: w.name }))} />}
       />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">

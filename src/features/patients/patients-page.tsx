@@ -76,7 +76,6 @@ export default function PatientsPage() {
     <Page>
       <PageHeader
         title="Patients"
-        description={region === "us" ? "One medical record number per patient across every service. Search by name, MRN, member ID or date of birth." : "One hospital number per patient across every service. Search by name, hospital number, NHS number or date of birth."}
         actions={
           <Button variant="primary" onPress={() => setCreating(true)}>
             <UserPlus className="size-4" aria-hidden />

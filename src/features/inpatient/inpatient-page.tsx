@@ -59,7 +59,6 @@ export default function InpatientPage() {
     <Page>
       <PageHeader
         title={us ? "Inpatient — bed board" : "Wards — bed state"}
-        description={us ? "Bed status across all units. Click an occupied bed to open the patient's chart." : "Bed state across all wards. Click an occupied bed to open the patient's record."}
         actions={
           <Button variant="primary" onPress={() => setAdmitting({})}>
             <Plus className="size-4" aria-hidden /> {us ? "Direct admission" : "Elective admission"}
@@ -255,7 +254,7 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
               <span className="truncate font-semibold">{patient.name}</span>
               <MarkerDots patient={patient} />
             </div>
-            <div className="num truncate text-[11px] text-muted">
+            <div className="num truncate text-[11px] text-foreground/75">
               {patient.gender === "female" ? "F" : "M"} · {ageLabel(patient.birthDate)} · <span className={cn(pastEdd && "font-semibold text-danger")}>LOS {los} d{plan && ` · EDD ${formatDate(plan.edd)}`}</span>
             </div>
             <div className="mt-0.5 line-clamp-1 text-xs">{encounter.diagnoses.find((d) => d.primary)?.display ?? encounter.chiefComplaint}</div>
@@ -276,7 +275,7 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
                   IM due
                 </Chip>
               )}
-              <span className="truncate text-[11px] text-muted">{staff.get(encounter.practitionerId ?? "")?.name.replace(/,.*$/, "")}</span>
+              <span className="truncate text-[11px] text-foreground/75">{staff.get(encounter.practitionerId ?? "")?.name.replace(/,.*$/, "")}</span>
             </div>
           </button>
         ) : (

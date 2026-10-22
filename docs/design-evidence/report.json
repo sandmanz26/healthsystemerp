@@ -1,0 +1,41 @@
+{
+  "contract": "docs/DESIGN.md §7 Direction contract — surface: clinical & revenue-cycle worklists used all shift by physicians, nurses, patient access, pharmacy, lab and coders in US and UK/EU hospitals; job: see who needs action next and act in one or two clicks; primary action per screen is the worklist action (Call/Start, Triage, Administer, Verify, Submit); hierarchy: patient identity + acuity > time pressure > codes/standards > metadata; target viewports 1440x900 (workstation) and 390x844 (phone on rounds).",
+  "targetViewports": ["1440x900", "390x844"],
+  "accessibility": {
+    "status": "pass",
+    "evidence": "axe-core 4.10.2 (WCAG 2.0/2.1 A+AA rules) reports 0 violations on 21 distinct screens rendered in the US pack under the roles that use them: Home, Emergency, Inpatient, Ambulatory, Nursing, Laboratory, Pharmacy, Surgery, Imaging, Patients (Physician); Registration, Scheduling, Supply Chain, Module Center, Settings, Interfaces (Administrator); Claims, Billing (HIM coder); Quality, Analytics, Workforce (Executive). Fixed on the way: status text ink darkened for AA (success/danger/warning), danger fill darkened for white text, triage colours retuned, muted text on bed tiles, filter tabs rebuilt as an ARIA radio group (aria-controls pointed at missing panels). Keyboard: Tab reaches the location filter on Registration with a visible focus ring (1440x900-focus.png, 390x844-focus.png); the filter radio group supports Arrow/Home/End. prefers-reduced-motion: the skeleton's motion-safe:animate-pulse resolves to animation-name none. Not audited with tools: the dark (night-shift) theme and the UK pack — reviewed visually only."
+  },
+  "responsive": {
+    "status": "pass",
+    "evidence": "Home, Emergency and Inpatient rendered at 390x844 and 1440x900 with document scrollWidth − innerWidth = 0 (no horizontal scroll). At 390px the top-bar search collapses to its icon instead of truncating to 'Sea…', stat readouts wrap to two columns, ED cards stack time-to-provider under the patient, and the home header no longer wraps the shift range (shift clock lives only in the top bar). The earlier 14-step end-to-end flow passes at 1440x900 in both the US and UK packs."
+  },
+  "contentStates": {
+    "loading": { "status": "pass", "evidence": "Route chunk held open: a structural skeleton (header, four readouts, six worklist rows) with aria-busy and a polite 'Loading…' live region replaces the old centred spinner, so nothing jumps when the page arrives (1440x900-loading.png, 390x844-loading.png)." },
+    "empty": { "status": "pass", "evidence": "Laboratory → Collect with no specimens due shows 'No orders at this stage' on the chart-paper empty panel while the other stage counters remain visible and selectable (1440x900-empty.png, 390x844-empty.png)." },
+    "error": { "status": "pass", "evidence": "Quality page chunk aborted: the new ErrorBoundary keeps the shell and shows 'This screen could not be downloaded', the cause, the raw error, and Reload / Home; runtime crashes offer Try again / Home / Rebuild demo data and reset on navigation (1440x900-error.png, 390x844-error.png)." },
+    "partial": { "status": "pass", "evidence": "IndexedDB made unavailable (private-window behaviour): the app still loads and works in memory and a status banner states that changes are not being saved on this device and why (1440x900-partial.png). Partial clinical data — e.g. results not yet resulted, failed interface messages — is shown per item on the lab and interface screens." },
+    "success": { "status": "pass", "evidence": "Registering a clinic visit shows the queue ticket with the HL7 ADT^A04 confirmation plus the eligibility result, with Print ticket and Done as next actions (1440x900-success.png, 390x844-success.png)." },
+    "permission": { "status": "pass", "evidence": "Patient financial services opening the ED board sees 'No access', the role and page named, where an administrator grants it (Settings → Access control), and a Back to home link (1440x900-permission.png, 390x844-permission.png). Modules switched off show a separate 'not turned on' state with a Module Center link for admins." }
+  },
+  "renderedEvidence": [
+    { "viewport": "1440x900", "artifact": "1440x900-home-doctor.png", "observation": "Physician home: compact header strip (date, facility, role) and the four readouts sit above the fold; the clinic queue and inpatient list start at ~320px instead of below a hero card." },
+    { "viewport": "1440x900", "artifact": "1440x900-emergency.png", "observation": "ED tracking board: terse rule line under the title, ESI lanes with full-contrast labels on empty lanes, door-to-provider timers and sepsis badge legible." },
+    { "viewport": "1440x900", "artifact": "1440x900-inpatient.png", "observation": "Bed board: patient tiles keep LOS/EDD and attending in a darker ink that passes AA on the occupied-bed tint." },
+    { "viewport": "1440x900", "artifact": "1440x900-loading.png", "observation": "Loading skeleton mirrors header, readouts and worklist." },
+    { "viewport": "1440x900", "artifact": "1440x900-error.png", "observation": "Chunk-load error with Reload/Home inside the intact shell." },
+    { "viewport": "1440x900", "artifact": "1440x900-empty.png", "observation": "Empty lab stage with counters still visible." },
+    { "viewport": "1440x900", "artifact": "1440x900-permission.png", "observation": "No-access state names the role and page and offers Back to home." },
+    { "viewport": "1440x900", "artifact": "1440x900-success.png", "observation": "Visit registered: ticket, ADT^A04 sent, eligibility, Print ticket / Done." },
+    { "viewport": "1440x900", "artifact": "1440x900-partial.png", "observation": "Storage-unavailable banner above an otherwise working home page." },
+    { "viewport": "1440x900", "artifact": "1440x900-focus.png", "observation": "Keyboard focus ring visible on the Registration location filter after six Tab presses." },
+    { "viewport": "390x844", "artifact": "390x844-home-doctor.png", "observation": "Phone home: header wraps cleanly, two-column readouts, clinic queue visible in the first screen." },
+    { "viewport": "390x844", "artifact": "390x844-emergency.png", "observation": "Phone ED board: icon-only search, stacked readouts, card actions (Triage / Assign to me) fit without overflow." },
+    { "viewport": "390x844", "artifact": "390x844-inpatient.png", "observation": "Phone bed board: tiles stack one per row without horizontal scroll." },
+    { "viewport": "390x844", "artifact": "390x844-loading.png", "observation": "Skeleton at phone width." },
+    { "viewport": "390x844", "artifact": "390x844-error.png", "observation": "Error state at phone width; long error text scrolls inside its own box." },
+    { "viewport": "390x844", "artifact": "390x844-empty.png", "observation": "Empty lab stage at phone width." },
+    { "viewport": "390x844", "artifact": "390x844-permission.png", "observation": "No-access state at phone width." },
+    { "viewport": "390x844", "artifact": "390x844-success.png", "observation": "Registration success dialog fits the phone viewport." },
+    { "viewport": "390x844", "artifact": "390x844-focus.png", "observation": "Focus ring visible at phone width." }
+  ]
+}

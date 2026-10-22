@@ -27,14 +27,14 @@ interface StatProps {
  */
 export function Stat({ label, value, hint, icon: Icon, tone = "default", onClick }: StatProps) {
   const body = (
-    <div className={cn("relative h-full overflow-hidden rounded-[14px] border border-border bg-surface py-4 pl-5 pr-4", onClick && "transition hover:border-foreground/25")}>
+    <div className={cn("relative h-full overflow-hidden rounded-[14px] border border-border bg-surface py-3 pl-4 pr-3.5", onClick && "transition hover:border-foreground/25")}>
       <span className={cn("absolute inset-y-3 left-0 w-1 rounded-r-full", RULE[tone])} aria-hidden />
       <div className="flex items-start justify-between gap-2">
         <span className="label-caps text-muted">{label}</span>
         {Icon && <Icon className="size-4 shrink-0 text-muted" aria-hidden />}
       </div>
-      <div className={cn("num mt-2 text-[28px] font-semibold leading-none tracking-tight", tone === "danger" && "text-danger")}>{value}</div>
-      {hint && <div className="mt-2 text-xs text-muted">{hint}</div>}
+      <div className={cn("num mt-1.5 text-2xl font-semibold leading-none tracking-tight", tone === "danger" && "text-danger")}>{value}</div>
+      {hint && <div className="mt-1 text-xs leading-snug text-muted">{hint}</div>}
     </div>
   )
   if (!onClick) return body

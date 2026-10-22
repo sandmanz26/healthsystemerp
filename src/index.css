@@ -51,7 +51,7 @@
   --color-band-dnr: oklch(0.5 0.17 305);
 
   /* Triage colours: Manchester red/orange/yellow/green/blue (also used for ESI 1–5). */
-  --color-triage-1: oklch(0.58 0.21 25);
+  --color-triage-1: oklch(0.53 0.21 25);
   --color-triage-2: oklch(0.72 0.17 55);
   --color-triage-3: oklch(0.86 0.16 95);
   --color-triage-4: oklch(0.68 0.15 150);
@@ -95,7 +95,7 @@
   --focus: oklch(0.6 0.19 260);
   --success: oklch(0.62 0.15 152);
   --warning: oklch(0.78 0.15 75);
-  --danger: oklch(0.6 0.21 25);
+  --danger: oklch(0.56 0.21 25);
 
   --surface-shadow: 0 0 0 0 transparent;
   --overlay-shadow: 0 18px 40px -12px oklch(0.22 0.03 262 / 0.18), 0 0 0 1px oklch(0.91 0.009 255);
@@ -421,4 +421,23 @@ h3,
   --color-cat-operations: oklch(0.35 0 0);
   --color-cat-quality: oklch(0.72 0 0);
   --color-cat-integration: oklch(0.6 0 0);
+}
+
+/*
+ * Status ink. The status hues are tuned as fills (chips, rules, bands); as small text on
+ * white they fall below WCAG AA. In light themes, text uses a darker ink of the same hue.
+ * Dark theme keeps the bright tokens, which already contrast with the navy background.
+ */
+:root:not(.dark):not([data-theme="dark"]) .text-success {
+  color: oklch(0.47 0.13 152);
+}
+:root:not(.dark):not([data-theme="dark"]) .text-danger {
+  color: oklch(0.51 0.2 25);
+}
+:root:not(.dark):not([data-theme="dark"]) .text-warning {
+  color: oklch(0.5 0.12 65);
+}
+
+:root:not(.dark):not([data-theme="dark"]) .chip--warning.chip--soft {
+  color: oklch(0.42 0.1 65);
 }

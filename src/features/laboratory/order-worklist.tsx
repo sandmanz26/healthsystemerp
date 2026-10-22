@@ -152,10 +152,10 @@ export function OrderWorklistPage({ kind }: { kind: OrderKind }) {
         title={lab ? "Laboratory" : "Radiology"}
         description={
           lab
-            ? "Orders from every unit. STAT first; critical values must be called to a licensed caregiver with read-back before results are verified."
+            ? "STAT first · critical values need call-back with read-back before verification"
             : region === "us"
-              ? "Modality worklist, prior authorization for advanced imaging, and structured reporting."
-              : "Modality worklist and structured reporting. IR(ME)R justification is recorded on the request."
+              ? "Prior authorization for advanced imaging · ACR structured reporting"
+              : "IR(ME)R justification recorded on every request"
         }
       />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

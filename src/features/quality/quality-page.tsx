@@ -134,8 +134,8 @@ export default function QualityPage() {
         title="Quality & Patient Safety"
         description={
           region === "us"
-            ? "Report safety events without fear — anonymous reports are welcome. Reports feed our Patient Safety Organization under the Patient Safety Act (privileged & confidential)."
-            : "Report incidents without fear — anonymous reports are welcome. We learn from systems, not blame individuals (PSIRF; Just Culture)."
+            ? "Anonymous reports accepted · privileged under the Patient Safety Act (PSO)"
+            : "Anonymous reports accepted · PSIRF · Just Culture"
         }
         actions={
           <Button variant="primary" onPress={() => setReporting(true)}>

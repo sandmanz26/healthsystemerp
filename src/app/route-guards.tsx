@@ -1,6 +1,7 @@
 import { Suspense } from "react"
 import { Navigate, Outlet } from "react-router-dom"
 import { useStore } from "@/store"
+import { ErrorBoundary } from "./error-boundary"
 import { PageSpinner } from "./layout"
 
 /** Until onboarding is done, every route goes to the setup wizard. */
@@ -11,8 +12,10 @@ export function RequireOnboarding() {
 
 export function Fullscreen() {
   return (
-    <Suspense fallback={<PageSpinner />}>
-      <Outlet />
-    </Suspense>
+    <ErrorBoundary>
+      <Suspense fallback={<PageSpinner />}>
+        <Outlet />
+      </Suspense>
+    </ErrorBoundary>
   )
 }

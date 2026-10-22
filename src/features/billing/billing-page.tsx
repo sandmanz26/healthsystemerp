@@ -127,10 +127,10 @@ export default function BillingPage() {
         title={region === "us" ? "Patient Accounting" : "Private Patients & Overseas Visitors"}
         description={
           region === "us" ? (
-            "Itemised accounts with CPT/HCPCS and UB-04 revenue codes. Insured accounts are billed to the payer; patients pay their self-pay balance or cost share."
+            "CPT/HCPCS · UB-04 revenue codes · insured accounts bill the payer"
           ) : (
             <>
-              NHS-funded care is free at the point of use — activity is costed, not billed (PLICS). Only private patients and chargeable overseas visitors (NHS Charging Regulations) have an account here.
+              Private and chargeable overseas patients only · NHS-funded activity is costed (PLICS), not billed
             </>
           )
         }

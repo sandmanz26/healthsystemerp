@@ -179,8 +179,8 @@ export default function ClaimsPage() {
         title={us ? "Coding & Claims" : "Clinical Coding & SUS+"}
         description={
           us
-            ? "Code, group (MS-DRG), scrub pre-bill edits, submit 837I/837P and work denials from the 835 remittance."
-            : "Code spells in ICD-10 and OPCS-4, group to HRG4+, submit CDS to SUS+ and invoice private medical insurers."
+            ? "MS-DRG · 837I/837P · 835 remittance & CARC denials"
+            : "ICD-10 · OPCS-4 · HRG4+ · SUS+ · private insurer invoices"
         }
       />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">

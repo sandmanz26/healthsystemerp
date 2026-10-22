@@ -57,8 +57,8 @@ export default function AppointmentsPage() {
         title="Scheduling"
         description={
           region === "us"
-            ? "Provider session templates, slot capacity and bookings from the patient portal, phone, referrals and walk-ins."
-            : "Clinic sessions, slot capacity and bookings from the NHS App, phone, e-RS referrals and walk-ins. Consultant-led referrals start the 18-week RTT clock."
+            ? "Portal · phone · referral · walk-in"
+            : "NHS App · phone · e-RS · walk-in · consultant-led referrals start the 18-week RTT clock"
         }
         actions={
           <Button variant="primary" onPress={() => setBooking(true)}>
