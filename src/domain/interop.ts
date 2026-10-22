@@ -176,6 +176,18 @@ const hl7Time = (iso: string) => {
   return `${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}${p(d.getHours())}${p(d.getMinutes())}`
 }
 
+/** PID-11 XAD: street ^ other ^ city ^ state ^ postal code ^ country. */
+function hl7Address(p: Patient, region: Region): string {
+  const parts = p.address.split(",").map((x) => x.trim())
+  const street = parts[0] ?? ""
+  if (region === "us") {
+    const [city = "", stateZip = ""] = parts.slice(1)
+    return `${street}^^${city}^${stateZip.split(" ")[0]}^${p.postcode}^USA`
+  }
+  const city = (parts[1] ?? "").replace(p.postcode, "").trim()
+  return `${street}^^${city}^^${p.postcode}^GBR`
+}
+
 const PATIENT_CLASS: Record<Encounter["kind"], string> = { outpatient: "O", emergency: "E", inpatient: "I" }
 
 /**
@@ -191,7 +203,7 @@ export function toHl7Adt(event: "A01" | "A03" | "A04", p: Patient, e: Encounter,
   return [
     `MSH|^~\\&|MEDISPHERE|${facility}|HIE|HIE|${now}||ADT^${event}^ADT_A01|${e.id.toUpperCase()}${event}|P|2.5.1`,
     `EVN|${event}|${now}`,
-    `PID|1||${pid3}||${family.join(" ").toUpperCase()}^${given.toUpperCase()}||${p.birthDate.slice(0, 10).replaceAll("-", "")}|${p.gender === "male" ? "M" : "F"}|||${p.address}^^^^${p.postcode}`,
+    `PID|1||${pid3}||${family.join(" ").toUpperCase()}^${given.toUpperCase()}||${p.birthDate.slice(0, 10).replaceAll("-", "")}|${p.gender === "male" ? "M" : "F"}|||${hl7Address(p, region)}`,
     `PV1|1|${patientClass}|${unitCode}^${bedCode}||||${e.practitionerId ?? ""}|||||||||||${e.accountNumber}|||||||||||||||||||||||||${hl7Time(e.startedAt ?? e.createdAt)}${e.endedAt ? `|${hl7Time(e.endedAt)}` : ""}`,
     ...dg1,
   ].join("\n")
