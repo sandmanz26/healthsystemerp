@@ -59,7 +59,7 @@ export default function HomePage() {
   )
 }
 
-/** Header of the home page: the shift board at the nurses' station, on chart paper. */
+/** Header of the home page: the shift board at the nurses' station, on a faint grid. */
 function ShiftBoard({ greeting, role, description, facility }: { greeting: string; role: string; description: string; facility: string }) {
   const now = useNow(30_000)
   const shift = shiftAt(now)

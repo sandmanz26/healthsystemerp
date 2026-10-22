@@ -9,7 +9,7 @@ interface EmptyProps {
   action?: ReactNode
 }
 
-/** Empty state on a faint chart-paper grid: "nothing charted yet". */
+/** Empty state on a faint faint grid: "nothing charted yet". */
 export function Empty({ icon: Icon = Inbox, title, description, action }: EmptyProps) {
   return (
     <div className="bg-grid flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">

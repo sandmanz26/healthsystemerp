@@ -28,7 +28,7 @@ export default function QueueDisplayPage() {
   }, [encounters, units, now])
 
   return (
-    <div className="dark bg-grid min-h-screen bg-[oklch(0.15_0.02_210)] p-6 text-white sm:p-10" data-theme="dark">
+    <div className="dark bg-grid min-h-screen bg-background p-6 text-white sm:p-10" data-theme="dark">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Logo compact />
@@ -44,10 +44,10 @@ export default function QueueDisplayPage() {
       </header>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {boards.map(({ unit, called, next, waiting }) => (
-          <section key={unit.id} className="rounded-2xl bg-[oklch(0.2_0.022_212)] p-6 ring-1 ring-white/10">
+          <section key={unit.id} className="rounded-2xl bg-surface p-6 ring-1 ring-white/10">
             <h2 className="text-2xl font-semibold text-white/85">{unit.name}</h2>
             <div className="label-caps mt-5 text-white/50">Dipanggil</div>
-            <div className="ticket num mt-2 inline-block bg-[oklch(0.82_0.12_168)] px-8 py-3 text-7xl font-bold tracking-tight text-[oklch(0.18_0.03_200)] [--notch:12px]" aria-live="polite">
+            <div className="ticket num mt-2 inline-block bg-accent px-8 py-3 text-7xl font-bold tracking-tight text-accent-foreground [--notch:12px]" aria-live="polite">
               {called?.queueNumber ?? "—"}
             </div>
             <div className="label-caps mt-6 text-white/50">Berikutnya</div>

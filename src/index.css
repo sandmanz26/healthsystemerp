@@ -12,8 +12,8 @@
  * glance: chart paper, patient wristbands, bedside monitors, triage tags, queue
  * tickets and the coloured dividers of a medical-record binder. See docs/DESIGN.md.
  *
- *   Paper  (light) — warm chart paper, deep "scrub" green ink.
- *   Night  (dark)  — "jaga malam": low-glare blue-green for night shifts.
+ *   Light — clean white with medical blue (default) or monochrome (hitam-putih).
+ *   Dark  — "jaga malam": low-glare navy for night shifts.
  * ─────────────────────────────────────────────────────────────────────────────
  */
 @custom-variant dark (&:where(.dark, .dark *, [data-theme="dark"], [data-theme="dark"] *));
@@ -61,10 +61,13 @@
   --color-chrome: var(--chrome);
   --color-chrome-foreground: var(--chrome-foreground);
   --color-chrome-muted: var(--chrome-muted);
+  --color-chrome-active: var(--chrome-active);
+  --color-chrome-active-foreground: var(--chrome-active-foreground);
+  --color-chrome-border: var(--chrome-border);
   --color-paper: var(--background);
 }
 
-/* ── Paper (light) ─────────────────────────────────────────────────────────── */
+/* ── Light: clean white + medical blue (default) ──────────────────────────── */
 :root,
 .light,
 [data-theme="light"] {
@@ -73,68 +76,124 @@
   --border-width: 1px;
   --field-border-width: 1px;
 
-  --background: oklch(0.958 0.011 85);
-  --foreground: oklch(0.24 0.028 200);
-  --surface: oklch(0.988 0.005 90);
-  --surface-secondary: oklch(0.945 0.012 85);
-  --surface-tertiary: oklch(0.92 0.014 85);
-  --overlay: oklch(0.992 0.004 90);
-  --muted: oklch(0.5 0.022 200);
-  --default: oklch(0.925 0.013 85);
+  --background: oklch(0.982 0.004 255);
+  --foreground: oklch(0.22 0.025 262);
+  --surface: oklch(1 0 0);
+  --surface-secondary: oklch(0.968 0.006 255);
+  --surface-tertiary: oklch(0.942 0.009 255);
+  --overlay: oklch(1 0 0);
+  --muted: oklch(0.53 0.022 262);
+  --default: oklch(0.95 0.008 255);
   --default-foreground: var(--foreground);
-  --border: oklch(0.86 0.016 85);
-  --separator: oklch(0.89 0.013 85);
-  --field-background: oklch(0.995 0.003 90);
-  --field-border: oklch(0.84 0.016 85);
+  --border: oklch(0.91 0.009 255);
+  --separator: oklch(0.935 0.007 255);
+  --field-background: oklch(1 0 0);
+  --field-border: oklch(0.885 0.01 255);
 
-  --accent: oklch(0.44 0.085 172);
-  --accent-foreground: oklch(0.98 0.01 90);
-  --focus: oklch(0.55 0.12 172);
-  --success: oklch(0.6 0.13 152);
+  --accent: oklch(0.55 0.2 260);
+  --accent-foreground: oklch(0.99 0 0);
+  --focus: oklch(0.6 0.19 260);
+  --success: oklch(0.62 0.15 152);
   --warning: oklch(0.78 0.15 75);
-  --danger: oklch(0.58 0.2 25);
+  --danger: oklch(0.6 0.21 25);
 
   --surface-shadow: 0 0 0 0 transparent;
-  --overlay-shadow: 0 18px 40px -12px oklch(0.24 0.03 200 / 0.25), 0 0 0 1px oklch(0.86 0.016 85);
+  --overlay-shadow: 0 18px 40px -12px oklch(0.22 0.03 262 / 0.18), 0 0 0 1px oklch(0.91 0.009 255);
 
-  --chrome: oklch(0.27 0.04 188);
-  --chrome-foreground: oklch(0.95 0.012 85);
-  --chrome-muted: oklch(0.72 0.03 175);
-  --grid-minor: oklch(0.75 0.06 20 / 0.12);
-  --grid-major: oklch(0.7 0.08 20 / 0.2);
+  --chrome: oklch(1 0 0);
+  --chrome-foreground: oklch(0.22 0.025 262);
+  --chrome-muted: oklch(0.55 0.02 262);
+  --chrome-active: oklch(0.95 0.03 258);
+  --chrome-active-foreground: oklch(0.45 0.19 260);
+  --chrome-border: oklch(0.91 0.009 255);
+  --grid-minor: oklch(0.6 0.12 258 / 0.05);
+  --grid-major: oklch(0.6 0.12 258 / 0.09);
 }
 
-/* ── Night shift (dark) ────────────────────────────────────────────────────── */
+/* ── Dark: night shift, blue ──────────────────────────────────────────────── */
 .dark,
 [data-theme="dark"] {
-  --background: oklch(0.175 0.02 215);
-  --foreground: oklch(0.93 0.012 90);
-  --surface: oklch(0.21 0.022 212);
-  --surface-secondary: oklch(0.245 0.022 212);
-  --surface-tertiary: oklch(0.275 0.022 212);
-  --overlay: oklch(0.225 0.022 212);
-  --muted: oklch(0.7 0.022 200);
-  --default: oklch(0.27 0.02 212);
+  --background: oklch(0.165 0.014 262);
+  --foreground: oklch(0.95 0.005 255);
+  --surface: oklch(0.2 0.016 262);
+  --surface-secondary: oklch(0.235 0.017 262);
+  --surface-tertiary: oklch(0.27 0.018 262);
+  --overlay: oklch(0.22 0.016 262);
+  --muted: oklch(0.7 0.02 258);
+  --default: oklch(0.265 0.017 262);
   --default-foreground: var(--foreground);
-  --border: oklch(0.31 0.022 212);
-  --separator: oklch(0.27 0.02 212);
-  --field-background: oklch(0.2 0.02 212);
-  --field-border: oklch(0.33 0.022 212);
+  --border: oklch(0.3 0.018 262);
+  --separator: oklch(0.265 0.016 262);
+  --field-background: oklch(0.19 0.015 262);
+  --field-border: oklch(0.33 0.018 262);
 
-  --accent: oklch(0.78 0.12 168);
-  --accent-foreground: oklch(0.18 0.02 215);
-  --focus: oklch(0.78 0.12 168);
-  --success: oklch(0.72 0.14 152);
+  --accent: oklch(0.68 0.17 258);
+  --accent-foreground: oklch(0.16 0.02 262);
+  --focus: oklch(0.7 0.16 258);
+  --success: oklch(0.72 0.15 152);
   --warning: oklch(0.82 0.14 78);
-  --danger: oklch(0.66 0.19 24);
+  --danger: oklch(0.67 0.19 24);
 
-  --overlay-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.6), 0 0 0 1px oklch(0.31 0.022 212);
+  --overlay-shadow: 0 18px 40px -12px rgb(0 0 0 / 0.6), 0 0 0 1px oklch(0.3 0.018 262);
 
-  --chrome: oklch(0.135 0.018 215);
-  --chrome-foreground: oklch(0.92 0.012 90);
-  --chrome-muted: oklch(0.62 0.03 190);
-  --grid-minor: oklch(0.7 0.08 175 / 0.07);
-  --grid-major: oklch(0.7 0.08 175 / 0.12);
+  --chrome: oklch(0.185 0.015 262);
+  --chrome-foreground: oklch(0.93 0.006 255);
+  --chrome-muted: oklch(0.66 0.02 258);
+  --chrome-active: oklch(0.27 0.05 260);
+  --chrome-active-foreground: oklch(0.85 0.1 258);
+  --chrome-border: oklch(0.27 0.016 262);
+  --grid-minor: oklch(0.7 0.1 258 / 0.05);
+  --grid-major: oklch(0.7 0.1 258 / 0.09);
+}
+
+/* ── Monochrome (hitam-putih): same layout, neutral greys, black accent ──────── */
+[data-accent="mono"] {
+  --background: oklch(0.982 0 0);
+  --foreground: oklch(0.18 0 0);
+  --surface: oklch(1 0 0);
+  --surface-secondary: oklch(0.965 0 0);
+  --surface-tertiary: oklch(0.94 0 0);
+  --overlay: oklch(1 0 0);
+  --muted: oklch(0.5 0 0);
+  --default: oklch(0.95 0 0);
+  --border: oklch(0.9 0 0);
+  --separator: oklch(0.93 0 0);
+  --field-border: oklch(0.87 0 0);
+  --accent: oklch(0.18 0 0);
+  --accent-foreground: oklch(0.99 0 0);
+  --focus: oklch(0.35 0 0);
+  --chrome: oklch(1 0 0);
+  --chrome-foreground: oklch(0.18 0 0);
+  --chrome-muted: oklch(0.5 0 0);
+  --chrome-active: oklch(0.18 0 0);
+  --chrome-active-foreground: oklch(0.99 0 0);
+  --chrome-border: oklch(0.9 0 0);
+  --grid-minor: oklch(0.5 0 0 / 0.05);
+  --grid-major: oklch(0.5 0 0 / 0.08);
+}
+.dark[data-accent="mono"],
+[data-theme="dark"][data-accent="mono"] {
+  --background: oklch(0.15 0 0);
+  --foreground: oklch(0.96 0 0);
+  --surface: oklch(0.19 0 0);
+  --surface-secondary: oklch(0.225 0 0);
+  --surface-tertiary: oklch(0.26 0 0);
+  --overlay: oklch(0.21 0 0);
+  --muted: oklch(0.7 0 0);
+  --default: oklch(0.255 0 0);
+  --border: oklch(0.29 0 0);
+  --separator: oklch(0.255 0 0);
+  --field-background: oklch(0.18 0 0);
+  --field-border: oklch(0.32 0 0);
+  --accent: oklch(0.96 0 0);
+  --accent-foreground: oklch(0.15 0 0);
+  --focus: oklch(0.85 0 0);
+  --chrome: oklch(0.17 0 0);
+  --chrome-foreground: oklch(0.94 0 0);
+  --chrome-muted: oklch(0.66 0 0);
+  --chrome-active: oklch(0.96 0 0);
+  --chrome-active-foreground: oklch(0.15 0 0);
+  --chrome-border: oklch(0.26 0 0);
 }
 
 html,
@@ -347,4 +406,19 @@ h3,
 }
 .tabs:not(.tabs--secondary) .tabs__indicator {
   display: none;
+}
+
+/*
+ * In monochrome the module-category dividers turn grey too. Clinical colours (wristband
+ * markers, triage, monitor, status) keep their colour on purpose: they carry safety meaning.
+ */
+[data-accent="mono"] {
+  --color-cat-core: oklch(0.8 0 0);
+  --color-cat-front: oklch(0.45 0 0);
+  --color-cat-clinical: oklch(0.25 0 0);
+  --color-cat-support: oklch(0.55 0 0);
+  --color-cat-finance: oklch(0.65 0 0);
+  --color-cat-operations: oklch(0.35 0 0);
+  --color-cat-quality: oklch(0.72 0 0);
+  --color-cat-integration: oklch(0.6 0 0);
 }

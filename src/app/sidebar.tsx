@@ -1,6 +1,6 @@
 /**
  * The binder. Modules are grouped like the coloured dividers of a medical-record folder;
- * the active page is a tab that runs into the paper of the page. The footer shows the
+ * the active page is highlighted in the accent colour. The footer shows the
  * facility's module "slots" — the modular concept made visible.
  */
 import { Puzzle } from "lucide-react"
@@ -22,10 +22,10 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const optional = MODULES.filter((m) => !m.core)
 
   return (
-    <nav aria-label="Navigasi utama" className="flex h-full flex-col bg-chrome text-chrome-foreground">
+    <nav aria-label="Navigasi utama" className="flex h-full flex-col border-r border-chrome-border bg-chrome text-chrome-foreground">
       <div className="px-5 pb-5 pt-6">
-        <Logo inverted />
-        <div className="mt-5 border-l-2 border-chrome-muted/40 pl-3">
+        <Logo />
+        <div className="mt-5 rounded-xl border border-chrome-border px-3 py-2">
           <div className="truncate text-sm font-semibold" title={facility.name}>
             {facility.name}
           </div>
@@ -34,7 +34,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
           </div>
         </div>
       </div>
-      <div className="flex-1 space-y-5 overflow-y-auto pb-4 pl-3">
+      <div className="flex-1 space-y-5 overflow-y-auto px-3 pb-4">
         {GROUPS.map((group) => {
           const items = visible.filter((n) => n.group === group)
           if (!items.length) return null
@@ -58,7 +58,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
         })}
       </div>
       {(role === "admin" || role === "manager") && (
-        <NavLink to="/modules" onClick={onNavigate} className="group mx-3 mb-4 block rounded-xl border border-chrome-muted/25 p-3 transition hover:border-chrome-muted/60">
+        <NavLink to="/modules" onClick={onNavigate} className="group mx-3 mb-4 block rounded-xl border border-chrome-border p-3 transition hover:border-chrome-muted/60">
           <div className="flex items-center justify-between">
             <span className="label-caps text-chrome-muted">Slot modul</span>
             <span className="num text-xs">
@@ -88,18 +88,13 @@ function BinderTab({ item, onNavigate }: { item: NavItem; onNavigate?: () => voi
       onClick={onNavigate}
       className={({ isActive }) =>
         cn(
-          "relative flex items-center gap-3 rounded-l-xl py-2 pl-3 pr-4 text-sm font-medium transition-colors",
-          isActive ? "bg-paper text-foreground" : "text-chrome-foreground/75 hover:bg-white/5 hover:text-chrome-foreground",
+          "relative flex items-center gap-3 rounded-xl py-2 pl-3 pr-3 text-sm font-medium transition-colors",
+          isActive ? "bg-chrome-active font-semibold text-chrome-active-foreground" : "text-chrome-foreground/80 hover:bg-surface-secondary hover:text-chrome-foreground",
         )
       }
     >
-      {({ isActive }) => (
-        <>
-          {isActive && <span className={cn("absolute inset-y-2 left-0 w-1 rounded-full", CATEGORY_COLOR[item.group])} aria-hidden />}
-          <Icon className="size-[18px] shrink-0" aria-hidden />
-          <span className="truncate">{item.label}</span>
-        </>
-      )}
+      <Icon className="size-[18px] shrink-0" aria-hidden />
+      <span className="truncate">{item.label}</span>
     </NavLink>
   )
 }

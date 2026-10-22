@@ -22,7 +22,7 @@ export function ModuleCard({ module, enabled, onToggle, enabledSet, highlight, f
   return (
     <div id={`module-${module.id}`} className="relative h-full pt-[22px]">
       {/* Divider tab, coloured by category — the same colours as the sidebar binder. */}
-      <span className={cn("label-caps absolute left-4 top-0 flex h-[23px] items-center rounded-t-lg px-2.5 text-[oklch(0.22_0.03_200)]", CATEGORY_COLOR[module.category])}>
+      <span className={cn("label-caps absolute left-4 top-0 flex h-[23px] items-center rounded-t-lg px-2.5 text-[oklch(0.2_0.02_262)]", CATEGORY_COLOR[module.category])}>
         {CATEGORY_LABEL[module.category]}
       </span>
       <Card className={cn("h-full gap-3 rounded-tl-none p-4 transition", enabled ? "border-foreground/25" : "bg-surface/60", highlight && "ring-2 ring-accent")}>

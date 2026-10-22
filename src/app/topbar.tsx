@@ -1,22 +1,20 @@
-import { Avatar, Button, Dropdown, Kbd, Label, Popover, Tooltip } from "@heroui/react"
-import { Bell, ChevronDown, Lock, Menu, Monitor, Moon, Search, Sun } from "lucide-react"
+import { Avatar, Button, Dropdown, Header, Kbd, Label, Popover, Tooltip } from "@heroui/react"
+import { Bell, Check, ChevronDown, Lock, Menu, Monitor, Moon, Search, Sun } from "lucide-react"
 import { useNavigate } from "react-router-dom"
 import { ROLES, ROLE_ORDER } from "@/domain/roles"
 import type { RoleId } from "@/domain/types"
 import { cn } from "@/lib/cn"
 import { formatRelative, initials } from "@/lib/format"
-import { usePrefs, type ThemePref } from "@/lib/prefs"
+import { usePrefs, type AccentPref, type ThemePref } from "@/lib/prefs"
 import { useActions, useStore } from "@/store"
 import { useSession } from "@/store/selectors"
 import { ShiftIndicator } from "./shift-indicator"
 
 const THEME_ICON = { light: Sun, dark: Moon, system: Monitor }
-const THEME_NEXT: Record<ThemePref, ThemePref> = { system: "light", light: "dark", dark: "system" }
-const THEME_LABEL: Record<ThemePref, string> = { system: "Tema: ikuti sistem", light: "Tema: terang", dark: "Tema: gelap" }
+const THEME_LABEL: Record<ThemePref, string> = { light: "Terang", dark: "Gelap (jaga malam)", system: "Ikuti sistem" }
+const ACCENT_LABEL: Record<AccentPref, string> = { blue: "Biru-putih", mono: "Hitam-putih" }
 
 export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; onOpenSearch: () => void }) {
-  const { theme, setTheme } = usePrefs()
-  const ThemeIcon = THEME_ICON[theme]
   const { lock } = useActions()
 
   return (
@@ -41,12 +39,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
       <div className="ml-auto flex items-center gap-1">
         <ShiftIndicator />
         <Notifications />
-        <Tooltip delay={300}>
-          <Button isIconOnly variant="ghost" aria-label={THEME_LABEL[theme]} onPress={() => setTheme(THEME_NEXT[theme])}>
-            <ThemeIcon className="size-5" />
-          </Button>
-          <Tooltip.Content>{THEME_LABEL[theme]}</Tooltip.Content>
-        </Tooltip>
+        <AppearanceMenu />
         <Tooltip delay={300}>
           <Button isIconOnly variant="ghost" aria-label="Kunci layar" onPress={lock}>
             <Lock className="size-5" />
@@ -151,6 +144,49 @@ function RoleSwitcher() {
               <Dropdown.ItemIndicator />
             </Dropdown.Item>
           ))}
+        </Dropdown.Menu>
+      </Dropdown.Popover>
+    </Dropdown>
+  )
+}
+
+/** Theme (light / dark / system) and colour scheme (blue / monochrome). */
+function AppearanceMenu() {
+  const { theme, setTheme, accent, setAccent } = usePrefs()
+  const ThemeIcon = THEME_ICON[theme]
+  return (
+    <Dropdown>
+      <Dropdown.Trigger aria-label="Tampilan" className="grid size-10 place-items-center rounded-xl hover:bg-surface-secondary">
+        <ThemeIcon className="size-5" />
+      </Dropdown.Trigger>
+      <Dropdown.Popover placement="bottom end" className="min-w-56">
+        <Dropdown.Menu
+          aria-label="Tampilan"
+          onAction={(key) => {
+            const [kind, value] = String(key).split(":")
+            if (kind === "theme") setTheme(value as ThemePref)
+            else setAccent(value as AccentPref)
+          }}
+        >
+          <Dropdown.Section>
+            <Header className="label-caps px-2 pb-1 pt-1.5 text-muted">Mode</Header>
+            {(Object.keys(THEME_LABEL) as ThemePref[]).map((t) => (
+              <Dropdown.Item key={t} id={`theme:${t}`} textValue={THEME_LABEL[t]}>
+                <Label>{THEME_LABEL[t]}</Label>
+                {theme === t && <Check className="ml-auto size-4 text-accent" aria-label="dipilih" />}
+              </Dropdown.Item>
+            ))}
+          </Dropdown.Section>
+          <Dropdown.Section>
+            <Header className="label-caps px-2 pb-1 pt-2 text-muted">Warna</Header>
+            {(Object.keys(ACCENT_LABEL) as AccentPref[]).map((a) => (
+              <Dropdown.Item key={a} id={`accent:${a}`} textValue={ACCENT_LABEL[a]}>
+                <span className={a === "blue" ? "size-3 rounded-full bg-[oklch(0.55_0.2_260)]" : "size-3 rounded-full bg-[oklch(0.18_0_0)] ring-1 ring-border"} aria-hidden />
+                <Label>{ACCENT_LABEL[a]}</Label>
+                {accent === a && <Check className="ml-auto size-4 text-accent" aria-label="dipilih" />}
+              </Dropdown.Item>
+            ))}
+          </Dropdown.Section>
         </Dropdown.Menu>
       </Dropdown.Popover>
     </Dropdown>

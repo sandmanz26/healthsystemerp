@@ -8,15 +8,16 @@ import { router } from "./router"
 
 export function App() {
   const theme = usePrefs((s) => s.theme)
+  const accent = usePrefs((s) => s.accent)
   const hydrated = useHydrated()
   useEffect(() => {
-    applyTheme(theme)
+    applyTheme(theme, accent)
     if (theme !== "system") return
     const mq = window.matchMedia("(prefers-color-scheme: dark)")
-    const onChange = () => applyTheme("system")
+    const onChange = () => applyTheme("system", accent)
     mq.addEventListener("change", onChange)
     return () => mq.removeEventListener("change", onChange)
-  }, [theme])
+  }, [theme, accent])
 
   if (!hydrated) return <PageSpinner />
   return (

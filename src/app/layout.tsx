@@ -20,7 +20,7 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-full">
-      <aside className="no-print sticky top-0 hidden h-screen w-[264px] shrink-0 bg-chrome lg:block">
+      <aside className="no-print sticky top-0 hidden h-screen w-[260px] shrink-0 bg-chrome lg:block">
         <Sidebar />
       </aside>
 

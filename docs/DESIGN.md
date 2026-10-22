@@ -14,17 +14,24 @@
 3. **Angka dibaca seperti instrumen.** No. RM, jam, nilai vital, dan durasi memakai font mono
    tabular — sejajar dan tidak bisa salah baca (0/O, 1/l).
 4. **Status selalu teks + warna.** Tidak ada makna yang hanya disampaikan oleh warna.
-5. **Jaga malam itu nyata.** Mode gelap dirancang khusus untuk shift malam (silau rendah),
-   bukan sekadar invers.
+5. **Netral dulu, warna untuk makna.** Antarmuka putih/biru atau hitam/putih; warna kuat hanya
+   untuk informasi klinis. Mode gelap dirancang khusus untuk shift malam (silau rendah).
 
 ## 2. Fondasi
 
-| Token | Terang ("Kertas") | Gelap ("Jaga malam") | Catatan |
+Palet sengaja netral dan modern — putih bersih dengan satu warna aksen — agar tidak terasa
+"tua". Pengguna bisa memilih skema warna dari menu **Tampilan** (ikon matahari/bulan di top bar).
+
+| Token | Biru-putih (default) | Hitam-putih | Gelap (jaga malam) |
 |---|---|---|---|
-| Latar | kertas hangat `oklch(0.958 0.011 85)` | biru-hijau gelap `oklch(0.175 0.02 215)` | |
-| Tinta | hijau-tua `oklch(0.24 0.028 200)` | kertas `oklch(0.93 0.012 90)` | |
-| Aksen "scrub" | `oklch(0.44 0.085 172)` | mint `oklch(0.78 0.12 168)` | tombol utama, fokus |
-| Chrome (sidebar) | hijau scrub tua | hampir hitam | map rekam medis |
+| Latar | `oklch(0.982 0.004 255)` hampir putih | `oklch(0.982 0 0)` | navy `oklch(0.165 0.014 262)` |
+| Kartu & sidebar | putih murni | putih murni | `oklch(0.2 0.016 262)` |
+| Tinta | navy-hitam `oklch(0.22 0.025 262)` | hitam `oklch(0.18 0 0)` | `oklch(0.95 0.005 255)` |
+| Aksen | biru medis `oklch(0.55 0.2 260)` | hitam | biru muda `oklch(0.68 0.17 258)` |
+
+Di mode hitam-putih, warna pembatas kategori modul ikut menjadi abu-abu. **Warna klinis tetap
+berwarna** di semua skema (gelang penanda, triase, monitor, status) karena membawa makna
+keselamatan pasien.
 
 **Tipografi** — tiga peran, tiga huruf:
 - *Bricolage Grotesque* — judul & nama pasien (berkarakter, editorial).
@@ -44,7 +51,7 @@ besar (header mono kapital, garis tipis); chip status seperti stempel tinta.
 | **Tiket antrean** (`QueueTicket`) | Tiket thermal | Sisi bertakik; dipakai di worklist, dialog pendaftaran, dan layar TV. |
 | **Tag triase** (`TriageTag`) | Tag triase berlubang | Warna ATS 1–5 + nomor + label. |
 | **Tempat tidur** (bed board) | Denah bangsal | Ranjang tampak atas: sandaran, bantal, selimut; selimut = status, arsiran = tidak bisa dipakai. |
-| **Map rekam medis** (sidebar) | Binder dengan pembatas berwarna | Kategori modul = warna pembatas; halaman aktif = tab yang menyatu dengan kertas halaman. |
+| **Map rekam medis** (sidebar) | Binder dengan pembatas | Sidebar putih; kategori modul ditandai garis kecil berwarna; halaman aktif disorot warna aksen. |
 | **Slot modul** | Slot cartridge | Konsep modular dibuat terlihat: 19 slot berwarna kategori di sidebar & onboarding. |
 | **Kartu modul** | Pembatas map | Tab kategori menonjol di atas kartu. |
 | **Indikator dinas** | Papan jaga | Dinas Pagi/Sore/Malam, jam, dan sisa waktu sampai serah terima. |

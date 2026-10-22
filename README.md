@@ -13,7 +13,7 @@ anywhere.
 **Design language — "Bedside Chart":** the UI borrows from objects hospital staff read every day —
 chart paper, patient wristbands (with allergy / fall-risk / DNR marker bands), bedside monitors,
 triage tags, thermal queue tickets and the coloured dividers of a medical-record binder — plus a
-"jaga malam" dark theme for night shifts. See [`docs/DESIGN.md`](docs/DESIGN.md).
+a clean white + blue palette (or black & white), and a "jaga malam" dark theme for night shifts. See [`docs/DESIGN.md`](docs/DESIGN.md).
 
 Process docs (Indonesian): [`docs/RESEARCH.md`](docs/RESEARCH.md) (what a hospital needs, user
 behaviour, regulation) and [`docs/PLAN.md`](docs/PLAN.md) (plan → roast → plan v2, plus the
