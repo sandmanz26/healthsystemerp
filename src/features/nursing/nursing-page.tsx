@@ -6,6 +6,8 @@ import { Button, Chip, Tabs } from "@heroui/react"
 import { AlertTriangle, ClipboardPen, HeartPulse, Pill, Timer } from "lucide-react"
 import { useState } from "react"
 import { Link } from "react-router-dom"
+import { VitalsStrip } from "@/components/clinical/vitals-monitor"
+import { MarkerDots } from "@/components/clinical/wristband"
 import { Dialog } from "@/components/ui/dialog"
 import { Empty } from "@/components/ui/empty"
 import { SelectInput, TextAreaInput } from "@/components/ui/fields"
@@ -104,13 +106,16 @@ export default function NursingPage() {
                           <Link to={`/encounters/${e.id}`} className="truncate font-semibold hover:underline">
                             {p.name}
                           </Link>
-                          {p.allergies.length > 0 && <AlertTriangle className="size-3.5 shrink-0 text-danger" aria-label="Ada alergi" />}
+                          <MarkerDots patient={p} />
                         </div>
                         <div className="text-xs text-muted">
                           {p.gender === "female" ? "P" : "L"} · {ageLabel(p.birthDate)} · {e.diagnoses.find((d) => d.primary)?.display}
                         </div>
                       </div>
                       <News2Chip vitals={latest} />
+                    </div>
+                    <div className="mt-3">
+                      <VitalsStrip vitals={latest} />
                     </div>
                     {s && s.risk !== "rendah" && <p className={cn("mt-2 rounded-lg px-3 py-1.5 text-xs", s.risk === "tinggi" ? "bg-danger-soft text-danger-soft-foreground" : "bg-warning-soft text-warning-soft-foreground")}>{s.response}</p>}
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2">

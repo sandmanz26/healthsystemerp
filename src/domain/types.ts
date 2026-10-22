@@ -41,8 +41,12 @@ export interface Patient {
   /** BPJS class entitlement; KRIS replaces it for wards but it still drives non-ward tariffs. */
   bpjsClass?: 1 | 2 | 3
   insurer?: string
+  /** Safety markers worn as coloured wristbands (kuning = risiko jatuh, ungu = DNR). */
+  flags?: PatientFlag[]
   createdAt: ISODate
 }
+
+export type PatientFlag = "fall-risk" | "dnr"
 
 export type RoleId =
   | "admin"

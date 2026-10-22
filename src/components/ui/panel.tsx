@@ -12,14 +12,14 @@ interface PanelProps {
   flush?: boolean
 }
 
-/** Card with an optional header row. The workhorse container of the app. */
+/** Paper card with an optional header row. The workhorse container of the app. */
 export function Panel({ title, description, actions, children, className, flush }: PanelProps) {
   return (
-    <Card className={cn("gap-0 p-0", className)}>
+    <Card className={cn("gap-0 overflow-hidden p-0", className)}>
       {(title || actions) && (
-        <Card.Header className="flex flex-row items-start justify-between gap-3 border-b border-separator px-5 py-4">
+        <Card.Header className="flex flex-row items-start justify-between gap-3 border-b border-separator px-5 py-3.5">
           <div className="min-w-0">
-            {title && <Card.Title className="text-sm font-semibold">{title}</Card.Title>}
+            {title && <Card.Title className="font-display text-[15px] font-semibold leading-6">{title}</Card.Title>}
             {description && <Card.Description className="text-xs">{description}</Card.Description>}
           </div>
           {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}

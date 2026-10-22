@@ -20,12 +20,12 @@ export function AppLayout() {
 
   return (
     <div className="flex min-h-full">
-      <aside className="no-print sticky top-0 hidden h-screen w-64 shrink-0 border-r border-separator bg-surface lg:block">
+      <aside className="no-print sticky top-0 hidden h-screen w-[264px] shrink-0 bg-chrome lg:block">
         <Sidebar />
       </aside>
 
       <Drawer.Backdrop isOpen={menuOpen} onOpenChange={setMenuOpen}>
-        <Drawer.Content placement="left" className="w-72">
+        <Drawer.Content placement="left" className="w-72 bg-chrome">
           <Drawer.Dialog aria-label="Menu" className="h-full p-0">
             <Sidebar onNavigate={() => setMenuOpen(false)} />
           </Drawer.Dialog>

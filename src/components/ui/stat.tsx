@@ -1,16 +1,15 @@
-import { Card } from "@heroui/react"
 import type { LucideIcon } from "lucide-react"
 import type { ReactNode } from "react"
 import { cn } from "@/lib/cn"
 
 export type Tone = "default" | "accent" | "success" | "warning" | "danger"
 
-const TONE_ICON: Record<Tone, string> = {
-  default: "bg-default text-default-foreground",
-  accent: "bg-accent-soft text-accent-soft-foreground",
-  success: "bg-success-soft text-success-soft-foreground",
-  warning: "bg-warning-soft text-warning-soft-foreground",
-  danger: "bg-danger-soft text-danger-soft-foreground",
+const RULE: Record<Tone, string> = {
+  default: "bg-border",
+  accent: "bg-accent",
+  success: "bg-success",
+  warning: "bg-warning",
+  danger: "bg-danger",
 }
 
 interface StatProps {
@@ -22,25 +21,25 @@ interface StatProps {
   onClick?: () => void
 }
 
-/** KPI tile. Clickable tiles act as shortcuts into the matching worklist. */
+/**
+ * A readout: caps label, a large figure, and a tone rule on the left edge — like a reading
+ * written on a whiteboard grid. Clickable readouts jump to the matching worklist.
+ */
 export function Stat({ label, value, hint, icon: Icon, tone = "default", onClick }: StatProps) {
   const body = (
-    <Card className={cn("h-full gap-3 p-4", onClick && "transition hover:shadow-md")}>
-      <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium text-muted">{label}</span>
-        {Icon && (
-          <span className={cn("grid size-8 place-items-center rounded-lg", TONE_ICON[tone])}>
-            <Icon className="size-4" aria-hidden />
-          </span>
-        )}
+    <div className={cn("relative h-full overflow-hidden rounded-[14px] border border-border bg-surface py-4 pl-5 pr-4", onClick && "transition hover:border-foreground/25")}>
+      <span className={cn("absolute inset-y-3 left-0 w-1 rounded-r-full", RULE[tone])} aria-hidden />
+      <div className="flex items-start justify-between gap-2">
+        <span className="label-caps text-muted">{label}</span>
+        {Icon && <Icon className="size-4 shrink-0 text-muted" aria-hidden />}
       </div>
-      <div className="tabular text-2xl font-bold tracking-tight">{value}</div>
-      {hint && <div className="text-xs text-muted">{hint}</div>}
-    </Card>
+      <div className={cn("num mt-2 text-[28px] font-semibold leading-none tracking-tight", tone === "danger" && "text-danger")}>{value}</div>
+      {hint && <div className="mt-2 text-xs text-muted">{hint}</div>}
+    </div>
   )
   if (!onClick) return body
   return (
-    <button type="button" onClick={onClick} className="block h-full w-full rounded-[calc(var(--radius)*1.5)] text-left focus-visible:outline-2 focus-visible:outline-focus">
+    <button type="button" onClick={onClick} className="block h-full w-full rounded-[14px] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus">
       {body}
     </button>
   )

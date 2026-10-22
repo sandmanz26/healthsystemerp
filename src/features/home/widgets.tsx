@@ -10,7 +10,7 @@ export function WorkList({ title, description, to, linkLabel = "Buka", children,
       title={title}
       description={description}
       actions={
-        <Link to={to} className="inline-flex items-center gap-1 text-sm font-medium text-accent hover:underline">
+        <Link to={to} className="label-caps inline-flex items-center gap-1 text-accent hover:underline">
           {linkLabel} <ArrowRight className="size-3.5" aria-hidden />
         </Link>
       }
@@ -21,10 +21,11 @@ export function WorkList({ title, description, to, linkLabel = "Buka", children,
   )
 }
 
-export function WorkRow({ to, title, sub, aside }: { to: string; title: ReactNode; sub?: ReactNode; aside?: ReactNode }) {
+export function WorkRow({ to, title, sub, aside, lead }: { to: string; title: ReactNode; sub?: ReactNode; aside?: ReactNode; lead?: ReactNode }) {
   return (
     <li>
       <Link to={to} className="flex items-center gap-3 px-5 py-3 hover:bg-surface-secondary">
+        {lead}
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-medium">{title}</div>
           {sub && <div className="truncate text-xs text-muted">{sub}</div>}

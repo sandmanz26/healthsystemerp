@@ -6,6 +6,7 @@
 import { Button, Chip } from "@heroui/react"
 import { Printer, ShieldCheck } from "lucide-react"
 import { useMemo, useState } from "react"
+import { QueueTicket } from "@/components/clinical/queue-ticket"
 import { Dialog } from "@/components/ui/dialog"
 import { SelectInput, TextInput } from "@/components/ui/fields"
 import { PatientBanner } from "@/features/patients/patient-banner"
@@ -116,7 +117,9 @@ export function RegisterVisitDialog({ isOpen, onOpenChange, patientId: initialPa
       >
         <div className="print-area rounded-2xl border border-dashed border-border p-5 text-center">
           <div className="text-xs uppercase tracking-wide text-muted">{units.find((u) => u.id === registered.unitId)?.name}</div>
-          <div className="tabular my-2 text-5xl font-extrabold tracking-tight text-accent">{registered.queueNumber}</div>
+          <div className="my-3">
+            <QueueTicket number={registered.queueNumber} tone="accent" size="lg" />
+          </div>
           <div className="font-semibold">{patient.name}</div>
           <div className="tabular text-sm text-muted">RM {patient.mrn}</div>
           <div className="mt-2 text-xs text-muted">Terdaftar {formatTime(registered.createdAt)}</div>

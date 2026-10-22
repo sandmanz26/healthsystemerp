@@ -19,10 +19,12 @@ import { MODULES, type ModuleId } from "@/domain/modules"
 import { INM, indicatorRate, meetsTarget } from "@/domain/quality"
 import { ROLES } from "@/domain/roles"
 import type { RoleId } from "@/domain/types"
+import { QueueTicket } from "@/components/clinical/queue-ticket"
 import { News2Chip } from "@/features/emr/clinical-widgets"
 import { PatientForm } from "@/features/patients/patient-form"
 import { RegisterVisitDialog } from "@/features/registration/register-visit-dialog"
-import { dayKey, formatDateLong, formatDuration, formatPercent, formatRupiah } from "@/lib/format"
+import { dayKey, formatDateLong, formatDuration, formatPercent, formatRupiah, formatTime } from "@/lib/format"
+import { shiftAt } from "@/lib/shift"
 import { useNow } from "@/lib/use-now"
 import { useStore } from "@/store"
 import { isActive, stockOf, useEnabledModules, usePatientMap, useSession, useUnitName } from "@/store/selectors"
@@ -51,17 +53,45 @@ export default function HomePage() {
   const Home = HOMES[role]
   return (
     <Page>
-      <div className="mb-6">
-        <div className="text-sm text-muted">
-          {formatDateLong(new Date())} · {facility}
-        </div>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight">
-          {greeting()}, {user?.name.split(",")[0]}
-        </h1>
-        <p className="text-sm text-muted">{ROLES[role].description}.</p>
-      </div>
+      <ShiftBoard greeting={`${greeting()}, ${user?.name.split(",")[0]}`} role={ROLES[role].label} description={ROLES[role].description} facility={facility} />
       <Home />
     </Page>
+  )
+}
+
+/** Header of the home page: the shift board at the nurses' station, on chart paper. */
+function ShiftBoard({ greeting, role, description, facility }: { greeting: string; role: string; description: string; facility: string }) {
+  const now = useNow(30_000)
+  const shift = shiftAt(now)
+  const left = shift.remainingMin
+  return (
+    <section className="bg-grid mb-7 flex flex-col gap-6 overflow-hidden rounded-[18px] border border-border bg-surface p-6 lg:flex-row lg:items-end lg:justify-between">
+      <div className="min-w-0">
+        <div className="label-caps text-muted">
+          {formatDateLong(new Date(now))} · {facility}
+        </div>
+        <h1 className="mt-2 text-[34px] font-semibold leading-[1.1] sm:text-[40px]">{greeting}</h1>
+        <p className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted">
+          <span className="label-caps rounded-md bg-foreground px-2 py-0.5 text-background">{role}</span>
+          {description}.
+        </p>
+      </div>
+      <div className="w-full shrink-0 rounded-xl border border-border bg-background/70 p-4 backdrop-blur-sm lg:w-80">
+        <div className="flex items-baseline justify-between">
+          <span className="label-caps text-muted">Dinas {shift.label}</span>
+          <span className="num text-xs text-muted">
+            {shift.start}–{shift.end}
+          </span>
+        </div>
+        <div className="num mt-1 text-3xl font-semibold">{formatTime(new Date(now).toISOString())}</div>
+        <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-tertiary" aria-hidden>
+          <div className="h-full rounded-full bg-accent" style={{ width: `${Math.round(shift.progress * 100)}%` }} />
+        </div>
+        <div className="num mt-1.5 text-[11px] text-muted">
+          Serah terima dalam {Math.floor(left / 60)} j {left % 60} m
+        </div>
+      </div>
+    </section>
   )
 }
 
@@ -128,14 +158,14 @@ function FrontdeskHome() {
         <When module="registration">
           <WorkList title="Menunggu paling lama" description="Pertimbangkan konfirmasi ke poli" to="/registration" empty="Tidak ada antrean.">
             {[...waiting].sort((a, b) => a.createdAt.localeCompare(b.createdAt)).slice(0, 6).map((e) => (
-              <WorkRow key={e.id} to={`/patients/${e.patientId}`} title={`${e.queueNumber} · ${patients.get(e.patientId)?.name}`} sub={unitName(e.unitId)} aside={<span className={minutesSince(e.createdAt, now) > 60 ? "tabular text-sm font-semibold text-danger" : "tabular text-sm text-muted"}>{formatDuration(minutesSince(e.createdAt, now))}</span>} />
+              <WorkRow key={e.id} to={`/patients/${e.patientId}`} lead={<QueueTicket number={e.queueNumber} />} title={patients.get(e.patientId)?.name} sub={unitName(e.unitId)} aside={<span className={minutesSince(e.createdAt, now) > 60 ? "tabular text-sm font-semibold text-danger" : "tabular text-sm text-muted"}>{formatDuration(minutesSince(e.createdAt, now))}</span>} />
             ))}
           </WorkList>
         </When>
         <When module="appointments">
           <WorkList title="Booking hari ini" description="Belum check-in" to="/registration" linkLabel="Check-in" empty="Semua booking sudah datang.">
             {booked.slice(0, 6).map((a) => (
-              <WorkRow key={a.id} to="/registration" title={`${a.time} · ${patients.get(a.patientId)?.name}`} sub={`${unitName(a.unitId)} · ${a.source === "mobile-jkn" ? "Mobile JKN" : a.source}`} />
+              <WorkRow key={a.id} to="/registration" lead={<span className="num w-12 text-sm font-semibold">{a.time}</span>} title={patients.get(a.patientId)?.name} sub={`${unitName(a.unitId)} · ${a.source === "mobile-jkn" ? "Mobile JKN" : a.source}`} />
             ))}
           </WorkList>
         </When>
@@ -179,14 +209,14 @@ function DoctorHome() {
         <When module="outpatient">
           <WorkList title="Antrean poli saya" to="/outpatient" linkLabel="Ke worklist" empty="Tidak ada pasien menunggu.">
             {myWaiting.slice(0, 6).map((e) => (
-              <WorkRow key={e.id} to="/outpatient" title={`${e.queueNumber} · ${patients.get(e.patientId)?.name}`} sub={e.chiefComplaint} aside={<span className="tabular text-sm text-muted">{formatDuration(minutesSince(e.createdAt, now))}</span>} />
+              <WorkRow key={e.id} to="/outpatient" lead={<QueueTicket number={e.queueNumber} />} title={patients.get(e.patientId)?.name} sub={e.chiefComplaint} aside={<span className="tabular text-sm text-muted">{formatDuration(minutesSince(e.createdAt, now))}</span>} />
             ))}
           </WorkList>
         </When>
         <When module="inpatient">
           <WorkList title="Pasien rawat inap saya" description="Diurutkan dari NEWS2 tertinggi — visite yang berisiko dulu" to="/inpatient" empty="Tidak ada pasien rawat inap.">
             {myInpatients.slice(0, 8).map(({ e, latest }) => (
-              <WorkRow key={e.id} to={`/encounters/${e.id}`} title={`${beds.find((b) => b.id === e.bedId)?.code} · ${patients.get(e.patientId)?.name}`} sub={e.diagnoses.find((d) => d.primary)?.display} aside={<News2Chip vitals={latest} />} />
+              <WorkRow key={e.id} to={`/encounters/${e.id}`} lead={<span className="num w-16 text-xs font-bold text-muted">{beds.find((b) => b.id === e.bedId)?.code}</span>} title={patients.get(e.patientId)?.name} sub={e.diagnoses.find((d) => d.primary)?.display} aside={<News2Chip vitals={latest} />} />
             ))}
           </WorkList>
         </When>
@@ -237,7 +267,7 @@ function NurseHome() {
         <When module="nursing">
           <WorkList title="Pasien berisiko (NEWS2 ≥ 5)" description="Lapor DPJP & tingkatkan frekuensi observasi" to="/nursing" empty="Tidak ada pasien berisiko tinggi.">
             {risky.map(({ e, latest }) => (
-              <WorkRow key={e.id} to={`/encounters/${e.id}`} title={`${beds.find((b) => b.id === e.bedId)?.code} · ${patients.get(e.patientId)?.name}`} sub={news2(latest!)?.response} aside={<News2Chip vitals={latest} />} />
+              <WorkRow key={e.id} to={`/encounters/${e.id}`} lead={<span className="num w-16 text-xs font-bold text-muted">{beds.find((b) => b.id === e.bedId)?.code}</span>} title={patients.get(e.patientId)?.name} sub={news2(latest!)?.response} aside={<News2Chip vitals={latest} />} />
             ))}
           </WorkList>
           <WorkList title="Jadwal obat" to="/nursing" empty="Tidak ada obat jatuh tempo.">

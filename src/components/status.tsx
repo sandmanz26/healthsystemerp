@@ -3,7 +3,7 @@
  * per domain status so the same state reads the same everywhere.
  */
 import { Chip } from "@heroui/react"
-import { TRIAGE } from "@/domain/clinical"
+import { TriageTag } from "@/components/clinical/triage-tag"
 import type {
   BedStatus, ClaimStatus, EncounterStatus, InvoiceStatus, OrderStatus, PayerType, PrescriptionStatus, Priority, ResultFlag,
   SyncStatus, TriageLevel,
@@ -94,13 +94,7 @@ const SYNC: Record<SyncStatus, Def> = {
 export const SyncChip = ({ status }: { status: SyncStatus }) => <StatusChip def={SYNC[status]} />
 
 export function TriageChip({ level }: { level?: TriageLevel }) {
-  if (!level) return <StatusChip def={{ label: "Belum triase", color: "default" }} />
-  const t = TRIAGE[level]
-  return (
-    <Chip color={t.color} variant={level <= 2 ? "primary" : "soft"} size="sm" className="whitespace-nowrap">
-      {level} · {t.label}
-    </Chip>
-  )
+  return <TriageTag level={level} />
 }
 
 export function PriorityChip({ priority }: { priority: Priority }) {

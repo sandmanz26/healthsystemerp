@@ -1,13 +1,16 @@
 /**
- * Poli worklist. The doctor's day is this list: call the next patient, examine, finish.
- * Nurses use the same list to take vital signs before the doctor sees the patient.
+ * Poli worklist. The doctor's day is this queue, so the next patient is the hero of the
+ * screen with one big "call" action; everyone else waits on the ticket rail below.
+ * Nurses use the same screen to take vital signs before the doctor sees the patient.
  */
 import { Button, Chip, Switch } from "@heroui/react"
-import { AlertTriangle, Megaphone, Stethoscope } from "lucide-react"
+import { HeartPulse, Megaphone, Stethoscope } from "lucide-react"
 import { useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { QueueList, QueueRow } from "@/components/clinical/queue-row"
+import { QueueTicket } from "@/components/clinical/queue-ticket"
+import { MarkerDots } from "@/components/clinical/wristband"
 import { EncounterStatusChip, PayerChip } from "@/components/status"
-import { DataTable, type Column } from "@/components/ui/data-table"
 import { Empty } from "@/components/ui/empty"
 import { SelectInput } from "@/components/ui/fields"
 import { Page, PageHeader } from "@/components/ui/page"
@@ -17,12 +20,12 @@ import { Stat } from "@/components/ui/stat"
 import { ageLabel, minutesSince } from "@/domain/clinical"
 import type { Encounter } from "@/domain/types"
 import { VitalsDialog } from "@/features/emr/vitals-dialog"
-import { dayKey, formatDuration } from "@/lib/format"
+import { dayKey, formatDuration, formatTime } from "@/lib/format"
 import { usePrefs } from "@/lib/prefs"
 import { toast } from "@/lib/toast"
 import { useNow } from "@/lib/use-now"
 import { useActions, useStore } from "@/store"
-import { usePatientMap, useSession, useStaffMap } from "@/store/selectors"
+import { usePatientMap, useSession } from "@/store/selectors"
 
 type Filter = "waiting" | "active" | "done"
 
@@ -30,7 +33,6 @@ export default function OutpatientPage() {
   const encounters = useStore((s) => s.encounters)
   const units = useStore((s) => s.units)
   const patients = usePatientMap()
-  const staff = useStaffMap()
   const { role, user } = useSession()
   const { callPatient, startEncounter } = useActions()
   const navigate = useNavigate()
@@ -42,6 +44,7 @@ export default function OutpatientPage() {
   const [mineOnly, setMineOnly] = useState(role === "doctor")
   const [filter, setFilter] = useState<Filter>("waiting")
   const [vitalsFor, setVitalsFor] = useState<Encounter>()
+  const isClinician = role === "doctor" || role === "admin"
 
   const list = encounters
     .filter((e) => e.kind === "outpatient" && e.unitId === unit && dayKey(e.createdAt) === dayKey(now))
@@ -50,8 +53,11 @@ export default function OutpatientPage() {
   const waiting = list.filter((e) => e.status === "registered" || e.status === "called")
   const active = list.filter((e) => e.status === "in-progress" || e.status === "awaiting-admission")
   const done = list.filter((e) => e.status === "finished" || e.status === "cancelled")
-  const rows = filter === "waiting" ? waiting : filter === "active" ? active : done
+  const called = waiting.find((e) => e.status === "called")
   const nextUp = waiting.find((e) => e.status === "registered")
+  const hero = called ?? nextUp
+  const rows = (filter === "waiting" ? waiting : filter === "active" ? active : done).filter((e) => filter !== "waiting" || e.id !== hero?.id)
+  const unitName = units.find((u) => u.id === unit)?.name
 
   const open = (e: Encounter) => {
     startEncounter(e.id)
@@ -60,114 +66,44 @@ export default function OutpatientPage() {
 
   const call = (e: Encounter) => {
     callPatient(e.id)
-    toast(`Memanggil ${e.queueNumber}`, { description: `${patients.get(e.patientId)?.name} ke ${units.find((u) => u.id === unit)?.name}` })
+    toast(`Memanggil ${e.queueNumber}`, { description: `${patients.get(e.patientId)?.name} ke ${unitName}` })
   }
 
-  const columns: Column<Encounter>[] = [
-    { id: "queue", header: "No.", cell: (e) => <span className="tabular text-base font-bold">{e.queueNumber}</span> },
-    {
-      id: "patient",
-      header: "Pasien",
-      isRowHeader: true,
-      cell: (e) => {
-        const p = patients.get(e.patientId)!
-        return (
-          <div>
-            <div className="flex items-center gap-1.5 font-medium">
-              {p.name}
-              {p.allergies.length > 0 && <AlertTriangle className="size-3.5 text-danger" aria-label="Ada alergi" />}
-            </div>
-            <div className="tabular text-xs text-muted">
-              RM {p.mrn} · {p.gender === "female" ? "P" : "L"} {ageLabel(p.birthDate)}
-            </div>
-          </div>
-        )
-      },
-    },
-    { id: "complaint", header: "Keluhan", cell: (e) => <span className="line-clamp-2 text-sm">{e.chiefComplaint}</span> },
-    { id: "payer", header: "Penjamin", cell: (e) => <PayerChip payer={e.payer} /> },
-    {
-      id: "vitals",
-      header: "TTV",
-      cell: (e) =>
-        e.vitals.length ? (
-          <Chip size="sm" color="success" variant="soft">
-            Sudah
-          </Chip>
-        ) : (
-          <Button size="sm" variant="ghost" onPress={() => setVitalsFor(e)}>
-            Isi TTV
+  const rowActions = (e: Encounter) => {
+    const vitals = !e.vitals.length && (e.status === "registered" || e.status === "called") && (
+      <Button size="sm" variant="ghost" onPress={() => setVitalsFor(e)}>
+        <HeartPulse className="size-4" aria-hidden /> TTV
+      </Button>
+    )
+    if (!isClinician) return vitals
+    if (e.status === "registered")
+      return (
+        <>
+          {vitals}
+          <Button size="sm" variant="tertiary" onPress={() => call(e)}>
+            Panggil
           </Button>
-        ),
-    },
-    { id: "status", header: "Status", cell: (e) => <EncounterStatusChip status={e.status} /> },
-    {
-      id: "wait",
-      header: "Tunggu",
-      cell: (e) => {
-        const m = minutesSince(e.createdAt, now)
-        return e.status === "registered" || e.status === "called" ? <span className={m > 60 ? "tabular font-semibold text-danger" : "tabular text-muted"}>{formatDuration(m)}</span> : <span className="text-muted">—</span>
-      },
-    },
-    {
-      id: "action",
-      header: "",
-      align: "end",
-      cell: (e) => {
-        if (role !== "doctor" && role !== "admin") return null
-        if (e.status === "registered")
-          return (
-            <Button size="sm" variant="tertiary" onPress={() => call(e)}>
-              Panggil
-            </Button>
-          )
-        if (e.status === "called" || e.status === "in-progress")
-          return (
-            <Button size="sm" variant="primary" onPress={() => open(e)}>
-              {e.status === "called" ? "Periksa" : "Lanjutkan"}
-            </Button>
-          )
-        return (
-          <Button size="sm" variant="ghost" onPress={() => navigate(`/encounters/${e.id}`)}>
-            Lihat
-          </Button>
-        )
-      },
-    },
-  ]
+        </>
+      )
+    if (e.status === "called" || e.status === "in-progress")
+      return (
+        <Button size="sm" variant="primary" onPress={() => open(e)}>
+          {e.status === "called" ? "Periksa" : "Lanjutkan"}
+        </Button>
+      )
+    return (
+      <Button size="sm" variant="ghost" onPress={() => navigate(`/encounters/${e.id}`)}>
+        Lihat
+      </Button>
+    )
+  }
 
   return (
     <Page>
       <PageHeader
         title="Rawat Jalan"
-        description={`${units.find((u) => u.id === unit)?.name} · ${role === "doctor" && mineOnly ? `pasien ${user?.name}` : "semua dokter"}`}
+        description={`${unitName} · ${role === "doctor" && mineOnly ? `pasien ${user?.name}` : "semua dokter"}`}
         actions={
-          nextUp &&
-          (role === "doctor" || role === "admin") && (
-            <Button variant="primary" onPress={() => call(nextUp)}>
-              <Megaphone className="size-4" aria-hidden /> Panggil berikutnya ({nextUp.queueNumber})
-            </Button>
-          )
-        }
-      />
-      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Stat label="Menunggu" value={waiting.length} icon={Stethoscope} tone="warning" onClick={() => setFilter("waiting")} />
-        <Stat label="Sedang diperiksa" value={active.length} tone="accent" onClick={() => setFilter("active")} />
-        <Stat label="Selesai" value={done.filter((e) => e.status === "finished").length} tone="success" onClick={() => setFilter("done")} />
-        <Stat label="Belum TTV" value={waiting.filter((e) => !e.vitals.length).length} hint="Perlu diisi perawat" tone={waiting.some((e) => !e.vitals.length) ? "danger" : "default"} />
-      </div>
-      <Panel flush>
-        <div className="flex flex-col gap-3 border-b border-separator p-4 lg:flex-row lg:items-end lg:justify-between">
-          <Segmented
-            label="Status"
-            value={filter}
-            onChange={setFilter}
-            options={[
-              { value: "waiting", label: "Menunggu", count: waiting.length },
-              { value: "active", label: "Diperiksa", count: active.length },
-              { value: "done", label: "Selesai", count: done.length },
-            ]}
-          />
           <div className="flex flex-wrap items-end gap-4">
             {role === "doctor" && (
               <Switch isSelected={mineOnly} onChange={setMineOnly}>
@@ -175,25 +111,151 @@ export default function OutpatientPage() {
                   <Switch.Control>
                     <Switch.Thumb />
                   </Switch.Control>
-                  <span className="text-sm">Pasien saya saja</span>
+                  <span className="text-sm">Pasien saya</span>
                 </Switch.Content>
               </Switch>
             )}
-            <SelectInput label="Poli" className="w-64" value={unit} onChange={(v) => setUnitFilter("outpatient", v)} options={polis.map((u) => ({ value: u.id, label: u.name }))} />
+            <SelectInput label="Poli" className="w-60" value={unit} onChange={(v) => setUnitFilter("outpatient", v)} options={polis.map((u) => ({ value: u.id, label: u.name }))} />
           </div>
+        }
+      />
+
+      <div className="mb-6 grid gap-4 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+        {hero ? (
+          <NextUp
+            encounter={hero}
+            now={now}
+            isClinician={isClinician}
+            onCall={() => call(hero)}
+            onOpen={() => open(hero)}
+            onVitals={() => setVitalsFor(hero)}
+            queueAfter={waiting.filter((e) => e.id !== hero.id).length}
+          />
+        ) : (
+          <Panel>
+            <Empty icon={Stethoscope} title="Tidak ada pasien menunggu" description="Antrean poli ini sudah habis untuk saat ini." />
+          </Panel>
+        )}
+        <div className="grid grid-cols-2 gap-3">
+          <Stat label="Menunggu" value={waiting.length} tone="warning" onClick={() => setFilter("waiting")} />
+          <Stat label="Diperiksa" value={active.length} tone="accent" onClick={() => setFilter("active")} />
+          <Stat label="Selesai" value={done.filter((e) => e.status === "finished").length} tone="success" onClick={() => setFilter("done")} />
+          <Stat label="Belum TTV" value={waiting.filter((e) => !e.vitals.length).length} hint="Perlu diisi perawat" tone={waiting.some((e) => !e.vitals.length) ? "danger" : "default"} />
         </div>
-        <DataTable
-          label="Worklist poli"
-          rows={rows}
-          columns={columns}
-          rowKey={(e) => e.id}
-          empty={<Empty icon={Stethoscope} title="Tidak ada pasien" description={filter === "waiting" ? "Belum ada pasien menunggu di poli ini." : undefined} />}
-        />
-        <div className="border-t border-separator px-4 py-2 text-xs text-muted">
-          Dokter: {[...new Set(list.map((e) => e.practitionerId))].map((id) => staff.get(id ?? "")?.name).filter(Boolean).join(", ") || "—"}
+      </div>
+
+      <Panel flush>
+        <div className="flex items-center justify-between gap-3 border-b border-separator px-5 py-3">
+          <Segmented
+            label="Status"
+            value={filter}
+            onChange={setFilter}
+            options={[
+              { value: "waiting", label: "Antrean", count: waiting.length },
+              { value: "active", label: "Diperiksa", count: active.length },
+              { value: "done", label: "Selesai", count: done.length },
+            ]}
+          />
         </div>
+        {rows.length === 0 ? (
+          <Empty icon={Stethoscope} title={filter === "waiting" ? "Tidak ada antrean lain" : "Kosong"} />
+        ) : (
+          <QueueList>
+            {rows.map((e) => (
+              <QueueRow
+                key={e.id}
+                ticket={e.queueNumber}
+                patient={patients.get(e.patientId)!}
+                detail={<span className="line-clamp-2">{e.chiefComplaint}</span>}
+                badges={
+                  <>
+                    <PayerChip payer={e.payer} />
+                    {e.vitals.length > 0 && filter === "waiting" && (
+                      <Chip size="sm" variant="soft" color="success">
+                        TTV ✓
+                      </Chip>
+                    )}
+                    <EncounterStatusChip status={e.status} />
+                  </>
+                }
+                waited={e.status === "registered" || e.status === "called" ? minutesSince(e.createdAt, now) : undefined}
+                actions={rowActions(e)}
+                muted={e.status === "cancelled"}
+              />
+            ))}
+          </QueueList>
+        )}
       </Panel>
       {vitalsFor && <VitalsDialog encounterId={vitalsFor.id} patientName={patients.get(vitalsFor.patientId)?.name ?? ""} onClose={() => setVitalsFor(undefined)} />}
     </Page>
+  )
+}
+
+interface NextUpProps {
+  encounter: Encounter
+  now: number
+  isClinician: boolean
+  queueAfter: number
+  onCall: () => void
+  onOpen: () => void
+  onVitals: () => void
+}
+
+/** The patient the doctor should see now, as large as the ticket in the patient's hand. */
+function NextUp({ encounter: e, now, isClinician, queueAfter, onCall, onOpen, onVitals }: NextUpProps) {
+  const patient = useStore((s) => s.patients.find((p) => p.id === e.patientId))!
+  const waited = minutesSince(e.createdAt, now)
+  const called = e.status === "called"
+  return (
+    <section className="bg-grid relative flex flex-col gap-5 overflow-hidden rounded-[14px] border border-border bg-surface p-5 sm:flex-row sm:items-center">
+      <div className="flex flex-col items-center gap-2">
+        <span className="label-caps text-muted">{called ? "Sedang dipanggil" : "Berikutnya"}</span>
+        <QueueTicket number={e.queueNumber} tone="accent" size="lg" />
+        <span className="num text-[11px] text-muted">{queueAfter} lagi di belakang</span>
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <h2 className="truncate text-2xl font-semibold">{patient.name}</h2>
+          <MarkerDots patient={patient} />
+        </div>
+        <div className="num text-xs text-muted">
+          {patient.gender === "female" ? "P" : "L"} · {ageLabel(patient.birthDate)} · RM {patient.mrn} · daftar {formatTime(e.createdAt)}
+        </div>
+        <p className="mt-2 text-sm">
+          <span className="text-muted">Keluhan:</span> {e.chiefComplaint}
+        </p>
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <PayerChip payer={e.payer} />
+          {e.vitals.length ? (
+            <Chip size="sm" variant="soft" color="success">
+              TTV sudah diisi
+            </Chip>
+          ) : (
+            <Button size="sm" variant="ghost" onPress={onVitals}>
+              <HeartPulse className="size-4" aria-hidden /> Isi TTV
+            </Button>
+          )}
+          <span className={waited > 60 ? "num text-sm font-semibold text-danger" : "num text-sm text-muted"}>menunggu {formatDuration(waited)}</span>
+        </div>
+      </div>
+      {isClinician && (
+        <div className="flex shrink-0 flex-col gap-2 sm:w-48">
+          {called ? (
+            <Button size="lg" variant="primary" onPress={onOpen} fullWidth>
+              <Stethoscope className="size-4" aria-hidden /> Mulai periksa
+            </Button>
+          ) : (
+            <Button size="lg" variant="primary" onPress={onCall} fullWidth>
+              <Megaphone className="size-4" aria-hidden /> Panggil
+            </Button>
+          )}
+          {called && (
+            <Button size="sm" variant="ghost" onPress={onCall}>
+              Panggil ulang
+            </Button>
+          )}
+        </div>
+      )}
+    </section>
   )
 }

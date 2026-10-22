@@ -163,9 +163,7 @@ export default function EncounterPage() {
         </Tabs>
 
         <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
-          <Panel title="Tanda vital terakhir">
-            <VitalsGrid vitals={latest[0]} />
-          </Panel>
+          <VitalsGrid vitals={latest[0]} history={encounter.vitals} label={bed?.code ?? encounter.queueNumber} />
           {(role === "doctor" || role === "admin" || closed) && <FinishPanel encounter={encounter} />}
         </aside>
       </div>

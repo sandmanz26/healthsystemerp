@@ -8,6 +8,7 @@ import { ArrowLeft, ArrowRight, Building2, Hospital, Stethoscope } from "lucide-
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
 import { Logo } from "@/app/logo"
+import { CATEGORY_COLOR } from "@/app/navigation"
 import { TextInput } from "@/components/ui/fields"
 import { CATEGORY_LABEL, CATEGORY_ORDER, FACILITY_PRESETS, MODULES, MODULE_MAP, withDependencies, withoutDependents, type FacilityType, type ModuleId } from "@/domain/modules"
 import { cn } from "@/lib/cn"
@@ -68,44 +69,73 @@ export default function OnboardingPage() {
         </div>
 
         {step === 1 && (
-          <div className="mx-auto max-w-3xl space-y-8">
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Selamat datang 👋</h1>
-              <p className="mt-2 text-muted">Ceritakan sedikit tentang faskes Anda. Kami sarankan modul awal yang secukupnya — sisanya bisa ditambah kapan saja ketika tim sudah siap.</p>
-            </div>
-            <TextInput label="Nama faskes" value={name} onChange={setName} isRequired />
-            <fieldset>
-              <legend className="mb-3 text-sm font-medium">Jenis faskes</legend>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {FACILITY_PRESETS.map((p) => {
-                  const Icon = PRESET_ICON[p.id]
-                  const active = p.id === type
-                  return (
-                    <button
-                      type="button"
-                      key={p.id}
-                      onClick={() => chooseType(p.id)}
-                      aria-pressed={active}
-                      className={cn("flex gap-3 rounded-2xl border bg-surface p-4 text-left transition", active ? "border-accent ring-2 ring-accent/30" : "border-border hover:border-accent/50")}
-                    >
-                      <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl", active ? "bg-accent text-accent-foreground" : "bg-default text-muted")}>
-                        <Icon className="size-5" aria-hidden />
-                      </span>
-                      <span>
-                        <span className="block font-semibold">{p.name}</span>
-                        <span className="block text-sm text-muted">{p.description}</span>
-                        <span className="mt-1 block text-xs text-accent">{p.start.length} modul awal</span>
-                      </span>
-                    </button>
-                  )
-                })}
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start">
+            <div className="bg-grid rounded-[20px] border border-border bg-surface p-8 lg:sticky lg:top-8">
+              <span className="label-caps text-muted">Langkah 1 · Faskes Anda</span>
+              <h1 className="mt-3 text-[40px] font-semibold leading-[1.05] sm:text-5xl">Mulai dari yang Anda butuhkan hari ini.</h1>
+              <p className="mt-4 max-w-md text-muted">
+                Setiap modul adalah satu slot. Pasang yang dibutuhkan tim sekarang; tambahkan sisanya ketika siap. Modul yang belum dipasang tidak akan muncul di layar siapa pun.
+              </p>
+              <div className="mt-8">
+                <div className="flex items-baseline justify-between">
+                  <span className="label-caps text-muted">Slot terpasang · {preset.name}</span>
+                  <span className="num text-sm font-semibold">
+                    {withDependencies(preset.start).size}/{MODULES.filter((m) => !m.core).length}
+                  </span>
+                </div>
+                <div className="mt-2 grid grid-cols-[repeat(19,minmax(0,1fr))] gap-1" aria-hidden>
+                  {MODULES.filter((m) => !m.core).map((m) => (
+                    <span key={m.id} className={cn("h-10 rounded-[3px] transition-colors duration-300", withDependencies(preset.start).has(m.id) ? CATEGORY_COLOR[m.category] : "bg-surface-tertiary")} title={m.name} />
+                  ))}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-x-3 gap-y-1">
+                  {CATEGORY_ORDER.filter((c) => c !== "core").map((c) => (
+                    <span key={c} className="flex items-center gap-1.5 text-[11px] text-muted">
+                      <span className={cn("size-2 rounded-sm", CATEGORY_COLOR[c])} />
+                      {CATEGORY_LABEL[c]}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </fieldset>
-            <div className="flex justify-end">
-              <Button variant="primary" size="lg" onPress={() => setStep(2)} isDisabled={!name.trim()}>
-                Lanjut pilih modul
-                <ArrowRight className="size-4" aria-hidden />
-              </Button>
+            </div>
+            <div className="space-y-6">
+              <TextInput label="Nama faskes" value={name} onChange={setName} isRequired />
+              <fieldset>
+                <legend className="label-caps mb-3 text-muted">Jenis faskes</legend>
+                <div className="grid gap-3">
+                  {FACILITY_PRESETS.map((p) => {
+                    const Icon = PRESET_ICON[p.id]
+                    const active = p.id === type
+                    return (
+                      <button
+                        type="button"
+                        key={p.id}
+                        onClick={() => chooseType(p.id)}
+                        aria-pressed={active}
+                        className={cn("flex items-center gap-4 rounded-[14px] border bg-surface p-4 text-left transition", active ? "border-foreground shadow-[inset_4px_0_0_var(--accent)]" : "border-border hover:border-foreground/40")}
+                      >
+                        <span className={cn("grid size-11 shrink-0 place-items-center rounded-xl", active ? "bg-foreground text-background" : "border border-dashed border-border text-muted")}>
+                          <Icon className="size-5" aria-hidden />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block font-display text-[17px] font-semibold">{p.name}</span>
+                          <span className="block text-sm text-muted">{p.description}</span>
+                        </span>
+                        <span className="num shrink-0 text-right text-xs text-muted">
+                          <b className="block text-lg text-foreground">{p.start.length}</b>
+                          modul awal
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              </fieldset>
+              <div className="flex justify-end">
+                <Button variant="primary" size="lg" onPress={() => setStep(2)} isDisabled={!name.trim()}>
+                  Lanjut pilih modul
+                  <ArrowRight className="size-4" aria-hidden />
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -114,7 +144,7 @@ export default function OnboardingPage() {
           <div className="space-y-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h1 className="text-3xl font-bold tracking-tight">Modul awal untuk {preset.name}</h1>
+                <h1 className="text-4xl font-semibold">Modul awal untuk {preset.name}</h1>
                 <p className="mt-2 max-w-2xl text-muted">
                   Yang tercentang adalah saran kami untuk mulai. Modul inti (Master Pasien, Pengaturan) selalu aktif. Modul yang tidak aktif <b>tidak akan tampil</b> di menu siapa pun.
                 </p>
@@ -137,7 +167,7 @@ export default function OnboardingPage() {
             )}
             {grouped.map(({ category, modules }) => (
               <section key={category} className="space-y-3">
-                <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">{CATEGORY_LABEL[category]}</h2>
+                <h2 className="label-caps text-muted">{CATEGORY_LABEL[category]}</h2>
                 <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                   {modules.map((m) => (
                     <ModuleCard

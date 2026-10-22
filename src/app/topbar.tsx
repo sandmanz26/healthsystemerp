@@ -8,6 +8,7 @@ import { formatRelative, initials } from "@/lib/format"
 import { usePrefs, type ThemePref } from "@/lib/prefs"
 import { useActions, useStore } from "@/store"
 import { useSession } from "@/store/selectors"
+import { ShiftIndicator } from "./shift-indicator"
 
 const THEME_ICON = { light: Sun, dark: Moon, system: Monitor }
 const THEME_NEXT: Record<ThemePref, ThemePref> = { system: "light", light: "dark", dark: "system" }
@@ -19,7 +20,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
   const { lock } = useActions()
 
   return (
-    <header className="no-print sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-separator bg-background/85 px-4 backdrop-blur sm:px-6">
+    <header className="no-print sticky top-0 z-30 flex h-[68px] items-center gap-3 border-b border-separator bg-background/90 px-4 backdrop-blur sm:px-8">
       <Button isIconOnly variant="ghost" className="lg:hidden" aria-label="Buka menu" onPress={onOpenMenu}>
         <Menu className="size-5" />
       </Button>
@@ -27,7 +28,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
       <button
         type="button"
         onClick={onOpenSearch}
-        className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-left text-sm text-muted transition hover:border-accent/50 sm:max-w-md"
+        className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-left text-sm text-muted transition hover:border-accent/60 sm:max-w-sm"
       >
         <Search className="size-4 shrink-0" aria-hidden />
         <span className="truncate">Cari pasien atau menu…</span>
@@ -38,6 +39,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
       </button>
 
       <div className="ml-auto flex items-center gap-1">
+        <ShiftIndicator />
         <Notifications />
         <Tooltip delay={300}>
           <Button isIconOnly variant="ghost" aria-label={THEME_LABEL[theme]} onPress={() => setTheme(THEME_NEXT[theme])}>

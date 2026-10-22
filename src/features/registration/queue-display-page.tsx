@@ -28,31 +28,41 @@ export default function QueueDisplayPage() {
   }, [encounters, units, now])
 
   return (
-    <div className="dark min-h-screen bg-[oklch(0.18_0.02_200)] p-6 text-white sm:p-10" data-theme="dark">
+    <div className="dark bg-grid min-h-screen bg-[oklch(0.15_0.02_210)] p-6 text-white sm:p-10" data-theme="dark">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Logo compact />
           <div>
-            <div className="text-2xl font-bold">{facility}</div>
+            <div className="font-display text-3xl font-semibold">{facility}</div>
             <div className="text-white/60">Antrean rawat jalan</div>
           </div>
         </div>
         <div className="text-right">
-          <div className="tabular text-4xl font-bold">{formatTime(new Date(now).toISOString())}</div>
+          <div className="num text-5xl font-semibold">{formatTime(new Date(now).toISOString())}</div>
           <div className="text-white/60">{formatDateLong(new Date(now))}</div>
         </div>
       </header>
       <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
         {boards.map(({ unit, called, next, waiting }) => (
-          <section key={unit.id} className="rounded-3xl bg-white/5 p-6 ring-1 ring-white/10">
-            <h2 className="text-xl font-semibold text-white/80">{unit.name}</h2>
-            <div className="mt-4 text-sm uppercase tracking-widest text-white/50">Dipanggil</div>
-            <div className="tabular text-7xl font-extrabold tracking-tight text-[oklch(0.8_0.12_186)]" aria-live="polite">
+          <section key={unit.id} className="rounded-2xl bg-[oklch(0.2_0.022_212)] p-6 ring-1 ring-white/10">
+            <h2 className="text-2xl font-semibold text-white/85">{unit.name}</h2>
+            <div className="label-caps mt-5 text-white/50">Dipanggil</div>
+            <div className="ticket num mt-2 inline-block bg-[oklch(0.82_0.12_168)] px-8 py-3 text-7xl font-bold tracking-tight text-[oklch(0.18_0.03_200)] [--notch:12px]" aria-live="polite">
               {called?.queueNumber ?? "—"}
             </div>
-            <div className="mt-5 text-sm uppercase tracking-widest text-white/50">Berikutnya</div>
-            <div className="tabular mt-1 flex gap-3 text-2xl font-bold text-white/90">{next.length ? next.map((e) => <span key={e.id}>{e.queueNumber}</span>) : <span className="text-white/40">—</span>}</div>
-            <div className="mt-4 text-sm text-white/50">{waiting} orang menunggu</div>
+            <div className="label-caps mt-6 text-white/50">Berikutnya</div>
+            <div className="mt-2 flex gap-2">
+              {next.length ? (
+                next.map((e) => (
+                  <span key={e.id} className="ticket num bg-white/10 px-4 py-1.5 text-2xl font-bold text-white/90 [--notch:6px]">
+                    {e.queueNumber}
+                  </span>
+                ))
+              ) : (
+                <span className="text-2xl text-white/40">—</span>
+              )}
+            </div>
+            <div className="num mt-4 text-sm text-white/50">{waiting} orang menunggu</div>
           </section>
         ))}
       </div>

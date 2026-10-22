@@ -413,29 +413,34 @@ function makeOutpatientToday(ctx: Ctx, patients: Patient[]) {
   const { rng, now, data } = ctx
   const plan: [string, number][] = [["poli-umum", 10], ["poli-dalam", 6], ["poli-anak", 3], ["poli-obgyn", 2], ["poli-bedah", 1], ["poli-saraf", 1], ["poli-gigi", 2]]
   const prefixes: Record<string, string> = { "poli-umum": "A", "poli-dalam": "B", "poli-anak": "C", "poli-obgyn": "D", "poli-bedah": "E", "poli-saraf": "F", "poli-gigi": "G" }
+  const startOfDay = new Date(now).setHours(0, 1, 0, 0)
+  const dayFit = Math.min(1, (now - startOfDay) / (190 * MIN))
   for (const [unitId, count] of plan) {
     const doc = doctorFor(unitId)
     for (let i = 0; i < count; i++) {
       const s = OUTPATIENT_SCENARIOS[unitId][i % OUTPATIENT_SCENARIOS[unitId].length]
       const patient = pickPatient(ctx, patients, s, ctx.active)
-      // Earlier queue numbers arrived earlier and are further along.
-      const createdAt = now - (count - i) * rng.int(9, 14) * MIN - 10 * MIN
+      // Earlier queue numbers arrived earlier and are further along. Shortly after midnight the
+      // clinic day is compressed so "today" is never empty in the demo.
+      const offset = (count - i) * rng.int(9, 14) * MIN + 10 * MIN
+      const createdAt = now - offset * dayFit
       const share = i / count
       const status: EncounterStatus = share < 0.45 ? "finished" : share < 0.55 ? "in-progress" : share < 0.62 ? "called" : "registered"
       const enc = baseEncounter(`op${unitId}${i}`, patient, "outpatient", unitId, doc, createdAt, status, s)
       enc.queueNumber = `${prefixes[unitId]}${String(i + 1).padStart(3, "0")}`
       if (status !== "registered") enc.vitals.push(vitalsFrom(s, createdAt + 8 * MIN, "n5", rng))
-      if (status === "called") enc.calledAt = isoAt(now - 2 * MIN)
+      if (status === "called") enc.calledAt = isoAt(now - 1 * MIN)
       if (status === "in-progress" || status === "finished") {
-        enc.calledAt = isoAt(createdAt + 20 * MIN)
-        enc.startedAt = isoAt(createdAt + 22 * MIN)
+        // Never later than "now", and earlier than the patient currently being called.
+        enc.calledAt = isoAt(Math.min(createdAt + 20 * MIN * dayFit, now - 3 * MIN))
+        enc.startedAt = isoAt(Math.min(createdAt + 22 * MIN * dayFit, now - 2 * MIN))
       }
       data.encounters.push(enc)
       const inv = openInvoice(ctx, enc)
       tariff(inv, createdAt, "admin")
       data.queueCounters[`${dayKey()}:${unitId}`] = i + 1
       if (status === "finished") {
-        const t = createdAt + 30 * MIN
+        const t = Math.min(createdAt + 30 * MIN * dayFit, now - 2 * MIN)
         enc.endedAt = isoAt(t)
         enc.diagnoses = diagnosesFrom(s)
         enc.notes.push(noteFrom(s, t, doc))
@@ -458,7 +463,7 @@ function makeEmergencyNow(ctx: Ctx, patients: Patient[]) {
   picks.forEach((si, i) => {
     const s = ER_SCENARIOS[si]
     const patient = pickPatient(ctx, patients, s, ctx.active)
-    const createdAt = now - [4, 18, 35, 52, 75, 96, 140, 190][i] * MIN
+    const createdAt = now - [4, 18, 35, 52, 75, 96, 140, 190][i] * MIN * Math.min(1, (now - new Date(now).setHours(0, 1, 0, 0)) / (200 * MIN))
     const status: EncounterStatus = i === 0 ? "registered" : i === 7 ? "awaiting-admission" : i < 3 ? "triaged" : "in-progress"
     const doc = i % 2 ? "d2" : "d12"
     const enc = baseEncounter(`er${i}`, patient, "emergency", "igd", doc, createdAt, status, s)
@@ -546,6 +551,19 @@ function makeInpatientsNow(ctx: Ctx, patients: Patient[]) {
       const rx = addPrescription(ctx, enc, s, start + 2 * HOUR, "dispensed", doc)
       if (rx) makeMar(ctx, enc, rx)
     }
+  }
+  // Safety markers: elderly or post-op patients are fall risks; one ICU patient is DNR.
+  for (const enc of data.encounters.filter((e) => e.kind === "inpatient" && e.status === "in-progress")) {
+    const p = data.patients.find((x) => x.id === enc.patientId)!
+    const flags = new Set(p.flags ?? [])
+    if (ageYears(p, now) >= 65 || enc.diagnoses.some((d) => ["S72.0", "I63.9"].includes(d.code))) flags.add("fall-risk")
+    if (enc.unitId === "icu" && enc.diagnoses[0]?.code === "I63.9" && ageYears(p, now) >= 75) flags.add("dnr")
+    p.flags = [...flags]
+  }
+  const stroke = data.encounters.find((e) => e.unitId === "icu" && e.status === "in-progress" && e.diagnoses[0]?.code === "I63.9")
+  if (stroke) {
+    const p = data.patients.find((x) => x.id === stroke.patientId)!
+    p.flags = [...new Set([...(p.flags ?? []), "dnr" as const])]
   }
   // A few beds being cleaned or under maintenance — housekeeping is part of bed flow.
   const free = data.beds.filter((b) => b.status === "available")

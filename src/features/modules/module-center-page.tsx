@@ -116,7 +116,7 @@ export default function ModuleCenterPage() {
           if (!items.length) return null
           return (
             <section key={category} className="space-y-3">
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-muted">{CATEGORY_LABEL[category]}</h2>
+              <h2 className="label-caps text-muted">{CATEGORY_LABEL[category]}</h2>
               <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
                 {items.map((m) => {
                   const state = modules[m.id]

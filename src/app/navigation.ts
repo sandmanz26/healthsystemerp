@@ -84,3 +84,16 @@ export function isNavVisible(item: NavItem, enabled: Set<ModuleId>, role: RoleId
 export function navForPath(pathname: string): NavItem | undefined {
   return [...NAV].sort((a, b) => b.path.length - a.path.length).find((n) => (n.path === "/" ? pathname === "/" : pathname.startsWith(n.path)))
 }
+
+/** Divider colour per module category (Tailwind classes from the cat-* tokens). */
+export const CATEGORY_COLOR: Record<ModuleCategory | "home", string> = {
+  home: "bg-accent",
+  core: "bg-cat-core",
+  front: "bg-cat-front",
+  clinical: "bg-cat-clinical",
+  support: "bg-cat-support",
+  finance: "bg-cat-finance",
+  operations: "bg-cat-operations",
+  quality: "bg-cat-quality",
+  integration: "bg-cat-integration",
+}

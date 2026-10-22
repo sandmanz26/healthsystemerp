@@ -2,17 +2,18 @@
  * Bed board. The single most-watched screen in an inpatient unit: who is where, which beds
  * are free or being cleaned, and who is waiting in the ER for a bed.
  */
-import { Button, Card, Dropdown, Label } from "@heroui/react"
-import { AlertTriangle, BedDouble, BedSingle, Clock, MoreVertical, Plus, Sparkles } from "lucide-react"
+import { Button, Dropdown, Label } from "@heroui/react"
+import { BedDouble, BedSingle, Clock, MoreVertical, Plus, Sparkles } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
+import { MarkerDots } from "@/components/clinical/wristband"
 import { BedStatusChip, PayerChip } from "@/components/status"
 import { Empty } from "@/components/ui/empty"
 import { Page, PageHeader } from "@/components/ui/page"
 import { Panel } from "@/components/ui/panel"
 import { Segmented } from "@/components/ui/segmented"
 import { Stat } from "@/components/ui/stat"
-import { ageLabel, minutesSince } from "@/domain/clinical"
+import { ageLabel, minutesSince, news2 } from "@/domain/clinical"
 import type { Bed, BedStatus, Encounter } from "@/domain/types"
 import { News2Chip } from "@/features/emr/clinical-widgets"
 import { cn } from "@/lib/cn"
@@ -22,14 +23,6 @@ import { toast } from "@/lib/toast"
 import { useActions, useStore } from "@/store"
 import { usePatientMap, useStaffMap, useUnitName } from "@/store/selectors"
 import { AdmitDialog, TransferDialog } from "./admit-dialog"
-
-const CARD_TONE: Record<BedStatus, string> = {
-  occupied: "border-accent/30",
-  available: "border-success/40 border-dashed",
-  cleaning: "border-warning/50 border-dashed",
-  maintenance: "border-danger/40 border-dashed opacity-70",
-  reserved: "border-border border-dashed",
-}
 
 export default function InpatientPage() {
   const beds = useStore((s) => s.beds)
@@ -153,6 +146,18 @@ interface BedCardProps {
   onAdmit: () => void
 }
 
+const BLANKET: Record<BedStatus, string> = {
+  occupied: "bg-accent-soft text-foreground",
+  available: "border-2 border-dashed border-success/50 text-success",
+  cleaning: "bg-hatch text-warning/40",
+  maintenance: "bg-hatch text-danger/35",
+  reserved: "border-2 border-dotted border-border text-muted",
+}
+
+/**
+ * One bed drawn from above: headboard, pillow, blanket. The blanket carries the patient;
+ * its fill is the bed status (hatching = not usable right now).
+ */
 function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) {
   const patients = usePatientMap()
   const staff = useStaffMap()
@@ -160,13 +165,15 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
   const patient = encounter ? patients.get(encounter.patientId) : undefined
   const latest = encounter ? [...encounter.vitals].sort((a, b) => b.at.localeCompare(a.at))[0] : undefined
   const los = encounter ? Math.max(1, Math.ceil(minutesSince(encounter.startedAt ?? encounter.createdAt) / 1440)) : 0
+  const score = latest ? news2(latest) : null
+  const alarm = score && score.risk !== "rendah"
 
   return (
-    <Card className={cn("gap-2 border-2 p-4", CARD_TONE[bed.status])}>
-      <div className="flex items-center justify-between gap-2">
+    <article className={cn("rounded-[14px] border bg-surface p-3", alarm ? (score.risk === "tinggi" ? "border-danger" : "border-warning") : "border-border")}>
+      <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="tabular font-bold">{bed.code}</span>
-          <span className="rounded-md bg-surface-secondary px-1.5 py-0.5 text-[11px] font-medium text-muted">{bed.bedClass}</span>
+          <span className="num text-sm font-bold">{bed.code}</span>
+          <span className="label-caps text-muted">{bed.bedClass}</span>
         </div>
         <div className="flex items-center gap-1">
           <BedStatusChip status={bed.status} />
@@ -206,25 +213,40 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
           </Dropdown>
         </div>
       </div>
-      {encounter && patient ? (
-        <button type="button" onClick={() => onOpen(encounter)} className="text-left">
-          <div className="flex items-center gap-1.5 font-semibold">
-            {patient.name}
-            {patient.allergies.length > 0 && <AlertTriangle className="size-3.5 text-danger" aria-label="Ada alergi" />}
+
+      {/* The bed, from above */}
+      <div className="flex h-[104px] items-stretch gap-1.5 rounded-xl border border-border bg-surface-secondary p-1.5">
+        <div className="w-1.5 shrink-0 rounded-full bg-surface-tertiary" aria-hidden />
+        <div className="flex w-7 shrink-0 items-center" aria-hidden>
+          <div className="h-3/5 w-full rounded-md border border-border bg-surface" />
+        </div>
+        {encounter && patient ? (
+          <button type="button" onClick={() => onOpen(encounter)} className={cn("min-w-0 flex-1 rounded-lg px-2.5 py-1.5 text-left transition hover:brightness-[0.97]", BLANKET.occupied)}>
+            <div className="flex items-center gap-1.5">
+              <span className="truncate font-semibold">{patient.name}</span>
+              <MarkerDots patient={patient} />
+            </div>
+            <div className="num truncate text-[11px] text-muted">
+              {patient.gender === "female" ? "P" : "L"} · {ageLabel(patient.birthDate)} · hari ke-{los}
+            </div>
+            <div className="mt-0.5 line-clamp-1 text-xs">{encounter.diagnoses.find((d) => d.primary)?.display ?? encounter.chiefComplaint}</div>
+            <div className="mt-1 flex items-center gap-1.5">
+              <News2Chip vitals={latest} />
+              <span className="truncate text-[11px] text-muted">{staff.get(encounter.practitionerId ?? "")?.name.replace(/,.*$/, "")}</span>
+            </div>
+          </button>
+        ) : (
+          <div className={cn("flex min-w-0 flex-1 items-center justify-center rounded-lg text-center", BLANKET[bed.status])}>
+            {bed.status === "available" ? (
+              <button type="button" onClick={onAdmit} className="label-caps h-full w-full rounded-lg hover:bg-success/10">
+                Kosong · admisi
+              </button>
+            ) : (
+              <span className="label-caps rounded bg-surface px-2 py-1 text-muted">{bed.status === "cleaning" ? "Housekeeping" : bed.status === "reserved" ? "Dipesan" : "Perbaikan"}</span>
+            )}
           </div>
-          <div className="tabular text-xs text-muted">
-            {patient.gender === "female" ? "P" : "L"} · {ageLabel(patient.birthDate)} · RM {patient.mrn}
-          </div>
-          <div className="mt-1 line-clamp-1 text-sm">{encounter.diagnoses.find((d) => d.primary)?.display ?? encounter.chiefComplaint}</div>
-          <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-muted">
-            <News2Chip vitals={latest} />
-            <span>Hari ke-{los}</span>
-            <span>· {staff.get(encounter.practitionerId ?? "")?.name.replace(/,.*$/, "")}</span>
-          </div>
-        </button>
-      ) : (
-        <p className="text-sm text-muted">{bed.status === "available" ? "Siap menerima pasien" : bed.status === "cleaning" ? "Menunggu housekeeping" : bed.status === "reserved" ? "Dipesan untuk admisi terencana" : "Tidak dapat dipakai"}</p>
-      )}
-    </Card>
+        )}
+      </div>
+    </article>
   )
 }
