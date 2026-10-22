@@ -1,14 +1,17 @@
 import { DEFAULT_USER_FOR_ROLE } from "@/data/master"
 import { createSeed } from "@/data/seed"
 import { MODULE_MAP, blockersForDisable, missingForEnable, type FacilityType, type ModuleId } from "@/domain/modules"
+import type { Region } from "@/domain/region"
 import type { RoleId } from "@/domain/types"
 import { audit, nowIso, type SetFn } from "../helpers"
 import type { FacilityProfile } from "../schema"
 
 export function tenantActions(set: SetFn) {
   return {
-    completeOnboarding(input: { facilityName: string; type: FacilityType; modules: ModuleId[] }) {
+    /** Finishes first-run setup. Choosing another region rebuilds the demo data for that market. */
+    completeOnboarding(input: { facilityName: string; type: FacilityType; modules: ModuleId[]; region: Region }) {
       set((d) => {
+        if (input.region !== d.facility.region) Object.assign(d, createSeed(input.modules, input.region), { session: d.session })
         d.facility.name = input.facilityName.trim() || d.facility.name
         d.facility.type = input.type
         for (const id of Object.keys(d.modules) as ModuleId[]) {
@@ -17,7 +20,7 @@ export function tenantActions(set: SetFn) {
           d.modules[id].enabledAt = nowIso()
         }
         d.onboarded = true
-        audit(d, "Menyelesaikan onboarding", input.type)
+        audit(d, "Completed onboarding", input.type)
       })
     },
 
@@ -28,7 +31,7 @@ export function tenantActions(set: SetFn) {
         for (const m of [...missingForEnable(id, enabled), id]) {
           d.modules[m].enabled = true
           d.modules[m].enabledAt = nowIso()
-          audit(d, "Mengaktifkan modul", MODULE_MAP[m].name)
+          audit(d, "Enabled module", MODULE_MAP[m].name)
         }
       })
     },
@@ -41,7 +44,7 @@ export function tenantActions(set: SetFn) {
         blockers = blockersForDisable(id, enabled)
         if (blockers.length || MODULE_MAP[id].core) return
         d.modules[id].enabled = false
-        audit(d, "Menonaktifkan modul", MODULE_MAP[id].name)
+        audit(d, "Disabled module", MODULE_MAP[id].name)
       })
       return blockers
     },
@@ -76,7 +79,7 @@ export function tenantActions(set: SetFn) {
     updateFacility(patch: Partial<FacilityProfile>) {
       set((d) => {
         Object.assign(d.facility, patch)
-        audit(d, "Mengubah profil faskes", d.facility.name)
+        audit(d, "Updated facility profile", d.facility.name)
       })
     },
 
@@ -97,7 +100,7 @@ export function tenantActions(set: SetFn) {
     resetDemo() {
       set((d) => {
         const enabled = (Object.keys(d.modules) as ModuleId[]).filter((m) => d.modules[m].enabled)
-        const fresh = createSeed(enabled)
+        const fresh = createSeed(enabled, d.facility.region)
         Object.assign(d, fresh, { onboarded: d.onboarded, session: d.session, facility: d.facility })
       })
     },
@@ -105,7 +108,7 @@ export function tenantActions(set: SetFn) {
     /** Back to first-run (choose facility type again). */
     restartOnboarding() {
       set((d) => {
-        Object.assign(d, createSeed(), { onboarded: false })
+        Object.assign(d, createSeed(undefined, d.facility.region), { onboarded: false })
       })
     },
   }

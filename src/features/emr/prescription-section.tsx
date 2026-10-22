@@ -1,7 +1,8 @@
 /**
- * Electronic prescribing with live review: allergy cross-reactivity, interactions,
- * duplicate therapy, high-alert drugs and Fornas status are checked while typing, the same
- * rules the pharmacist sees — fewer calls back from the pharmacy.
+ * Medication ordering (CPOE / ePMA) with live clinical decision support: allergy
+ * cross-reactivity, interactions, therapeutic duplication, ISMP high-alert drugs, controlled
+ * substances and formulary status are checked while typing — the same rules the pharmacist
+ * verifies against, so fewer call-backs from pharmacy.
  */
 import { Button, Chip } from "@heroui/react"
 import { AlertOctagon, AlertTriangle, Info, Plus, Trash2 } from "lucide-react"
@@ -9,20 +10,58 @@ import { useMemo } from "react"
 import { RxStatusChip } from "@/components/status"
 import { SelectInput, TextInput } from "@/components/ui/fields"
 import { Panel } from "@/components/ui/panel"
-import { FREQUENCIES, ROUTES_OF_ADMIN } from "@/domain/catalog"
+import { FREQUENCIES, ROUTES_OF_ADMIN, frequencyLabel } from "@/domain/catalog"
 import { reviewPrescription, type DrugAlert } from "@/domain/clinical"
-import type { Encounter, Patient, PrescriptionItem } from "@/domain/types"
+import type { Encounter, InventoryItem, Patient, PrescriptionItem } from "@/domain/types"
 import { cn } from "@/lib/cn"
-import { formatDateTime, formatRupiah } from "@/lib/format"
+import { formatDateTime, formatMoney } from "@/lib/format"
 import { toast } from "@/lib/toast"
 import { useDraft } from "@/lib/use-draft"
 import { useActions, useStore } from "@/store"
-import { stockOf, useInventoryMap } from "@/store/selectors"
+import { stockOf, useInventoryMap, useRegion } from "@/store/selectors"
+import type { Region } from "@/domain/region"
 
-const PER_DAY: Record<string, number> = { "1x1": 1, "2x1": 2, "3x1": 3, "4x1": 4, "Tiap 8 jam": 3, "Tiap 12 jam": 2, "Jika perlu": 1 }
+/** Doses per day for the quantity calculation (PRN / once count as one). */
+const perDay = (id: string) => Math.max(1, FREQUENCIES.find((f) => f.id === id)?.hours.length ?? 1)
 
 type Line = Omit<PrescriptionItem, "qty"> & { qty: string }
-const newLine = (): Line => ({ itemId: "", dose: "", frequency: "3x1", route: "Oral", days: 3, qty: "" })
+const newLine = (): Line => ({ itemId: "", dose: "", frequency: "tid", route: "PO", days: 3, qty: "" })
+
+/** Safety badges for a drug: ISMP high-alert, DEA / Misuse of Drugs schedule, formulary. */
+export function DrugBadges({ item, region }: { item: InventoryItem; region: Region }) {
+  return (
+    <>
+      {item.highAlert && (
+        <Chip size="sm" color="danger" variant="soft">
+          High alert
+        </Chip>
+      )}
+      {item.controlled && (
+        <Chip size="sm" color="warning" variant="soft" className="num">
+          {region === "us" ? `DEA C-${item.controlled}` : `CD${item.controlled}`}
+        </Chip>
+      )}
+      {item.formulary === false && (
+        <Chip size="sm" variant="soft">
+          Non-formulary
+        </Chip>
+      )}
+    </>
+  )
+}
+
+function drugMeta(d: InventoryItem, region: Region): string {
+  return [
+    d.strength,
+    d.form,
+    `on hand ${stockOf(d)}`,
+    d.highAlert && "HIGH ALERT",
+    d.controlled && (region === "us" ? `DEA C-${d.controlled}` : `CD${d.controlled}`),
+    d.formulary === false && "non-formulary",
+  ]
+    .filter(Boolean)
+    .join(" · ")
+}
 
 export function AlertList({ alerts }: { alerts: DrugAlert[] }) {
   if (!alerts.length) return null
@@ -46,12 +85,13 @@ export function PrescriptionSection({ encounter, patient, readOnly }: { encounte
   const allRx = useStore((s) => s.prescriptions)
   const items = useInventoryMap()
   const { prescribe } = useActions()
+  const region = useRegion()
   const [lines, setLines, clear] = useDraft<Line[]>(`rx:${encounter.id}`, [newLine()])
-  const drugs = inventory.filter((i) => i.category === "obat")
+  const drugs = useMemo(() => inventory.filter((i) => i.category === "drug"), [inventory])
   const existing = useMemo(() => allRx.filter((r) => r.encounterId === encounter.id).sort((a, b) => b.prescribedAt.localeCompare(a.prescribedAt)), [allRx, encounter.id])
 
   const chosen = lines.filter((l) => l.itemId).map((l) => items.get(l.itemId)!).filter(Boolean)
-  const alerts = reviewPrescription(patient, chosen)
+  const alerts = reviewPrescription(patient, chosen, region)
   const blocking = alerts.some((a) => a.level === "danger")
 
   const update = (i: number, patch: Partial<Line>) =>
@@ -60,7 +100,7 @@ export function PrescriptionSection({ encounter, patient, readOnly }: { encounte
         if (idx !== i) return l
         const next = { ...l, ...patch }
         // Quantity follows dose frequency × days unless the prescriber typed one.
-        if (("frequency" in patch || "days" in patch || "itemId" in patch) && !("qty" in patch)) next.qty = String((PER_DAY[next.frequency] ?? 1) * next.days)
+        if (("frequency" in patch || "days" in patch || "itemId" in patch) && !("qty" in patch)) next.qty = String(perDay(next.frequency) * next.days)
         return next
       }),
     )
@@ -71,7 +111,7 @@ export function PrescriptionSection({ encounter, patient, readOnly }: { encounte
   return (
     <div className="space-y-4">
       {!readOnly && (
-        <Panel title="Resep elektronik" description="Telaah otomatis berjalan saat Anda mengetik.">
+        <Panel title={region === "us" ? "New medication order" : "Prescribe (ePMA)"} description="Allergy, interaction and formulary checks run as you type.">
           <div className="space-y-3">
             {lines.map((l, i) => {
               const item = items.get(l.itemId)
@@ -79,41 +119,46 @@ export function PrescriptionSection({ encounter, patient, readOnly }: { encounte
               return (
                 <div key={i} className="grid gap-2 rounded-xl bg-surface-secondary p-3 md:grid-cols-[minmax(200px,2fr)_1fr_1fr_1fr_80px_80px_auto]">
                   <SelectInput
-                    label="Obat"
+                    label="Medication"
                     value={l.itemId || null}
                     onChange={(v) => update(i, { itemId: v, dose: items.get(v)?.strength ?? "" })}
-                    options={drugs.map((d) => ({ value: d.id, label: d.name, description: `${d.form ?? ""} · stok ${stockOf(d)}${d.highAlert ? " · HIGH ALERT" : ""}${d.fornas ? "" : " · non-Fornas"}` }))}
-                    description={item ? `Stok ${stock} ${item.unit}` : undefined}
+                    options={drugs.map((d) => ({ value: d.id, label: d.name, description: drugMeta(d, region) }))}
+                    description={item ? `${stock} ${item.unit} on hand${item.atc ? ` · ATC ${item.atc}` : ""}` : undefined}
                   />
-                  <TextInput label="Dosis" value={l.dose} onChange={(v) => update(i, { dose: v })} />
-                  <SelectInput label="Frekuensi" value={l.frequency} onChange={(v) => update(i, { frequency: v })} options={FREQUENCIES.map((f) => ({ value: f, label: f }))} />
-                  <SelectInput label="Rute" value={l.route} onChange={(v) => update(i, { route: v })} options={ROUTES_OF_ADMIN.map((r) => ({ value: r, label: r }))} />
-                  <TextInput label="Hari" value={String(l.days)} onChange={(v) => update(i, { days: Math.max(1, Number(v.replace(/\D/g, "")) || 1) })} inputMode="numeric" />
-                  <TextInput label="Jumlah" value={l.qty} onChange={(v) => update(i, { qty: v.replace(/\D/g, "") })} inputMode="numeric" error={item && Number(l.qty) > stock ? "Stok kurang" : undefined} />
+                  <TextInput label="Dose" value={l.dose} onChange={(v) => update(i, { dose: v })} />
+                  <SelectInput label="Frequency" value={l.frequency} onChange={(v) => update(i, { frequency: v })} options={FREQUENCIES.map((f) => ({ value: f.id, label: frequencyLabel(f.id, region) }))} />
+                  <SelectInput label="Route" value={l.route} onChange={(v) => update(i, { route: v })} options={ROUTES_OF_ADMIN.map((r) => ({ value: r, label: r }))} />
+                  <TextInput label="Days" value={String(l.days)} onChange={(v) => update(i, { days: Math.max(1, Number(v.replace(/\D/g, "")) || 1) })} inputMode="numeric" />
+                  <TextInput label="Qty" value={l.qty} onChange={(v) => update(i, { qty: v.replace(/\D/g, "") })} inputMode="numeric" error={item && Number(l.qty) > stock ? "Insufficient stock" : undefined} />
                   <div className="flex items-end">
-                    <Button isIconOnly variant="ghost" aria-label="Hapus baris" onPress={() => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : [newLine()]))}>
+                    <Button isIconOnly variant="ghost" aria-label="Remove line" onPress={() => setLines((ls) => (ls.length > 1 ? ls.filter((_, idx) => idx !== i) : [newLine()]))}>
                       <Trash2 className="size-4" />
                     </Button>
                   </div>
+                  {item && (item.highAlert || item.controlled || item.formulary === false) && (
+                    <div className="flex flex-wrap gap-1.5 md:col-span-7">
+                      <DrugBadges item={item} region={region} />
+                    </div>
+                  )}
                 </div>
               )
             })}
             <Button size="sm" variant="ghost" onPress={() => setLines((ls) => [...ls, newLine()])}>
-              <Plus className="size-4" aria-hidden /> Tambah obat
+              <Plus className="size-4" aria-hidden /> Add medication
             </Button>
             <AlertList alerts={alerts} />
             <div className="flex flex-wrap items-center justify-between gap-3">
-              <span className="tabular text-sm text-muted">Perkiraan biaya {formatRupiah(total)}</span>
+              <span className="tabular text-sm text-muted">Estimated cost {formatMoney(total)}</span>
               <Button
                 variant="primary"
                 isDisabled={!valid || blocking}
                 onPress={() => {
                   prescribe(encounter.id, lines.map((l) => ({ ...l, qty: Number(l.qty) })))
                   clear()
-                  toast.success("Resep terkirim ke farmasi")
+                  toast.success(region === "us" ? "Order sent to pharmacy for verification" : "Prescription sent to pharmacy for screening")
                 }}
               >
-                {blocking ? "Ada alergi — ganti obat" : "Kirim ke farmasi"}
+                {blocking ? "Allergy conflict — choose another drug" : "Sign & send to pharmacy"}
               </Button>
             </div>
           </div>
@@ -121,7 +166,7 @@ export function PrescriptionSection({ encounter, patient, readOnly }: { encounte
       )}
 
       {existing.map((rx) => (
-        <Panel key={rx.id} title={`Resep ${formatDateTime(rx.prescribedAt)}`} actions={<RxStatusChip status={rx.status} />}>
+        <Panel key={rx.id} title={`${region === "us" ? "Medication order" : "Prescription"} · ${formatDateTime(rx.prescribedAt)}`} actions={<RxStatusChip status={rx.status} />}>
           <ul className="space-y-1 text-sm">
             {rx.items.map((l) => {
               const item = items.get(l.itemId)
@@ -129,18 +174,14 @@ export function PrescriptionSection({ encounter, patient, readOnly }: { encounte
                 <li key={l.itemId} className="flex flex-wrap items-center gap-2">
                   <b>{item?.name}</b>
                   <span className="text-muted">
-                    {l.dose} · {l.frequency} · {l.route} · {l.days} hari · {l.qty} {item?.unit}
+                    {l.dose} · {frequencyLabel(l.frequency, region)} · {l.route} · {l.days} day(s) · {l.qty} {item?.unit}
                   </span>
-                  {item?.highAlert && (
-                    <Chip size="sm" color="danger" variant="soft">
-                      High alert
-                    </Chip>
-                  )}
+                  {item && <DrugBadges item={item} region={region} />}
                 </li>
               )
             })}
           </ul>
-          {rx.reviewNote && <p className="mt-2 text-xs text-muted">Catatan apoteker: {rx.reviewNote}</p>}
+          {rx.reviewNote && <p className="mt-2 text-xs text-muted">Pharmacist note: {rx.reviewNote}</p>}
         </Panel>
       ))}
     </div>

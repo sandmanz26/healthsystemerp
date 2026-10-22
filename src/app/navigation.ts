@@ -9,6 +9,7 @@ import {
   Puzzle,
 } from "lucide-react"
 import { MODULE_MAP, type ModuleCategory, type ModuleId } from "@/domain/modules"
+import type { Region } from "@/domain/region"
 import type { RoleId } from "@/domain/types"
 
 export interface NavItem {
@@ -20,30 +21,35 @@ export interface NavItem {
   group: ModuleCategory | "home"
   /** Override module roles (e.g. Module Center is admin-only). */
   roles?: RoleId[]
+  /** UK/NHS wording where it differs from the US label (e.g. "A&E", "Wards"). */
+  ukLabel?: string
 }
 
+/** The label staff in this market would expect. */
+export const navLabel = (item: NavItem, region: Region) => (region === "uk" && item.ukLabel) || item.label
+
 export const NAV: NavItem[] = [
-  { path: "/", label: "Beranda", icon: LayoutDashboard, modules: [], group: "home" },
-  { path: "/patients", label: "Pasien", icon: Users, modules: ["patients"], group: "core" },
-  { path: "/registration", label: "Pendaftaran", icon: Ticket, modules: ["registration"], group: "front" },
-  { path: "/appointments", label: "Jadwal & Janji", icon: CalendarClock, modules: ["appointments"], group: "front" },
-  { path: "/outpatient", label: "Rawat Jalan", icon: Stethoscope, modules: ["outpatient"], group: "clinical" },
-  { path: "/emergency", label: "IGD", icon: Siren, modules: ["emergency"], group: "clinical" },
-  { path: "/inpatient", label: "Rawat Inap", icon: BedDouble, modules: ["inpatient"], group: "clinical" },
-  { path: "/nursing", label: "Keperawatan", icon: HeartPulse, modules: ["nursing"], group: "clinical" },
-  { path: "/surgery", label: "Kamar Operasi", icon: Scissors, modules: ["surgery"], group: "clinical" },
-  { path: "/laboratory", label: "Laboratorium", icon: FlaskConical, modules: ["laboratory"], group: "support" },
-  { path: "/radiology", label: "Radiologi", icon: ScanLine, modules: ["radiology"], group: "support" },
-  { path: "/pharmacy", label: "Farmasi", icon: Pill, modules: ["pharmacy"], group: "support" },
-  { path: "/billing", label: "Kasir", icon: Receipt, modules: ["billing"], group: "finance" },
-  { path: "/claims", label: "Klaim & Casemix", icon: FileHeart, modules: ["claims"], group: "finance" },
-  { path: "/inventory", label: "Inventori", icon: Boxes, modules: ["inventory"], group: "operations" },
-  { path: "/hr", label: "SDM & Jadwal Jaga", icon: UsersRound, modules: ["hr"], group: "operations" },
-  { path: "/quality", label: "Mutu & IKP", icon: ShieldAlert, modules: ["quality"], group: "quality" },
-  { path: "/reports", label: "Laporan", icon: BarChart3, modules: ["reports"], group: "quality" },
-  { path: "/integrations", label: "Integrasi", icon: PlugZap, modules: ["bpjs", "satusehat"], group: "integration", roles: ["admin", "coder", "frontdesk"] },
-  { path: "/modules", label: "Pusat Modul", icon: Puzzle, modules: [], group: "core", roles: ["admin", "manager"] },
-  { path: "/settings", label: "Pengaturan", icon: Settings, modules: ["settings"], group: "core", roles: ["admin"] },
+  { path: "/", label: "Home", icon: LayoutDashboard, modules: [], group: "home" },
+  { path: "/patients", label: "Patients", icon: Users, modules: ["patients"], group: "core" },
+  { path: "/registration", label: "Registration", icon: Ticket, modules: ["registration"], group: "front" },
+  { path: "/appointments", label: "Scheduling", ukLabel: "Appointments", icon: CalendarClock, modules: ["appointments"], group: "front" },
+  { path: "/outpatient", label: "Ambulatory", ukLabel: "Outpatients", icon: Stethoscope, modules: ["outpatient"], group: "clinical" },
+  { path: "/emergency", label: "Emergency Dept", ukLabel: "A&E", icon: Siren, modules: ["emergency"], group: "clinical" },
+  { path: "/inpatient", label: "Inpatient", ukLabel: "Wards", icon: BedDouble, modules: ["inpatient"], group: "clinical" },
+  { path: "/nursing", label: "Nursing", icon: HeartPulse, modules: ["nursing"], group: "clinical" },
+  { path: "/surgery", label: "Surgery / OR", ukLabel: "Theatres", icon: Scissors, modules: ["surgery"], group: "clinical" },
+  { path: "/laboratory", label: "Laboratory", ukLabel: "Pathology", icon: FlaskConical, modules: ["laboratory"], group: "support" },
+  { path: "/radiology", label: "Imaging", icon: ScanLine, modules: ["radiology"], group: "support" },
+  { path: "/pharmacy", label: "Pharmacy", icon: Pill, modules: ["pharmacy"], group: "support" },
+  { path: "/billing", label: "Patient Accounts", ukLabel: "Private Billing", icon: Receipt, modules: ["billing"], group: "finance" },
+  { path: "/claims", label: "Coding & Claims", ukLabel: "Coding & SUS+", icon: FileHeart, modules: ["claims"], group: "finance" },
+  { path: "/inventory", label: "Supply Chain", icon: Boxes, modules: ["inventory"], group: "operations" },
+  { path: "/hr", label: "Workforce & Staffing", ukLabel: "Workforce & Rota", icon: UsersRound, modules: ["hr"], group: "operations" },
+  { path: "/quality", label: "Quality & Safety", icon: ShieldAlert, modules: ["quality"], group: "quality" },
+  { path: "/reports", label: "Analytics", icon: BarChart3, modules: ["reports"], group: "quality" },
+  { path: "/integrations", label: "Interfaces", icon: PlugZap, modules: ["payer", "interop"], group: "integration", roles: ["admin", "coder", "frontdesk"] },
+  { path: "/modules", label: "Module Center", ukLabel: "Module Centre", icon: Puzzle, modules: [], group: "core", roles: ["admin", "manager"] },
+  { path: "/settings", label: "Settings", icon: Settings, modules: ["settings"], group: "core", roles: ["admin"] },
 ]
 
 /** Icon per module, for cards in the Module Center. */
@@ -67,8 +73,8 @@ export const MODULE_ICON: Record<ModuleId, LucideIcon> = {
   hr: UsersRound,
   quality: ShieldAlert,
   reports: BarChart3,
-  bpjs: Activity,
-  satusehat: PlugZap,
+  payer: Activity,
+  interop: PlugZap,
 }
 
 export function isNavVisible(item: NavItem, enabled: Set<ModuleId>, role: RoleId): boolean {

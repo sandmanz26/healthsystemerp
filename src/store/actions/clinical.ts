@@ -1,12 +1,18 @@
 /**
- * Patient registry, registration, encounter documentation, inpatient flow and nursing.
+ * Patient registry, registration, encounter documentation, inpatient flow (ADT) and nursing.
  */
+import { MORSE_ITEMS, BRADEN_ITEMS } from "@/domain/clinical"
+import { formatMrn } from "@/domain/region"
 import type {
-  Allergy, BedStatus, ClinicalNote, Diagnosis, Disposition, Encounter, EncounterKind, HandoverNote, MarStatus,
-  Patient, PayerType, Procedure, TriageLevel, Vitals,
+  AdmissionClass, Allergy, AssessmentKind, BedStatus, ClinicalNote, CodeStatus, Diagnosis, DischargePlan, Disposition, Encounter,
+  EncounterKind, HandoverNote, MarStatus, Patient, PayerType, Procedure, TriageLevel, Vitals,
 } from "@/domain/types"
+import type { TariffKey } from "@/domain/catalog"
 import { uid } from "@/lib/id"
-import { addTariff, audit, findEncounter, isOn, nextQueueNumber, notify, nowIso, patientName, queueSync, type Draft, type SetFn } from "../helpers"
+import {
+  addTariff, audit, findEncounter, isOn, nextAccountNumber, nextQueueNumber, notify, nowIso, patientName, queueSync, regionOf,
+  type Draft, type SetFn,
+} from "../helpers"
 import { createClaimIfNeeded } from "./finance"
 
 export type NewPatient = Omit<Patient, "id" | "mrn" | "createdAt">
@@ -23,29 +29,53 @@ export interface RegisterVisitInput {
 }
 
 const QUEUE_PREFIX: Record<string, string> = {
-  "poli-umum": "A", "poli-dalam": "B", "poli-anak": "C", "poli-obgyn": "D", "poli-bedah": "E", "poli-saraf": "F", "poli-gigi": "G", igd: "IGD-",
+  "clinic-fm": "F", "clinic-im": "M", "clinic-cardio": "C", "clinic-peds": "P", "clinic-ob": "O", "clinic-surg": "S", "clinic-neuro": "N", ed: "ED",
 }
 
-/** SEP format: kode faskes (4) + "R" + 3 + MMYY + "V" + 6-digit sequence (issued by V-Claim in production). */
-function issueSepNumber(d: Draft): string {
-  const now = new Date()
-  const mmyy = `${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getFullYear()).slice(2)}`
-  return `${d.facility.code.slice(0, 4)}R001${mmyy}V${String(Math.floor(Math.random() * 999999)).padStart(6, "0")}`
+/**
+ * Simulated real-time eligibility. US: X12 270 → 271 through the clearinghouse. UK: a PDS
+ * trace that confirms the NHS number and registered GP. Production calls the real service.
+ */
+function checkEligibility(d: Draft, enc: Encounter) {
+  const patient = d.patients.find((p) => p.id === enc.patientId)!
+  const region = regionOf(d)
+  const reference = `${region === "us" ? "TRN" : "PDS"}-${Date.now().toString().slice(-8)}`
+  if (region === "uk") {
+    if (patient.payer !== "nhs") return
+    enc.eligibility = patient.nhsNumber
+      ? { at: nowIso(), status: "active", summary: `NHS number verified · Registered GP: ${patient.primaryCare ?? "unknown"}`, reference }
+      : { at: nowIso(), status: "not-found", summary: "No PDS match — trace with demographics", reference }
+    queueSync(d, "pds", "PDS trace", enc.id)
+    return
+  }
+  if (patient.payer === "self-pay" || !patient.coverage) return
+  enc.eligibility = {
+    at: nowIso(),
+    status: "active",
+    summary: patient.payer === "medicare" ? "Part A & B active · Part A deductible met" : patient.payer === "medicaid" ? "Active · $0 copay" : "Active · Copay $40 · Deductible remaining $850",
+    reference,
+  }
+  queueSync(d, "x12", "270/271", enc.id)
 }
+
+/** ED facility level (99281–99285) follows acuity until the coder assigns the final level. */
+const edLevel = (triage?: TriageLevel): TariffKey => `ed-${triage ?? 3}` as TariffKey
 
 function finishInternal(d: Draft, enc: Encounter, disposition: Disposition, note?: string) {
   enc.disposition = disposition
   enc.dispositionNote = note
-  if (disposition === "rawat-inap" && enc.kind !== "inpatient") {
-    // The encounter stays open until a bed is assigned — admission staff work from this list.
+  if (disposition === "admit" && enc.kind !== "inpatient") {
+    // The encounter stays open until a bed is assigned — bed management works from this list.
     enc.status = "awaiting-admission"
-    notify(d, { level: "info", title: "Permintaan rawat inap", body: `${patientName(d, enc.patientId)} menunggu tempat tidur.`, href: "/inpatient", roles: ["nurse", "frontdesk", "admin"] })
+    notify(d, { level: "info", title: "Admission request", body: `${patientName(d, enc.patientId)} needs a bed.`, href: "/inpatient", roles: ["nurse", "frontdesk", "admin"] })
     return
   }
   enc.status = "finished"
   enc.endedAt = nowIso()
-  if (enc.kind === "outpatient") addTariff(d, enc, enc.unitId === "poli-umum" || enc.unitId === "poli-gigi" ? "konsul-umum" : "konsul-spesialis")
-  queueSync(d, "satusehat", "Encounter", enc.id)
+  if (enc.kind === "outpatient") addTariff(d, enc, "clinic-est")
+  if (enc.kind === "emergency") addTariff(d, enc, edLevel(enc.triage))
+  queueSync(d, "hl7v2", "ADT^A03", enc.id)
+  queueSync(d, "fhir", "Encounter", enc.id)
   createClaimIfNeeded(d, enc)
 }
 
@@ -54,9 +84,9 @@ export function clinicalActions(set: SetFn) {
     createPatient(input: NewPatient): string {
       const id = uid("pt")
       set((d) => {
-        d.mrnCounter += 7
-        d.patients.unshift({ ...input, id, mrn: String(d.mrnCounter).padStart(6, "0"), createdAt: nowIso() })
-        audit(d, "Mendaftarkan pasien baru", input.name)
+        d.mrnCounter += 37
+        d.patients.unshift({ ...input, id, mrn: formatMrn(regionOf(d), d.mrnCounter), createdAt: nowIso() })
+        audit(d, "Registered new patient", input.name)
       })
       return id
     },
@@ -66,7 +96,7 @@ export function clinicalActions(set: SetFn) {
         const p = d.patients.find((x) => x.id === id)
         if (!p) return
         Object.assign(p, patch)
-        audit(d, "Mengubah data pasien", p.name)
+        audit(d, "Updated demographics", p.name)
       })
     },
 
@@ -75,7 +105,7 @@ export function clinicalActions(set: SetFn) {
         const p = d.patients.find((x) => x.id === patientId)
         if (!p) return
         p.allergies.push(allergy)
-        audit(d, "Menambah alergi", `${p.name}: ${allergy.substance}`)
+        audit(d, "Added allergy", `${p.name}: ${allergy.substance}`)
       })
     },
 
@@ -84,7 +114,24 @@ export function clinicalActions(set: SetFn) {
         const p = d.patients.find((x) => x.id === patientId)
         if (!p) return
         p.allergies = p.allergies.filter((a) => a.substance !== substance)
-        audit(d, "Menghapus alergi", `${p.name}: ${substance}`)
+        audit(d, "Removed allergy", `${p.name}: ${substance}`)
+      })
+    },
+
+    setCodeStatus(patientId: string, status: CodeStatus) {
+      set((d) => {
+        const p = d.patients.find((x) => x.id === patientId)
+        if (!p) return
+        p.codeStatus = status
+        audit(d, "Changed code status", `${p.name}: ${status}`)
+      })
+    },
+
+    /** Access to a chart outside the user's care relationship, with a mandatory reason. */
+    breakGlass(patientId: string, reason: string) {
+      set((d) => {
+        audit(d, "Break-the-glass access", patientName(d, patientId), { reason })
+        notify(d, { level: "warning", title: "Break-the-glass access", body: `${patientName(d, patientId)} — "${reason}". Privacy officer review required.`, href: "/settings", roles: ["admin"] })
       })
     },
 
@@ -100,23 +147,22 @@ export function clinicalActions(set: SetFn) {
           practitionerId: input.practitionerId,
           payer: input.payer,
           status: "registered",
+          accountNumber: nextAccountNumber(d),
           queueNumber: nextQueueNumber(d, input.unitId, QUEUE_PREFIX[input.unitId] ?? "Z"),
           createdAt: nowIso(),
           chiefComplaint: input.complaint,
           referralNumber: input.referralNumber,
-          sepNumber: input.payer === "bpjs" && isOn(d, "bpjs") ? issueSepNumber(d) : undefined,
           diagnoses: [],
           procedures: [],
           notes: [],
           vitals: [],
           handovers: [],
-          satusehat: isOn(d, "satusehat") ? "pending" : "not-required",
+          assessments: [],
+          exchange: isOn(d, "interop") ? "pending" : "not-required",
         }
         d.encounters.push(enc)
-        addTariff(d, enc, "admin")
-        if (input.kind === "emergency") addTariff(d, enc, "igd")
-        if (enc.sepNumber) queueSync(d, "bpjs-vclaim", "SEP", enc.id)
-        if (input.kind === "outpatient") queueSync(d, "bpjs-antrean", "Antrean", enc.id)
+        if (isOn(d, "payer")) checkEligibility(d, enc)
+        queueSync(d, "hl7v2", "ADT^A04", enc.id)
         if (input.appointmentId) {
           const ap = d.appointments.find((a) => a.id === input.appointmentId)
           if (ap) {
@@ -124,17 +170,25 @@ export function clinicalActions(set: SetFn) {
             ap.encounterId = id
           }
         }
-        audit(d, input.kind === "emergency" ? "Mendaftarkan pasien IGD" : "Mendaftarkan kunjungan", `${patient.name} · ${enc.queueNumber}`)
+        audit(d, input.kind === "emergency" ? "Registered ED arrival" : "Registered visit", `${patient.name} · ${enc.queueNumber}`)
       })
       return id
     },
 
-    issueSep(encounterId: string) {
+    /** Re-run eligibility (270/271 or PDS trace) for an encounter. */
+    verifyEligibility(encounterId: string) {
       set((d) => {
         const enc = findEncounter(d, encounterId)
-        enc.sepNumber = issueSepNumber(d)
-        queueSync(d, "bpjs-vclaim", "SEP", enc.id)
-        audit(d, "Menerbitkan SEP", enc.sepNumber)
+        checkEligibility(d, enc)
+        audit(d, regionOf(d) === "us" ? "Eligibility check (270/271)" : "PDS trace", patientName(d, enc.patientId))
+      })
+    },
+
+    recordAuthorization(encounterId: string, authNumber: string) {
+      set((d) => {
+        const enc = findEncounter(d, encounterId)
+        enc.authNumber = authNumber
+        audit(d, "Recorded prior authorization", `${patientName(d, enc.patientId)} · ${authNumber}`)
       })
     },
 
@@ -146,7 +200,7 @@ export function clinicalActions(set: SetFn) {
         enc.endedAt = nowIso()
         const inv = d.invoices.find((i) => i.encounterId === enc.id)
         if (inv && inv.payments.length === 0) inv.status = "void"
-        audit(d, "Membatalkan kunjungan", `${patientName(d, enc.patientId)} — ${reason}`)
+        audit(d, "Cancelled visit", `${patientName(d, enc.patientId)} — ${reason}`)
       })
     },
 
@@ -155,7 +209,6 @@ export function clinicalActions(set: SetFn) {
         const enc = findEncounter(d, encounterId)
         enc.status = "called"
         enc.calledAt = nowIso()
-        queueSync(d, "bpjs-antrean", "Task 4 (panggil)", enc.id)
       })
     },
 
@@ -166,7 +219,7 @@ export function clinicalActions(set: SetFn) {
         enc.status = "in-progress"
         enc.startedAt ??= nowIso()
         enc.practitionerId ??= d.session.role === "doctor" ? d.session.userId : enc.practitionerId
-        audit(d, "Membuka rekam medis", patientName(d, enc.patientId))
+        audit(d, "Opened chart", patientName(d, enc.patientId))
       })
     },
 
@@ -176,7 +229,7 @@ export function clinicalActions(set: SetFn) {
         enc.triage = level
         if (enc.status === "registered") enc.status = "triaged"
         if (vitals) enc.vitals.push({ ...vitals, id: uid("v"), at: nowIso(), by: d.session.userId })
-        audit(d, `Triase level ${level}`, patientName(d, enc.patientId))
+        audit(d, `Triage ${regionOf(d) === "us" ? "ESI" : "MTS"} ${level}`, patientName(d, enc.patientId))
       })
     },
 
@@ -187,15 +240,15 @@ export function clinicalActions(set: SetFn) {
       })
     },
 
-    addNote(encounterId: string, note: Pick<ClinicalNote, "subjective" | "objective" | "assessment" | "plan">) {
+    addNote(encounterId: string, note: Pick<ClinicalNote, "subjective" | "objective" | "assessment" | "plan"> & { type?: ClinicalNote["type"] }) {
       set((d) => {
         const enc = findEncounter(d, encounterId)
-        enc.notes.push({ ...note, id: uid("cppt"), at: nowIso(), authorId: d.session.userId, role: d.session.role })
+        enc.notes.push({ ...note, id: uid("note"), at: nowIso(), authorId: d.session.userId, role: d.session.role })
         if (enc.status === "registered" || enc.status === "called" || enc.status === "triaged") {
           enc.status = "in-progress"
           enc.startedAt ??= nowIso()
         }
-        audit(d, "Menulis CPPT", patientName(d, enc.patientId))
+        audit(d, "Signed note", patientName(d, enc.patientId))
       })
     },
 
@@ -222,21 +275,46 @@ export function clinicalActions(set: SetFn) {
       set((d) => {
         const enc = findEncounter(d, encounterId)
         finishInternal(d, enc, disposition, note)
-        audit(d, "Menyelesaikan kunjungan", `${patientName(d, enc.patientId)} — ${disposition}`)
+        audit(d, "Closed visit", `${patientName(d, enc.patientId)} — ${disposition}`)
       })
     },
 
     // -------------------------------------------------------------------------------------
-    // Inpatient
+    // Sepsis
     // -------------------------------------------------------------------------------------
 
-    /** Admits a patient to a bed. `fromEncounterId` links the ER/outpatient encounter. */
-    admit(input: { patientId: string; bedId: string; practitionerId: string; reason: string; fromEncounterId?: string }): string {
+    /** Starts the sepsis clock (time zero = now). */
+    startSepsis(encounterId: string, septicShock: boolean) {
+      set((d) => {
+        const enc = findEncounter(d, encounterId)
+        if (enc.sepsis) return
+        enc.sepsis = { identifiedAt: nowIso(), identifiedBy: d.session.userId, septicShock, done: {} }
+        notify(d, { level: "danger", title: regionOf(d) === "us" ? "Sepsis alert — SEP-1 clock started" : "Red flag sepsis — Sepsis Six started", body: patientName(d, enc.patientId), href: `/encounters/${enc.id}`, roles: ["doctor", "nurse"] })
+        audit(d, "Sepsis identified", patientName(d, enc.patientId))
+      })
+    },
+
+    toggleBundleItem(encounterId: string, itemId: string) {
+      set((d) => {
+        const sepsis = findEncounter(d, encounterId).sepsis
+        if (!sepsis) return
+        if (sepsis.done[itemId]) delete sepsis.done[itemId]
+        else sepsis.done[itemId] = nowIso()
+      })
+    },
+
+    // -------------------------------------------------------------------------------------
+    // Inpatient (ADT)
+    // -------------------------------------------------------------------------------------
+
+    /** Admits a patient to a bed. `fromEncounterId` links the ED/clinic encounter. */
+    admit(input: { patientId: string; bedId: string; practitionerId: string; reason: string; fromEncounterId?: string; admissionClass?: AdmissionClass; authNumber?: string; edd?: string }): string {
       const id = uid("enc")
       set((d) => {
         const bed = d.beds.find((b) => b.id === input.bedId)!
         const patient = d.patients.find((p) => p.id === input.patientId)!
         const parent = input.fromEncounterId ? findEncounter(d, input.fromEncounterId) : undefined
+        const us = regionOf(d) === "us"
         const enc: Encounter = {
           id,
           kind: "inpatient",
@@ -245,32 +323,52 @@ export function clinicalActions(set: SetFn) {
           practitionerId: input.practitionerId,
           payer: parent?.payer ?? patient.payer,
           status: "in-progress",
+          accountNumber: nextAccountNumber(d),
           createdAt: nowIso(),
           startedAt: nowIso(),
           chiefComplaint: input.reason,
           bedId: bed.id,
-          sepNumber: parent?.sepNumber,
-          diagnoses: parent ? [...parent.diagnoses] : [],
+          admissionClass: us ? input.admissionClass ?? "inpatient" : undefined,
+          authNumber: input.authNumber,
+          eligibility: parent?.eligibility,
+          diagnoses: parent ? parent.diagnoses.map((x) => ({ ...x, poa: us ? ("Y" as const) : undefined })) : [],
           procedures: [],
           notes: [],
           vitals: [],
           handovers: [],
-          satusehat: isOn(d, "satusehat") ? "pending" : "not-required",
+          assessments: [],
+          sepsis: parent?.sepsis,
+          dischargePlan: { edd: input.edd ?? new Date(Date.now() + 4 * 86400000).toISOString(), barriers: [], medicallyReady: false, imNotice: us && patient.payer === "medicare" ? false : undefined },
+          exchange: isOn(d, "interop") ? "pending" : "not-required",
           parentId: parent?.id,
         }
         d.encounters.push(enc)
         bed.status = "occupied"
         bed.encounterId = id
+        addTariff(d, enc, "ip-initial")
         if (parent && parent.status !== "finished") {
+          if (parent.kind === "emergency") addTariff(d, parent, edLevel(parent.triage))
           parent.status = "finished"
           parent.endedAt = nowIso()
-          parent.disposition = "rawat-inap"
-          queueSync(d, "satusehat", "Encounter", parent.id)
+          parent.disposition = "admit"
+          createClaimIfNeeded(d, parent)
         }
-        queueSync(d, "satusehat", "Encounter", id)
-        audit(d, "Admisi rawat inap", `${patient.name} → ${bed.code}`)
+        queueSync(d, "hl7v2", "ADT^A01", id)
+        queueSync(d, "fhir", "Encounter", id)
+        if (us && enc.admissionClass === "inpatient" && patient.payer === "commercial" && !input.authNumber)
+          notify(d, { level: "warning", title: "Authorization needed", body: `${patient.name}: commercial inpatient admission without prior authorization — notify payer within 24 h.`, href: "/claims", roles: ["coder", "frontdesk"] })
+        audit(d, us && enc.admissionClass === "observation" ? "Placed in observation" : "Admitted", `${patient.name} → ${bed.code}`)
       })
       return id
+    },
+
+    /** US: change observation ↔ inpatient (Two-Midnight Rule), with the physician order. */
+    setAdmissionClass(encounterId: string, admissionClass: AdmissionClass) {
+      set((d) => {
+        const enc = findEncounter(d, encounterId)
+        enc.admissionClass = admissionClass
+        audit(d, admissionClass === "inpatient" ? "Converted observation to inpatient" : "Changed to observation", patientName(d, enc.patientId))
+      })
     },
 
     transferBed(encounterId: string, bedId: string) {
@@ -286,7 +384,15 @@ export function clinicalActions(set: SetFn) {
         to.encounterId = enc.id
         enc.bedId = to.id
         enc.unitId = to.unitId
-        audit(d, "Pindah ruang", `${patientName(d, enc.patientId)}: ${from?.code ?? "-"} → ${to.code}`)
+        queueSync(d, "hl7v2", "ADT^A02", enc.id)
+        audit(d, "Transferred", `${patientName(d, enc.patientId)}: ${from?.code ?? "-"} → ${to.code}`)
+      })
+    },
+
+    setDischargePlan(encounterId: string, patch: Partial<DischargePlan>) {
+      set((d) => {
+        const enc = findEncounter(d, encounterId)
+        enc.dischargePlan = { edd: nowIso(), barriers: [], medicallyReady: false, ...enc.dischargePlan, ...patch }
       })
     },
 
@@ -295,14 +401,22 @@ export function clinicalActions(set: SetFn) {
         const enc = findEncounter(d, encounterId)
         const bed = d.beds.find((b) => b.id === enc.bedId)
         if (bed) {
-          const days = Math.max(1, Math.ceil((Date.now() - new Date(enc.startedAt ?? enc.createdAt).getTime()) / 86400000))
-          const billed = d.invoices.find((i) => i.encounterId === enc.id)?.charges.filter((c) => c.category === "kamar").reduce((s, c) => s + c.qty, 0) ?? 0
-          if (days > billed) addTariff(d, enc, `kamar-${bed.bedClass}` as "kamar-KRIS", days - billed)
+          const start = new Date(enc.startedAt ?? enc.createdAt).getTime()
+          const inv = d.invoices.find((i) => i.encounterId === enc.id)
+          if (enc.admissionClass === "observation") {
+            const hours = Math.max(1, Math.round((Date.now() - start) / 3600000))
+            const billed = inv?.charges.filter((c) => c.ref === "observation").reduce((s, c) => s + c.qty, 0) ?? 0
+            if (hours > billed) addTariff(d, enc, "observation", hours - billed)
+          } else {
+            const days = Math.max(1, Math.ceil((Date.now() - start) / 86400000))
+            const billed = inv?.charges.filter((c) => c.category === "room").reduce((s, c) => s + c.qty, 0) ?? 0
+            if (days > billed) addTariff(d, enc, `room-${bed.bedType}` as TariffKey, days - billed)
+          }
           bed.status = "cleaning"
           bed.encounterId = undefined
         }
         finishInternal(d, enc, disposition, note)
-        audit(d, "Pasien pulang", `${patientName(d, enc.patientId)} — ${disposition}`)
+        audit(d, "Discharged", `${patientName(d, enc.patientId)} — ${disposition}`)
       })
     },
 
@@ -324,7 +438,25 @@ export function clinicalActions(set: SetFn) {
       })
     },
 
-    recordMar(marId: string, status: MarStatus, note?: string) {
+    addAssessment(encounterId: string, kind: AssessmentKind, answers: Record<string, number>) {
+      set((d) => {
+        const enc = findEncounter(d, encounterId)
+        const items = kind === "morse" ? MORSE_ITEMS : BRADEN_ITEMS
+        const score = items.reduce((s, item) => s + (answers[item.id] ?? 0), 0)
+        enc.assessments.push({ id: uid("as"), at: nowIso(), by: d.session.userId, kind, score, answers })
+        if (kind === "morse") {
+          const p = d.patients.find((x) => x.id === enc.patientId)!
+          const flags = new Set(p.flags ?? [])
+          if (score >= 45) flags.add("fall-risk")
+          else flags.delete("fall-risk")
+          p.flags = [...flags]
+        }
+        audit(d, kind === "morse" ? `Morse fall scale ${score}` : `Braden scale ${score}`, patientName(d, enc.patientId))
+      })
+    },
+
+    /** Records an eMAR administration. BCMA: `scanned` means wristband and dose barcode matched. */
+    recordMar(marId: string, status: MarStatus, note?: string, opts: { scanned?: boolean; witnessId?: string } = {}) {
       set((d) => {
         const m = d.mar.find((x) => x.id === marId)
         if (!m) return
@@ -332,8 +464,10 @@ export function clinicalActions(set: SetFn) {
         m.by = d.session.userId
         m.at = nowIso()
         m.note = note
+        m.scanned = status === "given" ? opts.scanned ?? false : undefined
+        m.witnessId = opts.witnessId
         const item = d.inventory.find((i) => i.id === m.itemId)
-        audit(d, status === "given" ? "Memberikan obat" : "Menunda/menolak obat", `${item?.name ?? m.itemId} · ${patientName(d, findEncounter(d, m.encounterId).patientId)}`)
+        audit(d, status === "given" ? (opts.scanned ? "Administered (barcode scanned)" : "Administered (scan override)") : "Held / refused dose", `${item?.name ?? m.itemId} · ${patientName(d, findEncounter(d, m.encounterId).patientId)}`)
       })
     },
   }

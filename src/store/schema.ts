@@ -1,4 +1,5 @@
 import type { FacilityType, ModuleId } from "@/domain/modules"
+import type { Region } from "@/domain/region"
 import type {
   Appointment, AuditEntry, Bed, Claim, DoctorSchedule, Encounter, Incident, IndicatorValue, InventoryItem, Invoice,
   MarEntry, Notification, Patient, Prescription, PurchaseRequest, RoleId, RosterEntry, ServiceOrder, Staff,
@@ -6,12 +7,15 @@ import type {
 } from "@/domain/types"
 
 export interface FacilityProfile {
+  /** Market pack: code systems, units, payers, regulations. */
+  region: Region
   name: string
   type: FacilityType
   city: string
-  /** Kode faskes BPJS / Kemenkes. */
+  address: string
+  /** US: CMS Certification Number (CCN). UK: ODS organisation code. */
   code: string
-  /** SATUSEHAT Organization ID. */
+  /** US: organisation NPI. UK: parent NHS trust. */
   orgId: string
 }
 
@@ -57,7 +61,9 @@ export interface HospitalData {
   /** Daily queue counters per unit: `${dayKey}:${unitId}` → last number issued. */
   queueCounters: Record<string, number>
   invoiceCounter: number
+  /** Hospital account / spell numbers. */
+  accountCounter: number
   mrnCounter: number
 }
 
-export const DATA_VERSION = 3
+export const DATA_VERSION = 4

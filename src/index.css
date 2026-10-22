@@ -43,19 +43,19 @@
   --color-mon-temp: #ffa94d;
   --color-mon-text: #e7f2ef;
 
-  /* Wristband colours (standar gelang identitas & penanda). */
+  /* Wristband alert colours (US state hospital association standard; UK NPSA red for allergy). */
   --color-band-male: oklch(0.68 0.12 240);
   --color-band-female: oklch(0.76 0.11 350);
   --color-band-allergy: oklch(0.6 0.21 25);
   --color-band-fall: oklch(0.83 0.16 90);
   --color-band-dnr: oklch(0.5 0.17 305);
 
-  /* Australasian Triage Scale tag colours. */
-  --color-ats-1: oklch(0.58 0.21 25);
-  --color-ats-2: oklch(0.7 0.17 50);
-  --color-ats-3: oklch(0.68 0.15 150);
-  --color-ats-4: oklch(0.62 0.13 250);
-  --color-ats-5: oklch(0.93 0.005 90);
+  /* Triage colours: Manchester red/orange/yellow/green/blue (also used for ESI 1–5). */
+  --color-triage-1: oklch(0.58 0.21 25);
+  --color-triage-2: oklch(0.72 0.17 55);
+  --color-triage-3: oklch(0.86 0.16 95);
+  --color-triage-4: oklch(0.68 0.15 150);
+  --color-triage-5: oklch(0.62 0.13 250);
 
   /* Binder chrome (sidebar). */
   --color-chrome: var(--chrome);

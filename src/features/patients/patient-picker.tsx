@@ -1,17 +1,20 @@
 /**
- * Find a patient by No. RM, NIK, BPJS number or name. Keyboard first: type, arrow, Enter.
- * Front-desk staff search dozens of times an hour, so results appear as you type.
+ * Find a patient by MRN, NHS number, member ID, date of birth or name. Keyboard first:
+ * type, arrow, Enter. Front-desk staff search dozens of times an hour, so results appear as
+ * you type.
  */
 import { Avatar, Button, SearchField } from "@heroui/react"
 import { UserPlus } from "lucide-react"
 import { useMemo, useState } from "react"
 import { PayerChip } from "@/components/status"
 import { ageLabel } from "@/domain/clinical"
+import { formatNhsNumber } from "@/domain/interop"
 import type { Patient } from "@/domain/types"
 import { cn } from "@/lib/cn"
-import { initials } from "@/lib/format"
+import { formatDate, initials } from "@/lib/format"
 import { matchPatient } from "@/domain/search"
 import { useStore } from "@/store"
+import { useRegion } from "@/store/selectors"
 
 interface PatientPickerProps {
   onPick: (patient: Patient) => void
@@ -22,6 +25,7 @@ interface PatientPickerProps {
 
 export function PatientPicker({ onPick, onCreateNew, autoFocus, selectedId }: PatientPickerProps) {
   const patients = useStore((s) => s.patients)
+  const region = useRegion()
   const [query, setQuery] = useState("")
   const [active, setActive] = useState(0)
   const results = useMemo(() => (query.trim().length < 2 ? [] : patients.filter((p) => matchPatient(p, query)).slice(0, 8)), [patients, query])
@@ -29,7 +33,7 @@ export function PatientPicker({ onPick, onCreateNew, autoFocus, selectedId }: Pa
   return (
     <div className="space-y-2">
       <SearchField
-        aria-label="Cari pasien"
+        aria-label="Search patients"
         value={query}
         onChange={(v) => {
           setQuery(v)
@@ -45,13 +49,13 @@ export function PatientPicker({ onPick, onCreateNew, autoFocus, selectedId }: Pa
       >
         <SearchField.Group>
           <SearchField.SearchIcon />
-          <SearchField.Input placeholder="Ketik No. RM, NIK, No. BPJS, atau nama (min. 2 huruf)" />
+          <SearchField.Input placeholder={region === "us" ? "Name, MRN, member ID or DOB (yyyy-mm-dd)" : "Name, hospital number, NHS number or DOB (yyyy-mm-dd)"} />
           <SearchField.ClearButton />
         </SearchField.Group>
       </SearchField>
 
       {query.trim().length >= 2 && (
-        <ul className="max-h-72 divide-y divide-separator overflow-y-auto rounded-xl border border-border" role="listbox" aria-label="Hasil pencarian pasien">
+        <ul className="max-h-72 divide-y divide-separator overflow-y-auto rounded-xl border border-border" role="listbox" aria-label="Patient search results">
           {results.map((p, i) => (
             <li key={p.id} role="option" aria-selected={p.id === selectedId}>
               <button
@@ -65,22 +69,22 @@ export function PatientPicker({ onPick, onCreateNew, autoFocus, selectedId }: Pa
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm font-medium">{p.name}</div>
-                  <div className="tabular text-xs text-muted">
-                    RM {p.mrn} · {ageLabel(p.birthDate)} · NIK {p.nik}
+                  <div className="num text-xs text-muted">
+                    MRN {p.mrn} · DOB {formatDate(p.birthDate)} ({ageLabel(p.birthDate)}){p.nhsNumber && ` · NHS ${formatNhsNumber(p.nhsNumber)}`}
                   </div>
                 </div>
                 <PayerChip payer={p.payer} />
               </button>
             </li>
           ))}
-          {results.length === 0 && <li className="px-3 py-4 text-center text-sm text-muted">Pasien tidak ditemukan.</li>}
+          {results.length === 0 && <li className="px-3 py-4 text-center text-sm text-muted">No matching patient. Search again before creating a new record.</li>}
         </ul>
       )}
 
       {onCreateNew && (
         <Button variant="ghost" size="sm" onPress={() => onCreateNew(query)}>
           <UserPlus className="size-4" aria-hidden />
-          Pasien baru
+          New patient
         </Button>
       )}
     </div>

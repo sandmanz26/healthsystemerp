@@ -1,8 +1,9 @@
 import type { ReactNode } from "react"
 import { useLocation } from "react-router-dom"
-import { CATEGORY_COLOR, navForPath } from "@/app/navigation"
+import { CATEGORY_COLOR, navForPath, navLabel } from "@/app/navigation"
 import { CATEGORY_LABEL } from "@/domain/modules"
 import { cn } from "@/lib/cn"
+import { useRegion } from "@/store/selectors"
 
 interface PageHeaderProps {
   title: string
@@ -20,13 +21,14 @@ interface PageHeaderProps {
 export function PageHeader({ title, description, actions, eyebrow }: PageHeaderProps) {
   const { pathname } = useLocation()
   const nav = navForPath(pathname)
+  const region = useRegion()
   const group = nav?.group ?? "home"
   return (
     <header className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
       <div className="min-w-0">
         <div className="mb-2 flex items-center gap-2">
           <span className={cn("h-3.5 w-1.5 rounded-sm", CATEGORY_COLOR[group])} aria-hidden />
-          <span className="label-caps text-muted">{eyebrow ?? (group === "home" ? "Beranda" : `${CATEGORY_LABEL[group]} · ${nav?.label ?? title}`)}</span>
+          <span className="label-caps text-muted">{eyebrow ?? (group === "home" ? "Home" : `${CATEGORY_LABEL[group]} · ${nav ? navLabel(nav, region) : title}`)}</span>
         </div>
         <h1 className="text-[28px] font-semibold leading-tight text-foreground sm:text-[32px]">{title}</h1>
         {description && <p className="mt-1.5 max-w-3xl text-sm text-muted">{description}</p>}

@@ -1,32 +1,32 @@
 /**
- * Inpatient efficiency indicators (Barber-Johnson), as reported in RL / SIRS.
- * Definitions follow the Kemenkes technical guidance.
+ * Inpatient capacity & flow indicators (Barber-Johnson family), as used in bed management
+ * dashboards on both sides of the Atlantic.
  */
 export interface CensusInput {
   beds: number
   periodDays: number
-  /** Sum of occupied beds for each day of the period (hari perawatan). */
+  /** Sum of occupied beds for each day of the period (patient days / bed days). */
   patientDays: number
   /** Patients discharged alive + dead in the period. */
   discharges: number
   deaths: number
   deathsOver48h: number
-  /** Sum of length of stay of discharged patients (lama dirawat). */
+  /** Sum of length of stay of discharged patients. */
   totalLos: number
 }
 
 export interface CensusIndicators {
-  /** Bed Occupancy Ratio, ideal 60–85%. */
+  /** Bed occupancy, %. */
   bor: number
-  /** Average Length of Stay, ideal 6–9 days. */
+  /** Average length of stay, days. */
   alos: number
-  /** Turn Over Interval, ideal 1–3 days. */
+  /** Turnover interval: days a bed stays empty between patients. */
   toi: number
-  /** Bed Turn Over, ideal 40–50 times/year. */
+  /** Bed turnover: discharges per bed in the period. */
   bto: number
-  /** Net Death Rate ‰, ideal < 25. */
+  /** Net death rate ‰ (deaths > 48 h after admission). */
   ndr: number
-  /** Gross Death Rate ‰, ideal < 45. */
+  /** Gross death rate ‰. */
   gdr: number
 }
 
@@ -42,9 +42,13 @@ export function censusIndicators(c: CensusInput): CensusIndicators {
   }
 }
 
+/**
+ * Operating ranges. 85% occupancy is the classic safety threshold for acute beds (Bagust et
+ * al., BMJ 1999); NHS England plans to 92%. US acute ALOS ≈ 4.5–5.5 days (AHA).
+ */
 export const IDEAL = {
-  bor: [60, 85],
-  alos: [6, 9],
-  toi: [1, 3],
-  bto: [40, 50],
+  bor: [75, 85],
+  alos: [3.5, 5.5],
+  toi: [0.5, 2],
+  bto: [3, 6],
 } as const

@@ -1,39 +1,39 @@
-/** WHO Surgical Safety Checklist (2009), adapted wording as used in Indonesian hospitals. */
+/** WHO Surgical Safety Checklist (2009), aligned with the Joint Commission Universal Protocol. */
 export const WHO_CHECKLIST: { phase: "sign-in" | "time-out" | "sign-out"; title: string; when: string; items: { id: string; label: string }[] }[] = [
   {
     phase: "sign-in",
     title: "Sign in",
-    when: "Sebelum induksi anestesi",
+    when: "Before induction of anaesthesia",
     items: [
-      { id: "si-identity", label: "Identitas, lokasi, prosedur, dan persetujuan dikonfirmasi pasien" },
-      { id: "si-site", label: "Lokasi operasi sudah ditandai" },
-      { id: "si-consent", label: "Informed consent lengkap" },
-      { id: "si-anesthesia", label: "Pemeriksaan mesin & obat anestesi lengkap, pulse oximeter berfungsi" },
-      { id: "si-allergy", label: "Riwayat alergi sudah dicek" },
-      { id: "si-airway", label: "Risiko jalan napas sulit / aspirasi dinilai" },
-      { id: "si-blood", label: "Risiko perdarahan > 500 mL (anak 7 mL/kg) diantisipasi" },
+      { id: "si-identity", label: "Patient has confirmed identity, site, procedure and consent" },
+      { id: "si-site", label: "Site marked (Universal Protocol)" },
+      { id: "si-consent", label: "Signed informed consent on the chart" },
+      { id: "si-anesthesia", label: "Anaesthesia machine & medication check complete; pulse oximeter on and working" },
+      { id: "si-allergy", label: "Known allergies reviewed" },
+      { id: "si-airway", label: "Difficult airway / aspiration risk assessed" },
+      { id: "si-blood", label: "Risk of > 500 mL blood loss (7 mL/kg in children) planned for" },
     ],
   },
   {
     phase: "time-out",
     title: "Time out",
-    when: "Sebelum insisi kulit",
+    when: "Before skin incision",
     items: [
-      { id: "to-team", label: "Semua anggota tim memperkenalkan nama & peran" },
-      { id: "to-confirm", label: "Konfirmasi nama pasien, prosedur, dan lokasi insisi" },
-      { id: "to-antibiotic", label: "Antibiotik profilaksis diberikan ≤ 60 menit sebelumnya" },
-      { id: "to-imaging", label: "Hasil pencitraan penting ditampilkan" },
+      { id: "to-team", label: "All team members introduced by name and role" },
+      { id: "to-confirm", label: "Patient name, procedure and incision site confirmed" },
+      { id: "to-antibiotic", label: "Antibiotic prophylaxis given within the last 60 minutes" },
+      { id: "to-imaging", label: "Essential imaging displayed" },
     ],
   },
   {
     phase: "sign-out",
     title: "Sign out",
-    when: "Sebelum pasien keluar kamar operasi",
+    when: "Before the patient leaves the operating room",
     items: [
-      { id: "so-procedure", label: "Nama prosedur dicatat" },
-      { id: "so-count", label: "Hitung instrumen, kasa, dan jarum lengkap" },
-      { id: "so-specimen", label: "Spesimen diberi label (termasuk nama pasien)" },
-      { id: "so-concerns", label: "Masalah alat & perhatian pemulihan disampaikan" },
+      { id: "so-procedure", label: "Name of the procedure recorded" },
+      { id: "so-count", label: "Instrument, sponge and needle counts complete" },
+      { id: "so-specimen", label: "Specimen labelled (including patient name)" },
+      { id: "so-concerns", label: "Equipment problems and key recovery concerns addressed" },
     ],
   },
 ]

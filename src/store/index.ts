@@ -11,6 +11,7 @@ import { create } from "zustand"
 import { createJSONStorage, persist } from "zustand/middleware"
 import { immer } from "zustand/middleware/immer"
 import { createSeed } from "@/data/seed"
+import { setFormatRegion } from "@/lib/format"
 import { clinicalActions } from "./actions/clinical"
 import { financeActions } from "./actions/finance"
 import { operationsActions } from "./actions/operations"
@@ -48,9 +49,14 @@ export const useStore = create<Store>()(
       partialize: ({ actions, ...data }) => (void actions, data),
       // Schema changed: start over with fresh demo data rather than migrate mock records.
       migrate: () => createSeed() as unknown as Store,
+      onRehydrateStorage: () => (state) => state && setFormatRegion(state.facility.region),
     },
   ),
 )
+
+// Formatting (currency, dates, °F/°C) follows the facility's region.
+setFormatRegion(useStore.getState().facility.region)
+useStore.subscribe((s) => setFormatRegion(s.facility.region))
 
 /** Stable action bag — never triggers a re-render. */
 export const useActions = () => useStore((s) => s.actions)

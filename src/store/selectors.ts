@@ -7,6 +7,7 @@ import { MODULE_MAP, type ModuleId } from "@/domain/modules"
 import type { Encounter, InventoryItem, Patient, Staff } from "@/domain/types"
 import { useStore } from "./index"
 import type { HospitalData } from "./schema"
+import type { Region } from "@/domain/region"
 
 export function useModuleEnabled(id: ModuleId): boolean {
   return useStore((s) => s.modules[id]?.enabled ?? false)
@@ -66,38 +67,43 @@ export function inFlightWork(d: HospitalData, id: ModuleId): string[] {
   switch (id) {
     case "registration":
     case "outpatient":
-      return n(active.filter((e) => e.kind === "outpatient").length, "kunjungan rawat jalan belum selesai")
+      return n(active.filter((e) => e.kind === "outpatient").length, "clinic visit(s) still open")
     case "emergency":
-      return n(active.filter((e) => e.kind === "emergency").length, "pasien masih di IGD")
+      return n(active.filter((e) => e.kind === "emergency").length, "patient(s) still in the ED")
     case "inpatient":
-      return n(d.beds.filter((b) => b.status === "occupied").length, "pasien sedang dirawat inap")
+      return n(d.beds.filter((b) => b.status === "occupied").length, "inpatient(s) in a bed")
     case "nursing":
-      return n(d.mar.filter((m) => m.status === "due").length, "jadwal pemberian obat belum dikonfirmasi")
+      return n(d.mar.filter((m) => m.status === "due").length, "eMAR dose(s) not yet documented")
     case "surgery":
-      return n(d.surgeries.filter((s) => s.status !== "done" && s.status !== "cancelled").length, "operasi terjadwal / berjalan")
+      return n(d.surgeries.filter((s) => s.status !== "done" && s.status !== "cancelled").length, "case(s) scheduled or in progress")
     case "laboratory":
     case "radiology": {
       const kind = id === "laboratory" ? "lab" : "rad"
-      return n(d.orders.filter((o) => o.kind === kind && o.status !== "validated" && o.status !== "cancelled").length, "order belum divalidasi")
+      return n(d.orders.filter((o) => o.kind === kind && o.status !== "validated" && o.status !== "cancelled").length, "order(s) not yet verified")
     }
     case "pharmacy":
-      return n(d.prescriptions.filter((p) => p.status === "new" || p.status === "reviewed" || p.status === "prepared").length, "resep belum diserahkan")
+      return n(d.prescriptions.filter((p) => p.status === "new" || p.status === "reviewed" || p.status === "prepared").length, "order(s) not yet dispensed")
     case "billing":
-      return n(d.invoices.filter((i) => i.status === "open" && i.payer === "umum").length, "tagihan belum lunas")
+      return n(d.invoices.filter((i) => i.status === "open" && (i.payer === "self-pay" || i.payer === "overseas")).length, "open self-pay account(s)")
     case "claims":
-      return n(d.claims.filter((c) => c.status !== "paid" && c.status !== "approved").length, "klaim belum selesai")
+      return n(d.claims.filter((c) => c.status !== "paid" && c.status !== "accepted").length, "claim(s) in progress")
     case "inventory":
-      return n(d.purchases.filter((p) => p.status === "submitted" || p.status === "approved").length, "permintaan pembelian berjalan")
+      return n(d.purchases.filter((p) => p.status === "submitted" || p.status === "approved").length, "purchase request(s) open")
     case "appointments":
-      return n(d.appointments.filter((a) => a.status === "booked").length, "janji temu terjadwal")
-    case "bpjs":
-    case "satusehat": {
-      const integration = id === "satusehat" ? ["satusehat"] : ["bpjs-vclaim", "bpjs-antrean"]
-      return n(d.syncJobs.filter((j) => integration.includes(j.integration) && j.status !== "synced").length, "data belum terkirim")
+      return n(d.appointments.filter((a) => a.status === "booked").length, "booked appointment(s)")
+    case "payer":
+    case "interop": {
+      const integrations = id === "interop" ? ["hl7v2", "fhir", "sus", "iis"] : ["x12", "surescripts", "pds", "eps", "gp-connect"]
+      return n(d.syncJobs.filter((j) => integrations.includes(j.integration) && j.status !== "synced").length, "message(s) not yet delivered")
     }
     case "quality":
-      return n(d.incidents.filter((i) => i.status !== "selesai").length, "laporan insiden belum selesai")
+      return n(d.incidents.filter((i) => i.status !== "closed").length, "incident report(s) open")
     default:
       return []
   }
+}
+
+/** The facility's market pack (US or UK/EU). */
+export function useRegion(): Region {
+  return useStore((s) => s.facility.region)
 }

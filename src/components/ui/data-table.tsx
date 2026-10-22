@@ -46,7 +46,7 @@ export function DataTable<T>({ label, rows, columns, rowKey, onRowAction, empty,
     })
   }, [rows, columns, sort])
 
-  if (rows.length === 0) return <>{empty ?? <Empty title="Belum ada data" />}</>
+  if (rows.length === 0) return <>{empty ?? <Empty title="No data yet" />}</>
 
   const visible = sorted.slice(0, limit)
   const byKey = new Map(visible.map((r) => [rowKey(r), r]))
@@ -86,10 +86,10 @@ export function DataTable<T>({ label, rows, columns, rowKey, onRowAction, empty,
       {remaining > 0 && (
         <div className="flex items-center justify-between border-t border-separator px-4 py-2 text-sm text-muted">
           <span>
-            Menampilkan {visible.length} dari {sorted.length}
+            Showing {visible.length} of {sorted.length}
           </span>
           <Button size="sm" variant="ghost" onPress={() => setLimit((l) => l + pageSize)}>
-            Tampilkan {Math.min(pageSize, remaining)} lagi
+            Show {Math.min(pageSize, remaining)} more
           </Button>
         </div>
       )}

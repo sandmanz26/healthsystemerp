@@ -6,7 +6,7 @@ import { create } from "zustand"
 import { persist } from "zustand/middleware"
 
 export type ThemePref = "light" | "dark" | "system"
-/** Colour scheme: white + medical blue, or monochrome (hitam-putih). */
+/** Colour scheme: white + medical blue, or monochrome (black & white). */
 export type AccentPref = "blue" | "mono"
 
 interface Prefs {
@@ -14,7 +14,7 @@ interface Prefs {
   setTheme: (t: ThemePref) => void
   accent: AccentPref
   setAccent: (a: AccentPref) => void
-  /** Last unit chosen on worklists, per page, so staff land on "their" poli/ward. */
+  /** Last unit chosen on worklists, per page, so staff land on "their" clinic/unit. */
   unitFilter: Record<string, string>
   setUnitFilter: (page: string, unitId: string) => void
 }

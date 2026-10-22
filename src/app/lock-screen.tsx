@@ -21,7 +21,7 @@ export function LockScreen() {
   const submit = () => {
     // Demo PIN. Production verifies against the identity provider.
     if (pin === "1234") unlock()
-    else setError("PIN salah. Untuk demo gunakan 1234.")
+    else setError("Incorrect PIN. For the demo, use 1234.")
   }
 
   return (
@@ -34,7 +34,7 @@ export function LockScreen() {
           </Avatar>
           <div>
             <div className="font-semibold">{user?.name}</div>
-            <div className="text-sm text-muted">{ROLES[role].label} · layar terkunci</div>
+            <div className="text-sm text-muted">{ROLES[role].label} · workstation locked</div>
           </div>
         </div>
         <form
@@ -47,11 +47,11 @@ export function LockScreen() {
           <TextInput label="PIN" type="password" inputMode="numeric" value={pin} onChange={(v) => { setPin(v); setError(undefined) }} error={error} autoFocus description="Demo: 1234" maxLength={6} />
           <Button type="submit" variant="primary" fullWidth>
             <Lock className="size-4" aria-hidden />
-            Buka kunci
+            Unlock
           </Button>
         </form>
         <div>
-          <div className="mb-2 text-xs font-medium text-muted">Atau masuk sebagai pengguna lain</div>
+          <div className="mb-2 text-xs font-medium text-muted">Or sign in as another user</div>
           <div className="flex flex-wrap gap-1.5">
             {ROLE_ORDER.filter((r) => r !== role).map((r) => (
               <Button key={r} size="sm" variant="tertiary" onPress={() => switchRole(r)}>

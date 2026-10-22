@@ -1,19 +1,32 @@
 /**
- * Billing & claims.
+ * Patient accounting & claims.
  */
-import { estimateGroup } from "@/domain/finance"
-import type { ClaimStatus, Encounter, PaymentMethod } from "@/domain/types"
+import { expectedFfs, groupEncounter, grouperFor, isSelfPay } from "@/domain/finance"
+import type { ClaimStatus, Denial, Encounter, PaymentMethod } from "@/domain/types"
 import { uid } from "@/lib/id"
-import { audit, ensureInvoice, findEncounter, nowIso, patientName, type Draft, type SetFn } from "../helpers"
+import { audit, ensureInvoice, findEncounter, nowIso, patientName, queueSync, regionOf, type Draft, type SetFn } from "../helpers"
 
-/** Insured encounters become claims when they finish; the invoice moves to "claim". */
+/** Insured encounters become claims when they close; the account moves to "claim". */
 export function createClaimIfNeeded(d: Draft, enc: Encounter) {
-  if (enc.payer === "umum") return
+  if (isSelfPay(enc.payer)) return
   const inv = ensureInvoice(d, enc)
   inv.status = "claim"
   inv.closedAt = nowIso()
   if (d.claims.some((c) => c.encounterId === enc.id)) return
-  d.claims.push({ id: uid("clm"), encounterId: enc.id, invoiceId: inv.id, payer: enc.payer, grouper: enc.payer === "bpjs" ? "iDRG" : "FFS", status: "draft", updatedAt: nowIso() })
+  const region = regionOf(d)
+  const patient = d.patients.find((p) => p.id === enc.patientId)
+  d.claims.push({
+    id: uid("clm"),
+    number: region === "us" ? `2${Date.now().toString().slice(-12)}` : `SUS-${Date.now().toString().slice(-7)}`,
+    encounterId: enc.id,
+    invoiceId: inv.id,
+    payer: enc.payer,
+    payerName: region === "uk" && enc.payer === "nhs" ? "NHS England (via ICB commissioner)" : patient?.coverage?.payerName ?? "—",
+    grouper: grouperFor(enc, region),
+    billed: inv.charges.reduce((s, c) => s + c.qty * c.price, 0),
+    status: "draft",
+    updatedAt: nowIso(),
+  })
 }
 
 export function financeActions(set: SetFn) {
@@ -29,7 +42,7 @@ export function financeActions(set: SetFn) {
           inv.status = "paid"
           inv.closedAt = nowIso()
         }
-        audit(d, "Menerima pembayaran", `${inv.number} · ${method}`)
+        audit(d, "Posted payment", `${inv.number} · ${method}`)
       })
     },
 
@@ -39,52 +52,48 @@ export function financeActions(set: SetFn) {
         if (!inv || inv.status !== "open") return
         const c = inv.charges.find((x) => x.id === chargeId)
         inv.charges = inv.charges.filter((x) => x.id !== chargeId)
-        audit(d, "Menghapus item tagihan", `${inv.number}: ${c?.description ?? chargeId}`)
+        audit(d, "Reversed charge", `${inv.number}: ${c?.description ?? chargeId}`)
       })
     },
 
-    /** Runs the grouper on the encounter's current coding (fee-for-service claims take the bill total). */
+    /** Runs the grouper on the current coding (line-item claims take expected reimbursement). */
     groupClaim(claimId: string) {
       set((d) => {
         const claim = d.claims.find((c) => c.id === claimId)
         if (!claim) return
+        const enc = findEncounter(d, claim.encounterId)
+        const inv = d.invoices.find((i) => i.id === claim.invoiceId)
+        const billed = inv ? inv.charges.reduce((s, c) => s + c.qty * c.price, 0) : 0
+        claim.billed = billed
         if (claim.grouper === "FFS") {
-          const inv = d.invoices.find((i) => i.id === claim.invoiceId)
-          claim.tariff = inv ? inv.charges.reduce((s, c) => s + c.qty * c.price, 0) : 0
-          claim.status = "coded"
-          claim.updatedAt = nowIso()
-          return
+          claim.tariff = regionOf(d) === "us" ? expectedFfs(billed, claim.payer) : billed
+        } else {
+          const g = groupEncounter(enc, regionOf(d))
+          if (!g) return
+          Object.assign(claim, { groupCode: g.code, groupName: g.name, weight: g.weight, gmlos: g.gmlos, tariff: g.tariff })
         }
-        const g = estimateGroup(findEncounter(d, claim.encounterId), claim.grouper)
-        if (!g) return
-        claim.groupCode = g.code
-        claim.groupName = g.name
-        claim.tariff = g.tariff
         claim.status = "coded"
         claim.updatedAt = nowIso()
-        audit(d, "Grouping klaim", `${claim.grouper} ${g.code}`)
+        audit(d, "Grouped claim", `${claim.grouper} ${claim.groupCode ?? ""}`.trim())
       })
     },
 
-    setClaimGrouper(claimId: string, grouper: "iDRG" | "INA-CBG") {
-      set((d) => {
-        const claim = d.claims.find((c) => c.id === claimId)
-        if (!claim) return
-        claim.grouper = grouper
-        claim.groupCode = claim.groupName = undefined
-        claim.tariff = undefined
-        if (claim.status === "coded") claim.status = "draft"
-      })
-    },
-
-    setClaimStatus(claimId: string, status: ClaimStatus, note?: string) {
+    /** Moves a claim along: submit (837 / SUS+), accept, pay, deny (with CARC), appeal. */
+    setClaimStatus(claimId: string, status: ClaimStatus, opts: { note?: string; denial?: Denial } = {}) {
       set((d) => {
         const claim = d.claims.find((c) => c.id === claimId)
         if (!claim) return
         claim.status = status
-        claim.note = note
+        claim.note = opts.note ?? claim.note
+        if (opts.denial) claim.denial = opts.denial
+        if (status === "paid") claim.paid = claim.tariff
         claim.updatedAt = nowIso()
-        audit(d, `Klaim ${status}`, patientName(d, findEncounter(d, claim.encounterId).patientId))
+        if (status === "submitted") {
+          const kind = findEncounter(d, claim.encounterId).kind
+          if (regionOf(d) === "us") queueSync(d, "x12", kind === "inpatient" ? "837I" : "837P", claim.encounterId)
+          else if (claim.grouper === "HRG") queueSync(d, "sus", "CDS 6.3 APC/AE", claim.encounterId)
+        }
+        audit(d, `Claim ${status}`, patientName(d, findEncounter(d, claim.encounterId).patientId))
       })
     },
   }

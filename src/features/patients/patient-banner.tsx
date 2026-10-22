@@ -1,11 +1,13 @@
 /**
  * Patient identification for every screen that acts on one patient — rendered as the
- * wristband (see components/clinical/wristband.tsx). Patient safety goal #1: two
- * identifiers and allergy/fall/DNR markers always visible.
+ * wristband (see components/clinical/wristband.tsx). Joint Commission NPSG.01.01.01 /
+ * NHS positive patient identification: two identifiers and allergy / fall / code-status
+ * markers always visible.
  */
 import type { ReactNode } from "react"
 import { Wristband } from "@/components/clinical/wristband"
 import type { Encounter, Patient } from "@/domain/types"
+import { useRegion } from "@/store/selectors"
 
 interface PatientBannerProps {
   patient: Patient
@@ -16,5 +18,11 @@ interface PatientBannerProps {
 }
 
 export function PatientBanner({ patient, encounter, aside, compact }: PatientBannerProps) {
-  return <Wristband patient={patient} payer={encounter?.payer} compact={compact} aside={aside} meta={encounter?.sepNumber ? <span>SEP {encounter.sepNumber}</span> : undefined} />
+  const region = useRegion()
+  const meta = encounter?.accountNumber ? (
+    <span>
+      {region === "us" ? "Acct" : "Spell"} <b className="font-semibold text-foreground">{encounter.accountNumber}</b>
+    </span>
+  ) : undefined
+  return <Wristband patient={patient} payer={encounter?.payer} compact={compact} aside={aside} meta={meta} />
 }

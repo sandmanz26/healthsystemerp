@@ -6,11 +6,12 @@
 import { Puzzle } from "lucide-react"
 import { NavLink } from "react-router-dom"
 import { CATEGORY_LABEL, CATEGORY_ORDER, MODULES } from "@/domain/modules"
+import { REGIONS, type Region } from "@/domain/region"
 import { cn } from "@/lib/cn"
 import { useStore } from "@/store"
-import { useEnabledModules } from "@/store/selectors"
+import { useEnabledModules, useRegion } from "@/store/selectors"
 import { Logo } from "./logo"
-import { CATEGORY_COLOR, NAV, isNavVisible, type NavItem } from "./navigation"
+import { CATEGORY_COLOR, NAV, isNavVisible, navLabel, type NavItem } from "./navigation"
 
 const GROUPS = ["home", ...CATEGORY_ORDER] as const
 
@@ -18,19 +19,25 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   const enabled = useEnabledModules()
   const role = useStore((s) => s.session.role)
   const facility = useStore((s) => s.facility)
+  const region = useRegion()
   const visible = NAV.filter((n) => isNavVisible(n, enabled, role))
   const optional = MODULES.filter((m) => !m.core)
 
   return (
-    <nav aria-label="Navigasi utama" className="flex h-full flex-col border-r border-chrome-border bg-chrome text-chrome-foreground">
+    <nav aria-label="Main navigation" className="flex h-full flex-col border-r border-chrome-border bg-chrome text-chrome-foreground">
       <div className="px-5 pb-5 pt-6">
         <Logo />
         <div className="mt-5 rounded-xl border border-chrome-border px-3 py-2">
           <div className="truncate text-sm font-semibold" title={facility.name}>
             {facility.name}
           </div>
-          <div className="num text-[11px] text-chrome-muted">
-            {facility.city} · {facility.code}
+          <div className="num flex items-center gap-1.5 text-[11px] text-chrome-muted">
+            <span className="truncate">
+              {facility.city} · {region === "us" ? "CCN" : "ODS"} {facility.code}
+            </span>
+            <span className="ml-auto shrink-0 rounded border border-chrome-border px-1 font-semibold" title={REGIONS[region].name}>
+              {REGIONS[region].short}
+            </span>
           </div>
         </div>
       </div>
@@ -49,7 +56,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
               <ul className="space-y-0.5">
                 {items.map((item) => (
                   <li key={item.path}>
-                    <BinderTab item={item} onNavigate={onNavigate} />
+                    <BinderTab item={item} region={region} onNavigate={onNavigate} />
                   </li>
                 ))}
               </ul>
@@ -60,7 +67,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
       {(role === "admin" || role === "manager") && (
         <NavLink to="/modules" onClick={onNavigate} className="group mx-3 mb-4 block rounded-xl border border-chrome-border p-3 transition hover:border-chrome-muted/60">
           <div className="flex items-center justify-between">
-            <span className="label-caps text-chrome-muted">Slot modul</span>
+            <span className="label-caps text-chrome-muted">Module slots</span>
             <span className="num text-xs">
               {optional.filter((m) => enabled.has(m.id)).length}/{optional.length}
             </span>
@@ -71,7 +78,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
             ))}
           </div>
           <div className="mt-2 flex items-center gap-1.5 text-xs font-semibold text-chrome-foreground/90 group-hover:text-chrome-foreground">
-            <Puzzle className="size-3.5" aria-hidden /> Tambah atau atur modul
+            <Puzzle className="size-3.5" aria-hidden /> Add or manage modules
           </div>
         </NavLink>
       )}
@@ -79,7 +86,7 @@ export function Sidebar({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
-function BinderTab({ item, onNavigate }: { item: NavItem; onNavigate?: () => void }) {
+function BinderTab({ item, region, onNavigate }: { item: NavItem; region: Region; onNavigate?: () => void }) {
   const Icon = item.icon
   return (
     <NavLink
@@ -94,7 +101,7 @@ function BinderTab({ item, onNavigate }: { item: NavItem; onNavigate?: () => voi
       }
     >
       <Icon className="size-[18px] shrink-0" aria-hidden />
-      <span className="truncate">{item.label}</span>
+      <span className="truncate">{navLabel(item, region)}</span>
     </NavLink>
   )
 }

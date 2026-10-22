@@ -21,75 +21,79 @@ function StatusChip({ def, size = "sm" }: { def: Def; size?: "sm" | "md" }) {
 }
 
 const ENCOUNTER: Record<EncounterStatus, Def> = {
-  registered: { label: "Menunggu", color: "default" },
-  triaged: { label: "Sudah triase", color: "accent" },
-  called: { label: "Dipanggil", color: "warning" },
-  "in-progress": { label: "Diperiksa", color: "accent" },
-  "awaiting-admission": { label: "Menunggu kamar", color: "warning" },
-  finished: { label: "Selesai", color: "success" },
-  cancelled: { label: "Batal", color: "danger" },
+  registered: { label: "Waiting", color: "default" },
+  triaged: { label: "Triaged", color: "accent" },
+  called: { label: "Called", color: "warning" },
+  "in-progress": { label: "With provider", color: "accent" },
+  "awaiting-admission": { label: "Awaiting bed", color: "warning" },
+  finished: { label: "Completed", color: "success" },
+  cancelled: { label: "Cancelled", color: "danger" },
 }
 export const EncounterStatusChip = ({ status }: { status: EncounterStatus }) => <StatusChip def={ENCOUNTER[status]} />
 
 const ORDER: Record<OrderStatus, Def> = {
-  ordered: { label: "Diorder", color: "default" },
-  collected: { label: "Sampel diambil", color: "accent" },
-  "in-progress": { label: "Diproses", color: "accent" },
-  resulted: { label: "Hasil keluar", color: "warning" },
-  validated: { label: "Tervalidasi", color: "success" },
-  cancelled: { label: "Batal", color: "danger" },
+  ordered: { label: "Ordered", color: "default" },
+  collected: { label: "Collected", color: "accent" },
+  "in-progress": { label: "In process", color: "accent" },
+  resulted: { label: "Resulted", color: "warning" },
+  validated: { label: "Verified", color: "success" },
+  cancelled: { label: "Cancelled", color: "danger" },
 }
 export const OrderStatusChip = ({ status }: { status: OrderStatus }) => <StatusChip def={ORDER[status]} />
 
 const RX: Record<PrescriptionStatus, Def> = {
-  new: { label: "Baru", color: "default" },
-  reviewed: { label: "Ditelaah", color: "accent" },
-  prepared: { label: "Siap diserahkan", color: "warning" },
-  dispensed: { label: "Diserahkan", color: "success" },
-  cancelled: { label: "Batal", color: "danger" },
+  new: { label: "Pending verification", color: "default" },
+  reviewed: { label: "Verified", color: "accent" },
+  prepared: { label: "Ready", color: "warning" },
+  dispensed: { label: "Dispensed", color: "success" },
+  cancelled: { label: "Discontinued", color: "danger" },
 }
 export const RxStatusChip = ({ status }: { status: PrescriptionStatus }) => <StatusChip def={RX[status]} />
 
 const INVOICE: Record<InvoiceStatus, Def> = {
-  open: { label: "Belum bayar", color: "warning" },
-  paid: { label: "Lunas", color: "success" },
-  claim: { label: "Ditagihkan ke penjamin", color: "accent" },
-  void: { label: "Batal", color: "danger" },
+  open: { label: "Balance due", color: "warning" },
+  paid: { label: "Paid", color: "success" },
+  claim: { label: "Billed to payer", color: "accent" },
+  void: { label: "Void", color: "danger" },
 }
 export const InvoiceStatusChip = ({ status }: { status: InvoiceStatus }) => <StatusChip def={INVOICE[status]} />
 
 const CLAIM: Record<ClaimStatus, Def> = {
-  draft: { label: "Belum dikoding", color: "default" },
-  coded: { label: "Siap kirim", color: "accent" },
-  submitted: { label: "Terkirim", color: "accent" },
-  pending: { label: "Pending", color: "warning" },
-  approved: { label: "Disetujui", color: "success" },
-  rejected: { label: "Ditolak", color: "danger" },
-  paid: { label: "Dibayar", color: "success" },
+  draft: { label: "Not coded", color: "default" },
+  coded: { label: "Ready to bill", color: "accent" },
+  submitted: { label: "Submitted", color: "accent" },
+  accepted: { label: "Accepted", color: "success" },
+  denied: { label: "Denied", color: "danger" },
+  appealed: { label: "Appealed", color: "warning" },
+  paid: { label: "Paid", color: "success" },
 }
 export const ClaimStatusChip = ({ status }: { status: ClaimStatus }) => <StatusChip def={CLAIM[status]} />
 
 const BED: Record<BedStatus, Def> = {
-  available: { label: "Kosong", color: "success" },
-  occupied: { label: "Terisi", color: "accent" },
-  cleaning: { label: "Dibersihkan", color: "warning" },
-  maintenance: { label: "Perbaikan", color: "danger" },
-  reserved: { label: "Dipesan", color: "default" },
+  available: { label: "Clean / ready", color: "success" },
+  occupied: { label: "Occupied", color: "accent" },
+  cleaning: { label: "Dirty (EVS)", color: "warning" },
+  maintenance: { label: "Blocked", color: "danger" },
+  reserved: { label: "Assigned", color: "default" },
 }
 export const BedStatusChip = ({ status }: { status: BedStatus }) => <StatusChip def={BED[status]} />
 
 const PAYER: Record<PayerType, Def> = {
-  bpjs: { label: "BPJS", color: "success" },
-  umum: { label: "Umum", color: "default" },
-  asuransi: { label: "Asuransi", color: "accent" },
+  medicare: { label: "Medicare", color: "accent" },
+  medicaid: { label: "Medicaid", color: "accent" },
+  commercial: { label: "Commercial", color: "success" },
+  "self-pay": { label: "Self-pay", color: "warning" },
+  nhs: { label: "NHS", color: "accent" },
+  private: { label: "Private", color: "success" },
+  overseas: { label: "Overseas visitor", color: "warning" },
 }
 export const PayerChip = ({ payer }: { payer: PayerType }) => <StatusChip def={PAYER[payer]} />
 
 const SYNC: Record<SyncStatus, Def> = {
-  pending: { label: "Antre", color: "default" },
-  synced: { label: "Terkirim", color: "success" },
-  failed: { label: "Gagal", color: "danger" },
-  "not-required": { label: "Tidak aktif", color: "default" },
+  pending: { label: "Queued", color: "default" },
+  synced: { label: "Delivered", color: "success" },
+  failed: { label: "Error", color: "danger" },
+  "not-required": { label: "Off", color: "default" },
 }
 export const SyncChip = ({ status }: { status: SyncStatus }) => <StatusChip def={SYNC[status]} />
 
@@ -98,14 +102,14 @@ export function TriageChip({ level }: { level?: TriageLevel }) {
 }
 
 export function PriorityChip({ priority }: { priority: Priority }) {
-  return priority === "cito" ? <StatusChip def={{ label: "CITO", color: "danger" }} /> : <StatusChip def={{ label: "Rutin", color: "default" }} />
+  return priority === "stat" ? <StatusChip def={{ label: "STAT", color: "danger" }} /> : <StatusChip def={{ label: "Routine", color: "default" }} />
 }
 
 const FLAG: Record<ResultFlag, Def> = {
   N: { label: "Normal", color: "success" },
-  L: { label: "Rendah", color: "warning" },
-  H: { label: "Tinggi", color: "warning" },
-  LL: { label: "Kritis rendah", color: "danger" },
-  HH: { label: "Kritis tinggi", color: "danger" },
+  L: { label: "Low", color: "warning" },
+  H: { label: "High", color: "warning" },
+  LL: { label: "Critical low", color: "danger" },
+  HH: { label: "Critical high", color: "danger" },
 }
 export const FlagChip = ({ flag }: { flag: ResultFlag }) => <StatusChip def={FLAG[flag]} />

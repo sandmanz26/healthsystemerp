@@ -11,23 +11,24 @@ import { EncounterStatusChip, TriageChip } from "@/components/status"
 import { Empty } from "@/components/ui/empty"
 import { Page } from "@/components/ui/page"
 import { Panel } from "@/components/ui/panel"
-import { formatDateTime } from "@/lib/format"
+import { formatDateTime, formatTemp } from "@/lib/format"
 import { useNow } from "@/lib/use-now"
 import { PatientBanner } from "@/features/patients/patient-banner"
 import { useStore } from "@/store"
-import { useEncounter, useModuleEnabled, useSession, useStaffMap, useUnitName } from "@/store/selectors"
+import { useEncounter, useModuleEnabled, useRegion, useSession, useStaffMap, useUnitName } from "@/store/selectors"
 import { VitalsGrid } from "./clinical-widgets"
 import { DiagnosisSection } from "./diagnosis-section"
 import { FinishPanel } from "./finish-panel"
 import { OrdersSection } from "./orders-section"
 import { PrescriptionSection } from "./prescription-section"
+import { SepsisWidget } from "./sepsis-widget"
 import { SoapSection } from "./soap-section"
 import { VitalsDialog } from "./vitals-dialog"
 
-const BACK: Record<string, { to: string; label: string }> = {
-  outpatient: { to: "/outpatient", label: "Rawat Jalan" },
-  emergency: { to: "/emergency", label: "IGD" },
-  inpatient: { to: "/inpatient", label: "Rawat Inap" },
+const BACK = {
+  outpatient: { to: "/outpatient", label: { us: "Clinics", uk: "Outpatients" } },
+  emergency: { to: "/emergency", label: { us: "Emergency Department", uk: "A&E" } },
+  inpatient: { to: "/inpatient", label: { us: "Bed board", uk: "Bed board" } },
 }
 
 export default function EncounterPage() {
@@ -44,8 +45,9 @@ export default function EncounterPage() {
   const ordersOn = labOn || radOn
   const [vitalsOpen, setVitalsOpen] = useState(false)
   const now = useNow()
+  const region = useRegion()
 
-  if (!encounter || !patient) return <Page><Empty title="Kunjungan tidak ditemukan" /></Page>
+  if (!encounter || !patient) return <Page><Empty title="Encounter not found" /></Page>
 
   const closed = encounter.status === "finished" || encounter.status === "cancelled"
   const canWriteNotes = !closed && (role === "doctor" || role === "nurse")
@@ -57,7 +59,7 @@ export default function EncounterPage() {
   return (
     <Page>
       <Link to={back.to} className="mb-3 inline-flex items-center gap-1 text-sm text-muted hover:text-foreground">
-        <ArrowLeft className="size-4" aria-hidden /> {back.label}
+        <ArrowLeft className="size-4" aria-hidden /> {back.label[region]}
       </Link>
       <div className="mb-5">
         <PatientBanner
@@ -68,7 +70,7 @@ export default function EncounterPage() {
               {encounter.kind === "emergency" && <TriageChip level={encounter.triage} />}
               {bed && (
                 <Chip size="sm" variant="soft">
-                  <BedDouble className="size-3.5" aria-hidden /> {bed.code} · hari ke-{los}
+                  <BedDouble className="size-3.5" aria-hidden /> {bed.code} · day {los}
                 </Chip>
               )}
               <EncounterStatusChip status={encounter.status} />
@@ -77,11 +79,13 @@ export default function EncounterPage() {
         />
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 px-1 text-xs text-muted">
           <span>{unitName(encounter.unitId)}</span>
-          <span>DPJP: {staff.get(encounter.practitionerId ?? "")?.name ?? "—"}</span>
-          <span>Masuk {formatDateTime(encounter.createdAt)}</span>
-          {encounter.queueNumber && <span>Antrean {encounter.queueNumber}</span>}
+          <span>{region === "us" ? "Attending" : "Consultant"}: {staff.get(encounter.practitionerId ?? "")?.name ?? "—"}</span>
+          <span>Arrived {formatDateTime(encounter.createdAt)}</span>
+          <span className="num">{region === "us" ? "Acct" : "Spell"} {encounter.accountNumber}</span>
+          {encounter.queueNumber && <span>Queue {encounter.queueNumber}</span>}
+          {encounter.admissionClass === "observation" && <span className="font-semibold text-warning">Observation status</span>}
           <span>
-            Keluhan: <b className="text-foreground">{encounter.chiefComplaint}</b>
+            Chief complaint: <b className="text-foreground">{encounter.chiefComplaint}</b>
           </span>
         </div>
       </div>
@@ -89,12 +93,12 @@ export default function EncounterPage() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
         <Tabs className="min-w-0">
           <Tabs.ListContainer>
-            <Tabs.List aria-label="Rekam medis kunjungan">
-              <Tabs.Tab className="whitespace-nowrap" id="soap">CPPT<Tabs.Indicator /></Tabs.Tab>
-              <Tabs.Tab className="whitespace-nowrap" id="dx">Diagnosis{encounter.diagnoses.length > 0 && ` (${encounter.diagnoses.length})`}<Tabs.Indicator /></Tabs.Tab>
-              {ordersOn && <Tabs.Tab className="whitespace-nowrap" id="orders">Penunjang<Tabs.Indicator /></Tabs.Tab>}
-              {pharmacyOn && <Tabs.Tab className="whitespace-nowrap" id="rx">Resep<Tabs.Indicator /></Tabs.Tab>}
-              <Tabs.Tab className="whitespace-nowrap" id="vitals">Tanda vital ({encounter.vitals.length})<Tabs.Indicator /></Tabs.Tab>
+            <Tabs.List aria-label="Encounter chart">
+              <Tabs.Tab className="whitespace-nowrap" id="soap">Notes<Tabs.Indicator /></Tabs.Tab>
+              <Tabs.Tab className="whitespace-nowrap" id="dx">Diagnoses{encounter.diagnoses.length > 0 && ` (${encounter.diagnoses.length})`}<Tabs.Indicator /></Tabs.Tab>
+              {ordersOn && <Tabs.Tab className="whitespace-nowrap" id="orders">Orders & results<Tabs.Indicator /></Tabs.Tab>}
+              {pharmacyOn && <Tabs.Tab className="whitespace-nowrap" id="rx">{region === "us" ? "Medications" : "Prescribing"}<Tabs.Indicator /></Tabs.Tab>}
+              <Tabs.Tab className="whitespace-nowrap" id="vitals">Vitals ({encounter.vitals.length})<Tabs.Indicator /></Tabs.Tab>
             </Tabs.List>
           </Tabs.ListContainer>
           <Tabs.Panel id="soap" className="pt-4">
@@ -115,24 +119,24 @@ export default function EncounterPage() {
           )}
           <Tabs.Panel id="vitals" className="pt-4">
             <Panel
-              title="Riwayat tanda vital"
+              title="Vital signs flowsheet"
               actions={
                 canWriteNotes && (
                   <Button size="sm" variant="primary" onPress={() => setVitalsOpen(true)}>
-                    <HeartPulse className="size-4" aria-hidden /> Input TTV
+                    <HeartPulse className="size-4" aria-hidden /> Record vitals
                   </Button>
                 )
               }
               flush
             >
               {latest.length === 0 ? (
-                <Empty title="Belum ada tanda vital" />
+                <Empty title="No vital signs recorded" />
               ) : (
                 <div className="overflow-x-auto">
                   <table className="tabular w-full min-w-[640px] text-sm">
                     <thead>
                       <tr className="border-b border-separator text-left text-xs text-muted">
-                        {["Waktu", "TD", "Nadi", "Napas", "Suhu", "SpO₂", "Kesadaran"].map((h) => (
+                        {["Time", "BP", "HR", "RR", "Temp", "SpO₂", "ACVPU"].map((h) => (
                           <th key={h} className="px-4 py-2 font-medium">
                             {h}
                           </th>
@@ -146,7 +150,7 @@ export default function EncounterPage() {
                           <td className="px-4 py-2">{v.systolic ? `${v.systolic}/${v.diastolic ?? "-"}` : "—"}</td>
                           <td className="px-4 py-2">{v.heartRate ?? "—"}</td>
                           <td className="px-4 py-2">{v.respRate ?? "—"}</td>
-                          <td className="px-4 py-2">{v.temperature ?? "—"}</td>
+                          <td className="px-4 py-2">{formatTemp(v.temperature)}</td>
                           <td className="px-4 py-2">
                             {v.spo2 ?? "—"}
                             {v.onOxygen ? " (O₂)" : ""}
@@ -164,6 +168,7 @@ export default function EncounterPage() {
 
         <aside className="space-y-4 xl:sticky xl:top-20 xl:self-start">
           <VitalsGrid vitals={latest[0]} history={encounter.vitals} label={bed?.code ?? encounter.queueNumber} />
+          {(encounter.kind !== "outpatient" || encounter.sepsis) && <SepsisWidget encounter={encounter} canAct={!closed && (role === "doctor" || role === "nurse")} />}
           {(role === "doctor" || role === "admin" || closed) && <FinishPanel encounter={encounter} />}
         </aside>
       </div>

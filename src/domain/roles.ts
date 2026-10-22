@@ -8,27 +8,16 @@ export interface RoleInfo {
 }
 
 export const ROLES: Record<RoleId, RoleInfo> = {
-  admin: { id: "admin", label: "Admin Sistem", description: "Mengatur modul, pengguna, dan konfigurasi faskes" },
-  doctor: { id: "doctor", label: "Dokter", description: "Memeriksa pasien, menulis CPPT, order penunjang, resep" },
-  nurse: { id: "nurse", label: "Perawat", description: "Tanda vital, pemberian obat, asuhan & serah terima" },
-  frontdesk: { id: "frontdesk", label: "Pendaftaran", description: "Mendaftarkan pasien, antrean, SEP BPJS" },
-  pharmacist: { id: "pharmacist", label: "Apoteker", description: "Telaah resep, penyiapan & penyerahan obat" },
-  labtech: { id: "labtech", label: "Analis Lab", description: "Sampel, hasil, dan validasi laboratorium" },
-  radiographer: { id: "radiographer", label: "Radiografer", description: "Pemeriksaan & ekspertise radiologi" },
-  cashier: { id: "cashier", label: "Kasir", description: "Tagihan dan pembayaran pasien" },
-  coder: { id: "coder", label: "Casemix / Koder", description: "Koding diagnosis & klaim BPJS/asuransi" },
-  manager: { id: "manager", label: "Manajemen", description: "Indikator kinerja, mutu, dan keuangan" },
+  admin: { id: "admin", label: "System administrator", description: "Modules, users, access and facility configuration" },
+  doctor: { id: "doctor", label: "Physician", description: "Sees patients, writes notes, orders tests and medications" },
+  nurse: { id: "nurse", label: "Registered nurse", description: "Vitals, medication administration, assessments & handover" },
+  frontdesk: { id: "frontdesk", label: "Patient access", description: "Registration, eligibility, queue and scheduling" },
+  pharmacist: { id: "pharmacist", label: "Pharmacist", description: "Order verification, dispensing and controlled drugs" },
+  labtech: { id: "labtech", label: "Medical lab scientist", description: "Specimens, results, verification and critical calls" },
+  radiographer: { id: "radiographer", label: "Radiologic technologist", description: "Imaging exams and reports" },
+  cashier: { id: "cashier", label: "Patient financial services", description: "Accounts, payments and statements" },
+  coder: { id: "coder", label: "HIM / clinical coder", description: "Coding, grouping, claims and denials" },
+  manager: { id: "manager", label: "Executive", description: "Throughput, quality and financial performance" },
 }
 
-export const ROLE_ORDER: RoleId[] = [
-  "frontdesk",
-  "doctor",
-  "nurse",
-  "pharmacist",
-  "labtech",
-  "radiographer",
-  "cashier",
-  "coder",
-  "manager",
-  "admin",
-]
+export const ROLE_ORDER: RoleId[] = ["frontdesk", "doctor", "nurse", "pharmacist", "labtech", "radiographer", "cashier", "coder", "manager", "admin"]

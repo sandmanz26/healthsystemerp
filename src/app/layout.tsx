@@ -53,7 +53,7 @@ export function AppLayout() {
 export function PageSpinner() {
   return (
     <div className="grid min-h-[50vh] place-items-center">
-      <Spinner aria-label="Memuat" />
+      <Spinner aria-label="Loading" />
     </div>
   )
 }
@@ -65,10 +65,10 @@ function StaleDataBanner() {
   if (seededOn === dayKey()) return null
   return (
     <div className="no-print flex flex-wrap items-center justify-between gap-2 border-b border-warning/30 bg-warning-soft px-4 py-2 text-sm text-warning-soft-foreground sm:px-6">
-      <span>Data demo dibuat untuk {formatDate(seededOn)}. Antrean & jadwal "hari ini" mungkin kosong.</span>
+      <span>Demo data was generated for {formatDate(seededOn)}. Today's queues and schedules may be empty.</span>
       <Button size="sm" variant="secondary" onPress={resetDemo}>
         <RefreshCw className="size-4" aria-hidden />
-        Muat data hari ini
+        Load today's data
       </Button>
     </div>
   )

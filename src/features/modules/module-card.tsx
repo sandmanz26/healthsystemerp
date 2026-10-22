@@ -2,11 +2,14 @@ import { Card, Chip, Switch } from "@heroui/react"
 import { Check, Link2, Sparkles } from "lucide-react"
 import type { ReactNode } from "react"
 import { CATEGORY_COLOR, MODULE_ICON } from "@/app/navigation"
-import { CATEGORY_LABEL, MODULE_MAP, type ModuleDef, type ModuleId } from "@/domain/modules"
+import { CATEGORY_LABEL, moduleText, type ModuleDef, type ModuleId } from "@/domain/modules"
+import type { Region } from "@/domain/region"
 import { cn } from "@/lib/cn"
 
 interface ModuleCardProps {
   module: ModuleDef
+  /** Market whose wording to show (onboarding passes the region being chosen). */
+  region: Region
   enabled: boolean
   onToggle?: (next: boolean) => void
   /** Modules currently enabled — used to show which "enhances" benefits are live. */
@@ -17,7 +20,8 @@ interface ModuleCardProps {
 }
 
 /** One module: what it does, what it needs, what it unlocks. Used in onboarding and the Module Center. */
-export function ModuleCard({ module, enabled, onToggle, enabledSet, highlight, footer, badge }: ModuleCardProps) {
+export function ModuleCard({ module: base, region, enabled, onToggle, enabledSet, highlight, footer, badge }: ModuleCardProps) {
+  const module = moduleText(base.id, region)
   const Icon = MODULE_ICON[module.id]
   return (
     <div id={`module-${module.id}`} className="relative h-full pt-[22px]">
@@ -33,13 +37,13 @@ export function ModuleCard({ module, enabled, onToggle, enabledSet, highlight, f
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-[17px] font-semibold">{module.name}</h3>
-              {module.core && <span className="label-caps rounded border border-border px-1.5 py-0.5 text-muted">Inti</span>}
+              {module.core && <span className="label-caps rounded border border-border px-1.5 py-0.5 text-muted">Core</span>}
               {badge}
             </div>
             <p className="mt-0.5 text-sm text-muted">{module.summary}</p>
           </div>
           {onToggle && !module.core && (
-            <Switch isSelected={enabled} onChange={onToggle} aria-label={`${enabled ? "Nonaktifkan" : "Aktifkan"} ${module.name}`}>
+            <Switch isSelected={enabled} onChange={onToggle} aria-label={`${enabled ? "Turn off" : "Turn on"} ${module.name}`}>
               <Switch.Content>
                 <Switch.Control>
                   <Switch.Thumb />
@@ -63,10 +67,10 @@ export function ModuleCard({ module, enabled, onToggle, enabledSet, highlight, f
             {module.requires.length > 0 && (
               <div className="flex flex-wrap items-center gap-1.5">
                 <Link2 className="size-3.5 text-muted" aria-hidden />
-                <span className="label-caps text-muted">Butuh</span>
+                <span className="label-caps text-muted">Requires</span>
                 {module.requires.map((r) => (
                   <Chip key={r} size="sm" variant="soft" color={enabledSet.has(r) ? "success" : "warning"}>
-                    {MODULE_MAP[r].name}
+                    {moduleText(r, region).name}
                   </Chip>
                 ))}
               </div>
@@ -75,7 +79,7 @@ export function ModuleCard({ module, enabled, onToggle, enabledSet, highlight, f
               <div key={e.module} className="flex gap-1.5 text-muted">
                 <Sparkles className={cn("mt-0.5 size-3.5 shrink-0", enabledSet.has(e.module) ? "text-accent" : "text-muted")} aria-hidden />
                 <span>
-                  <b className={enabledSet.has(e.module) ? "text-foreground" : undefined}>+ {MODULE_MAP[e.module].name}:</b> {e.benefit}
+                  <b className={enabledSet.has(e.module) ? "text-foreground" : undefined}>+ {moduleText(e.module, region).name}:</b> {e.benefit}
                 </span>
               </div>
             ))}

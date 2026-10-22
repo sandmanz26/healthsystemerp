@@ -1,6 +1,8 @@
 /**
  * Vital signs entry with live NEWS2. Numeric keypad on tablets; the score updates as the
  * nurse types so escalation happens at the bedside, not after charting.
+ * Temperature and weight are entered in the facility's units (°F / lb in the US) and
+ * stored in °C / kg.
  */
 import { Button, Switch } from "@heroui/react"
 import { useState } from "react"
@@ -9,32 +11,34 @@ import { SelectInput, TextInput } from "@/components/ui/fields"
 import { news2 } from "@/domain/clinical"
 import type { Vitals } from "@/domain/types"
 import { cn } from "@/lib/cn"
+import { tempUnit } from "@/lib/format"
 import { toast } from "@/lib/toast"
 import { useActions } from "@/store"
-import { EMPTY_VITALS, toVitals, type VitalsDraft as Draft } from "./vitals-form"
+import { EMPTY_VITALS, toVitals, weightUnit, type VitalsDraft as Draft } from "./vitals-form"
 
 export function VitalsFields({ value, onChange }: { value: Draft; onChange: (d: Draft) => void }) {
   const set = (k: keyof Draft) => (v: string) => onChange({ ...value, [k]: v.replace(/[^\d.,]/g, "") })
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <TextInput label="Sistolik" value={value.systolic} onChange={set("systolic")} inputMode="numeric" suffix="mmHg" />
-      <TextInput label="Diastolik" value={value.diastolic} onChange={set("diastolic")} inputMode="numeric" suffix="mmHg" />
-      <TextInput label="Nadi" value={value.heartRate} onChange={set("heartRate")} inputMode="numeric" suffix="x/mnt" />
-      <TextInput label="Napas" value={value.respRate} onChange={set("respRate")} inputMode="numeric" suffix="x/mnt" />
-      <TextInput label="Suhu" value={value.temperature} onChange={set("temperature")} inputMode="decimal" suffix="°C" />
+      <TextInput label="Systolic BP" value={value.systolic} onChange={set("systolic")} inputMode="numeric" suffix="mmHg" />
+      <TextInput label="Diastolic BP" value={value.diastolic} onChange={set("diastolic")} inputMode="numeric" suffix="mmHg" />
+      <TextInput label="Heart rate" value={value.heartRate} onChange={set("heartRate")} inputMode="numeric" suffix="bpm" />
+      <TextInput label="Resp. rate" value={value.respRate} onChange={set("respRate")} inputMode="numeric" suffix="/min" />
+      <TextInput label="Temperature" value={value.temperature} onChange={set("temperature")} inputMode="decimal" suffix={tempUnit()} />
       <TextInput label="SpO₂" value={value.spo2} onChange={set("spo2")} inputMode="numeric" suffix="%" />
-      <TextInput label="Skala nyeri" value={value.painScore} onChange={set("painScore")} inputMode="numeric" suffix="/10" />
-      <TextInput label="Berat badan" value={value.weight} onChange={set("weight")} inputMode="decimal" suffix="kg" />
+      <TextInput label="Pain score" value={value.painScore} onChange={set("painScore")} inputMode="numeric" suffix="/10" />
+      <TextInput label="Weight" value={value.weight} onChange={set("weight")} inputMode="decimal" suffix={weightUnit()} />
     </div>
   )
 }
-
 
 interface VitalsDialogProps {
   encounterId: string
   patientName: string
   onClose: () => void
 }
+
+const RISK_LABEL = { low: "low", medium: "medium", high: "high" } as const
 
 export function VitalsDialog({ encounterId, patientName, onClose }: VitalsDialogProps) {
   const { addVitals } = useActions()
@@ -51,24 +55,24 @@ export function VitalsDialog({ encounterId, patientName, onClose }: VitalsDialog
       onOpenChange={(o) => !o && onClose()}
       isDismissable={false}
       size="lg"
-      title="Tanda vital"
+      title="Vital signs"
       description={patientName}
       footer={
         <>
           <Button variant="tertiary" onPress={onClose}>
-            Batal
+            Cancel
           </Button>
           <Button
             variant="primary"
             isDisabled={empty}
             onPress={() => {
               addVitals(encounterId, vitals)
-              if (score && score.risk !== "rendah") toast.warning(`NEWS2 ${score.score} — ${score.response}`)
-              else toast.success("Tanda vital tersimpan")
+              if (score && score.risk !== "low") toast.warning(`NEWS2 ${score.score} — ${score.response}`)
+              else toast.success("Vital signs saved")
               onClose()
             }}
           >
-            Simpan
+            Save
           </Button>
         </>
       }
@@ -76,15 +80,15 @@ export function VitalsDialog({ encounterId, patientName, onClose }: VitalsDialog
       <VitalsFields value={draft} onChange={setDraft} />
       <div className="grid gap-3 sm:grid-cols-2">
         <SelectInput
-          label="Kesadaran (ACVPU)"
+          label="Level of consciousness (ACVPU)"
           value={consciousness}
           onChange={setConsciousness}
           options={[
-            { value: "A", label: "A — Alert (sadar penuh)" },
-            { value: "C", label: "C — Confusion baru" },
-            { value: "V", label: "V — Respons suara" },
-            { value: "P", label: "P — Respons nyeri" },
-            { value: "U", label: "U — Tidak respons" },
+            { value: "A", label: "A — Alert" },
+            { value: "C", label: "C — New confusion" },
+            { value: "V", label: "V — Responds to voice" },
+            { value: "P", label: "P — Responds to pain" },
+            { value: "U", label: "U — Unresponsive" },
           ]}
         />
         <Switch isSelected={onOxygen} onChange={setOnOxygen} className="self-end pb-2">
@@ -92,19 +96,20 @@ export function VitalsDialog({ encounterId, patientName, onClose }: VitalsDialog
             <Switch.Control>
               <Switch.Thumb />
             </Switch.Control>
-            <span className="text-sm">Mendapat oksigen tambahan</span>
+            <span className="text-sm">On supplemental oxygen</span>
           </Switch.Content>
         </Switch>
       </div>
-      <div className={cn("rounded-xl p-3 text-sm", !score ? "bg-surface-secondary text-muted" : score.risk === "tinggi" ? "bg-danger-soft text-danger-soft-foreground" : score.risk === "sedang" ? "bg-warning-soft text-warning-soft-foreground" : "bg-success-soft text-success-soft-foreground")} role="status">
+      <div className={cn("rounded-xl p-3 text-sm", !score ? "bg-surface-secondary text-muted" : score.risk === "high" ? "bg-danger-soft text-danger-soft-foreground" : score.risk === "medium" ? "bg-warning-soft text-warning-soft-foreground" : "bg-success-soft text-success-soft-foreground")} role="status">
         {score ? (
           <>
-            <b>NEWS2 {score.score}</b> — risiko {score.risk}
-            {score.redFlag && " (ada parameter skor 3)"}. {score.response}.
+            <b>NEWS2 {score.score}</b> — {RISK_LABEL[score.risk]} clinical risk
+            {score.redFlag && " (single parameter scored 3)"}. {score.response}.
           </>
         ) : (
-          "Isi minimal 3 parameter untuk menghitung NEWS2."
+          "Enter at least 3 parameters to calculate NEWS2."
         )}
+        <span className="label-caps mt-1 block opacity-70">Source: Royal College of Physicians, NEWS2 (2017)</span>
       </div>
     </Dialog>
   )

@@ -1,6 +1,6 @@
 /**
- * SOAP templates. Doctors in a busy poli re-type the same structure 40+ times a day;
- * a template gives the skeleton, the doctor fills in the specifics.
+ * Note templates. Clinicians in a busy clinic re-type the same structure 30+ times a day;
+ * a template gives the skeleton, the clinician fills in the specifics.
  */
 export interface SoapTemplate {
   id: string
@@ -13,43 +13,43 @@ export interface SoapTemplate {
 
 export const SOAP_TEMPLATES: SoapTemplate[] = [
   {
-    id: "umum",
-    name: "Pemeriksaan umum",
-    subjective: "Keluhan utama: \nRiwayat penyakit sekarang: \nRiwayat penyakit dahulu: \nRiwayat obat: ",
-    objective: "KU: baik, kesadaran CM\nKepala/leher: dbn\nThorax: cor & pulmo dbn\nAbdomen: dbn\nEkstremitas: akral hangat, CRT < 2 dtk",
+    id: "general",
+    name: "General visit",
+    subjective: "CC: \nHPI: \nPMH: \nMeds: \nAllergies: reviewed",
+    objective: "General: alert, in no acute distress\nHEENT: normal\nCV: RRR, no murmurs\nLungs: clear bilaterally\nAbdomen: soft, non-tender\nExtremities: no edema, cap refill < 2 s",
     assessment: "",
-    plan: "Terapi: \nEdukasi: \nKontrol: ",
+    plan: "Treatment: \nPatient education: \nFollow-up: ",
   },
   {
-    id: "kontrol",
-    name: "Kontrol penyakit kronis",
-    subjective: "Kontrol rutin. Keluhan saat ini: \nKepatuhan minum obat: \nEfek samping: ",
-    objective: "TD: \nBB: \nPemeriksaan fisik: dbn",
-    assessment: "Terkontrol / belum terkontrol",
-    plan: "Lanjut terapi. Edukasi gaya hidup. Kontrol 1 bulan / rujuk balik FKTP.",
+    id: "chronic",
+    name: "Chronic disease follow-up",
+    subjective: "Routine follow-up. Current symptoms: \nMedication adherence: \nSide effects: ",
+    objective: "BP: \nWeight: \nExam: unremarkable",
+    assessment: "Controlled / not at goal",
+    plan: "Continue current regimen. Lifestyle counselling. Recheck labs in 3 months.",
   },
   {
-    id: "anak",
-    name: "Anak",
-    subjective: "Keluhan: \nAsupan & minum: \nBAK/BAB: \nImunisasi: lengkap / belum",
-    objective: "KU: \nBB/TB: \nTanda dehidrasi: (-)\nTanda bahaya umum: (-)",
+    id: "peds",
+    name: "Pediatric sick visit",
+    subjective: "CC: \nIntake & fluids: \nWet diapers / voiding: \nImmunizations: up to date / behind",
+    objective: "General: \nWeight / percentile: \nHydration: no signs of dehydration\nDanger signs: none",
     assessment: "",
-    plan: "Dosis obat sesuai BB. Edukasi tanda bahaya kepada orang tua.",
+    plan: "Weight-based dosing. Return precautions reviewed with caregiver.",
   },
   {
-    id: "cppt-ranap",
-    name: "CPPT harian rawat inap",
-    subjective: "Keluhan hari ini: \nTidur/makan: ",
-    objective: "TTV terlampir. Pemeriksaan fisik: \nHasil penunjang terbaru: ",
-    assessment: "Hari rawat ke-: \nPerkembangan: membaik / tetap / memburuk",
-    plan: "Lanjut terapi: \nRencana pemeriksaan: \nRencana pulang: ",
+    id: "progress",
+    name: "Inpatient progress note",
+    subjective: "Overnight events: \nPain / sleep / appetite: ",
+    objective: "Vitals reviewed. Exam: \nLabs / imaging today: \nI/O: ",
+    assessment: "Hospital day #: \nCourse: improving / unchanged / worsening",
+    plan: "Continue: \nPending: \nDispo / EDD: ",
   },
   {
-    id: "igd",
-    name: "IGD (primary survey)",
-    subjective: "Keluhan & onset: \nMekanisme (trauma): \nAMPLE: ",
-    objective: "A: paten\nB: \nC: \nD: GCS \nE: ",
+    id: "ed",
+    name: "ED primary survey",
+    subjective: "CC & onset: \nMechanism (trauma): \nSAMPLE: ",
+    objective: "A: patent\nB: \nC: \nD: GCS \nE: ",
     assessment: "",
-    plan: "Tatalaksana awal: \nPemeriksaan: \nDisposisi: ",
+    plan: "Initial management: \nWork-up: \nDisposition: ",
   },
 ]

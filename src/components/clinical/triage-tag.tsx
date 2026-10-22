@@ -1,27 +1,33 @@
-import { TRIAGE } from "@/domain/clinical"
+import { triageInfo, TRIAGE_SCALES } from "@/domain/clinical"
 import type { TriageLevel } from "@/domain/types"
 import { cn } from "@/lib/cn"
+import { useRegion } from "@/store/selectors"
 
-const TAG: Record<TriageLevel, string> = {
-  1: "bg-ats-1 text-white",
-  2: "bg-ats-2 text-[oklch(0.2_0.04_50)]",
-  3: "bg-ats-3 text-[oklch(0.18_0.04_150)]",
-  4: "bg-ats-4 text-white",
-  5: "bg-ats-5 text-[oklch(0.3_0.02_90)] ring-1 ring-inset ring-border",
+export const TRIAGE_BG: Record<TriageLevel, string> = {
+  1: "bg-triage-1 text-white",
+  2: "bg-triage-2 text-[oklch(0.22_0.05_55)]",
+  3: "bg-triage-3 text-[oklch(0.25_0.05_95)]",
+  4: "bg-triage-4 text-[oklch(0.18_0.04_150)]",
+  5: "bg-triage-5 text-white",
 }
 
-/** ATS triage level as the physical tag tied to the patient (colour + number + label). */
+/** Triage level as the physical tag tied to the patient (colour + number + label). ESI in the US, MTS in the UK. */
 export function TriageTag({ level }: { level?: TriageLevel }) {
+  const region = useRegion()
   if (!level)
     return (
       <span className="triage-tag label-caps inline-flex items-center gap-1.5 bg-default py-1 pl-5 pr-2.5 text-muted">
-        Belum triase
+        Not triaged
       </span>
     )
+  const scale = region === "us" ? "ESI" : "MTS"
   return (
-    <span className={cn("triage-tag inline-flex items-center gap-1.5 py-1 pl-5 pr-2.5", TAG[level])}>
-      <span className="num text-sm font-bold leading-none">{level}</span>
-      <span className="label-caps leading-none">{TRIAGE[level].label}</span>
+    <span className={cn("triage-tag inline-flex items-center gap-1.5 py-1 pl-5 pr-2.5", TRIAGE_BG[level])} title={`${TRIAGE_SCALES[region].name} ${level}: ${triageInfo(region, level).criteria}`}>
+      <span className="num text-sm font-bold leading-none">
+        <span className="sr-only">{scale} </span>
+        {level}
+      </span>
+      <span className="label-caps leading-none">{triageInfo(region, level).label}</span>
     </span>
   )
 }

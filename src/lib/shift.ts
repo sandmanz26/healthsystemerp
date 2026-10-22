@@ -1,8 +1,9 @@
 /**
- * Hospital shifts (dinas): Pagi 07–14, Sore 14–21, Malam 21–07. Everything a ward does is
- * organised around the current shift, so the app shows it permanently.
+ * Nursing shifts: 12-hour day (07:00–19:00) and night (19:00–07:00) — the dominant pattern in
+ * US and UK acute wards. Everything a ward does is organised around the current shift, so the
+ * app shows it permanently.
  */
-export type ShiftCode = "P" | "S" | "M"
+export type ShiftCode = "D" | "N"
 
 export interface ShiftInfo {
   code: ShiftCode
@@ -15,9 +16,8 @@ export interface ShiftInfo {
 }
 
 const SHIFTS: { code: ShiftCode; label: string; from: number; to: number }[] = [
-  { code: "P", label: "Pagi", from: 7, to: 14 },
-  { code: "S", label: "Sore", from: 14, to: 21 },
-  { code: "M", label: "Malam", from: 21, to: 31 },
+  { code: "D", label: "Day", from: 7, to: 19 },
+  { code: "N", label: "Night", from: 19, to: 31 },
 ]
 
 export function shiftAt(now: Date | number = new Date()): ShiftInfo {
@@ -29,8 +29,8 @@ export function shiftAt(now: Date | number = new Date()): ShiftInfo {
   return {
     code: s.code,
     label: s.label,
-    start: `${String(s.from % 24).padStart(2, "0")}.00`,
-    end: `${String(s.to % 24).padStart(2, "0")}.00`,
+    start: `${String(s.from % 24).padStart(2, "0")}:00`,
+    end: `${String(s.to % 24).padStart(2, "0")}:00`,
     progress: (h - s.from) / length,
     remainingMin: Math.round((s.to - h) * 60),
   }

@@ -19,7 +19,7 @@ export function operationsActions(set: SetFn) {
       const id = uid("ap")
       set((d) => {
         d.appointments.push({ ...input, id, status: "booked" })
-        audit(d, "Membuat janji temu", `${patientName(d, input.patientId)} · ${input.time}`)
+        audit(d, "Booked appointment", `${patientName(d, input.patientId)} · ${input.time}`)
       })
       return id
     },
@@ -43,7 +43,7 @@ export function operationsActions(set: SetFn) {
       const id = uid("op")
       set((d) => {
         d.surgeries.push({ ...input, id, status: "scheduled", checklist: {} })
-        audit(d, "Menjadwalkan operasi", `${patientName(d, input.patientId)}: ${input.procedure}`)
+        audit(d, "Scheduled surgery", `${patientName(d, input.patientId)}: ${input.procedure}`)
       })
       return id
     },
@@ -62,8 +62,12 @@ export function operationsActions(set: SetFn) {
         const next = NEXT_SURGERY_STATUS[s.status]
         if (!next) return
         s.status = next
-        if (next === "done" && s.encounterId) addTariff(d, findEncounter(d, s.encounterId), "operasi")
-        audit(d, `Operasi: ${next}`, `${patientName(d, s.patientId)} · ${s.procedure}`)
+        if (next === "done" && s.encounterId) {
+          const enc = findEncounter(d, s.encounterId)
+          addTariff(d, enc, "or-case")
+          addTariff(d, enc, "anesthesia")
+        }
+        audit(d, `Surgery: ${next}`, `${patientName(d, s.patientId)} · ${s.procedure}`)
       })
     },
 
@@ -78,10 +82,10 @@ export function operationsActions(set: SetFn) {
       const id = uid("ikp")
       set((d) => {
         const grade = riskGrade(input.probability, input.impact)
-        d.incidents.unshift({ ...input, id, reportedAt: nowIso(), grade, status: "dilaporkan" })
-        if (grade === "merah" || input.type === "Sentinel")
-          notify(d, { level: "danger", title: `Insiden ${input.type} grade ${grade}`, body: "Wajib RCA & lapor direksi.", href: "/quality", roles: ["manager", "admin"] })
-        audit(d, "Melaporkan insiden", input.type)
+        d.incidents.unshift({ ...input, id, reportedAt: nowIso(), grade, status: "reported" })
+        if (grade === "extreme" || input.sentinel || input.harm === "severe" || input.harm === "death")
+          notify(d, { level: "danger", title: input.sentinel ? "Sentinel / never event reported" : `Incident graded ${grade}`, body: "Escalate to the CMO/CNO; comprehensive review (RCA²) required.", href: "/quality", roles: ["manager", "admin"] })
+        audit(d, "Reported incident", input.category)
       })
       return id
     },
@@ -102,10 +106,10 @@ export function operationsActions(set: SetFn) {
         job.at = nowIso()
         const ok = Math.random() > 0.2
         job.status = ok ? "synced" : "failed"
-        job.error = ok ? undefined : job.error ?? "HTTP 503 dari server tujuan"
+        job.error = ok ? undefined : job.error ?? "HTTP 503 from receiving system"
         if (job.resource === "Encounter") {
           const enc = d.encounters.find((e) => e.id === job.ref)
-          if (enc) enc.satusehat = job.status
+          if (enc) enc.exchange = job.status
         }
       })
     },
@@ -119,7 +123,7 @@ export function operationsActions(set: SetFn) {
           job.attempts += 1
           job.at = nowIso()
           const enc = job.resource === "Encounter" ? d.encounters.find((e) => e.id === job.ref) : undefined
-          if (enc) enc.satusehat = "synced"
+          if (enc) enc.exchange = "synced"
         }
       })
     },

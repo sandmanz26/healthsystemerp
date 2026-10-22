@@ -1,6 +1,7 @@
 /**
- * Waiting-room TV. Large type, high contrast, no interaction. Shows the number currently
- * called per poli and who is next — reduces "sudah dipanggil belum?" questions at the desk.
+ * Waiting-room display. Large type, high contrast, no interaction. Shows the ticket currently
+ * called per clinic and who is next — cuts down on "have I been called yet?" questions at
+ * the desk. Tickets only, never names (HIPAA minimum necessary / UK GDPR).
  */
 import { useMemo } from "react"
 import { Logo } from "@/app/logo"
@@ -17,7 +18,7 @@ export default function QueueDisplayPage() {
   const boards = useMemo(() => {
     const today = encounters.filter((e) => e.kind === "outpatient" && dayKey(e.createdAt) === dayKey(now))
     return units
-      .filter((u) => u.kind === "poli")
+      .filter((u) => u.kind === "clinic")
       .map((u) => {
         const mine = today.filter((e) => e.unitId === u.id).sort((a, b) => a.createdAt.localeCompare(b.createdAt))
         const called = mine.filter((e) => e.calledAt).sort((a, b) => b.calledAt!.localeCompare(a.calledAt!))[0]
@@ -34,7 +35,7 @@ export default function QueueDisplayPage() {
           <Logo compact />
           <div>
             <div className="font-display text-3xl font-semibold">{facility}</div>
-            <div className="text-white/60">Antrean rawat jalan</div>
+            <div className="text-white/60">Outpatient clinics · now serving</div>
           </div>
         </div>
         <div className="text-right">
@@ -46,11 +47,11 @@ export default function QueueDisplayPage() {
         {boards.map(({ unit, called, next, waiting }) => (
           <section key={unit.id} className="rounded-2xl bg-surface p-6 ring-1 ring-white/10">
             <h2 className="text-2xl font-semibold text-white/85">{unit.name}</h2>
-            <div className="label-caps mt-5 text-white/50">Dipanggil</div>
+            <div className="label-caps mt-5 text-white/50">Now serving</div>
             <div className="ticket num mt-2 inline-block bg-accent px-8 py-3 text-7xl font-bold tracking-tight text-accent-foreground [--notch:12px]" aria-live="polite">
               {called?.queueNumber ?? "—"}
             </div>
-            <div className="label-caps mt-6 text-white/50">Berikutnya</div>
+            <div className="label-caps mt-6 text-white/50">Next</div>
             <div className="mt-2 flex gap-2">
               {next.length ? (
                 next.map((e) => (
@@ -62,7 +63,7 @@ export default function QueueDisplayPage() {
                 <span className="text-2xl text-white/40">—</span>
               )}
             </div>
-            <div className="num mt-4 text-sm text-white/50">{waiting} orang menunggu</div>
+            <div className="num mt-4 text-sm text-white/50">{waiting} waiting</div>
           </section>
         ))}
       </div>

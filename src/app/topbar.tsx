@@ -11,15 +11,15 @@ import { useSession } from "@/store/selectors"
 import { ShiftIndicator } from "./shift-indicator"
 
 const THEME_ICON = { light: Sun, dark: Moon, system: Monitor }
-const THEME_LABEL: Record<ThemePref, string> = { light: "Terang", dark: "Gelap (jaga malam)", system: "Ikuti sistem" }
-const ACCENT_LABEL: Record<AccentPref, string> = { blue: "Biru-putih", mono: "Hitam-putih" }
+const THEME_LABEL: Record<ThemePref, string> = { light: "Light", dark: "Dark (night shift)", system: "Match system" }
+const ACCENT_LABEL: Record<AccentPref, string> = { blue: "Blue & white", mono: "Monochrome" }
 
 export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; onOpenSearch: () => void }) {
   const { lock } = useActions()
 
   return (
     <header className="no-print sticky top-0 z-30 flex h-[68px] items-center gap-3 border-b border-separator bg-background/90 px-4 backdrop-blur sm:px-8">
-      <Button isIconOnly variant="ghost" className="lg:hidden" aria-label="Buka menu" onPress={onOpenMenu}>
+      <Button isIconOnly variant="ghost" className="lg:hidden" aria-label="Open menu" onPress={onOpenMenu}>
         <Menu className="size-5" />
       </Button>
 
@@ -29,7 +29,7 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
         className="flex h-10 min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-surface px-3 text-left text-sm text-muted transition hover:border-accent/60 sm:max-w-sm"
       >
         <Search className="size-4 shrink-0" aria-hidden />
-        <span className="truncate">Cari pasien atau menu…</span>
+        <span className="truncate">Search patients or pages…</span>
         <Kbd className="ml-auto hidden sm:inline-flex">
           <Kbd.Abbr keyValue="ctrl" />
           <Kbd.Content>K</Kbd.Content>
@@ -41,10 +41,10 @@ export function Topbar({ onOpenMenu, onOpenSearch }: { onOpenMenu: () => void; o
         <Notifications />
         <AppearanceMenu />
         <Tooltip delay={300}>
-          <Button isIconOnly variant="ghost" aria-label="Kunci layar" onPress={lock}>
+          <Button isIconOnly variant="ghost" aria-label="Lock screen" onPress={lock}>
             <Lock className="size-5" />
           </Button>
-          <Tooltip.Content>Kunci layar (workstation bersama)</Tooltip.Content>
+          <Tooltip.Content>Lock screen (shared workstation)</Tooltip.Content>
         </Tooltip>
         <RoleSwitcher />
       </div>
@@ -62,22 +62,22 @@ function Notifications() {
 
   return (
     <Popover>
-      <Button isIconOnly variant="ghost" aria-label={`Notifikasi, ${unread} belum dibaca`} className="relative">
+      <Button isIconOnly variant="ghost" aria-label={`Notifications, ${unread} unread`} className="relative">
         <Bell className="size-5" />
         {unread > 0 && <span className="tabular absolute right-1 top-1 grid min-w-4 place-items-center rounded-full bg-danger px-1 text-[10px] font-bold text-danger-foreground">{unread}</span>}
       </Button>
       <Popover.Content placement="bottom end" className="w-[min(92vw,380px)] p-0">
         <Popover.Dialog className="p-0">
           <div className="flex items-center justify-between border-b border-separator px-4 py-3">
-            <Popover.Heading className="text-sm font-semibold">Notifikasi</Popover.Heading>
+            <Popover.Heading className="text-sm font-semibold">Notifications</Popover.Heading>
             {unread > 0 && (
               <Button size="sm" variant="ghost" onPress={() => markAllNotificationsRead(role)}>
-                Tandai semua dibaca
+                Mark all as read
               </Button>
             )}
           </div>
           <ul className="max-h-[60vh] divide-y divide-separator overflow-y-auto">
-            {mine.length === 0 && <li className="px-4 py-8 text-center text-sm text-muted">Tidak ada notifikasi.</li>}
+            {mine.length === 0 && <li className="px-4 py-8 text-center text-sm text-muted">No notifications.</li>}
             {mine.map((n) => (
               <li key={n.id}>
                 <button
@@ -125,9 +125,9 @@ function RoleSwitcher() {
         <ChevronDown className="size-4 text-muted" aria-hidden />
       </Dropdown.Trigger>
       <Dropdown.Popover placement="bottom end" className="min-w-72">
-        <div className="px-3 pb-1 pt-2 text-xs font-medium text-muted">Lihat sebagai (demo)</div>
+        <div className="px-3 pb-1 pt-2 text-xs font-medium text-muted">View as (demo)</div>
         <Dropdown.Menu
-          aria-label="Ganti peran"
+          aria-label="Switch role"
           selectionMode="single"
           selectedKeys={new Set([role])}
           onAction={(key) => {
@@ -156,12 +156,12 @@ function AppearanceMenu() {
   const ThemeIcon = THEME_ICON[theme]
   return (
     <Dropdown>
-      <Dropdown.Trigger aria-label="Tampilan" className="grid size-10 place-items-center rounded-xl hover:bg-surface-secondary">
+      <Dropdown.Trigger aria-label="Appearance" className="grid size-10 place-items-center rounded-xl hover:bg-surface-secondary">
         <ThemeIcon className="size-5" />
       </Dropdown.Trigger>
       <Dropdown.Popover placement="bottom end" className="min-w-56">
         <Dropdown.Menu
-          aria-label="Tampilan"
+          aria-label="Appearance"
           onAction={(key) => {
             const [kind, value] = String(key).split(":")
             if (kind === "theme") setTheme(value as ThemePref)
@@ -169,21 +169,21 @@ function AppearanceMenu() {
           }}
         >
           <Dropdown.Section>
-            <Header className="label-caps px-2 pb-1 pt-1.5 text-muted">Mode</Header>
+            <Header className="label-caps px-2 pb-1 pt-1.5 text-muted">Theme</Header>
             {(Object.keys(THEME_LABEL) as ThemePref[]).map((t) => (
               <Dropdown.Item key={t} id={`theme:${t}`} textValue={THEME_LABEL[t]}>
                 <Label>{THEME_LABEL[t]}</Label>
-                {theme === t && <Check className="ml-auto size-4 text-accent" aria-label="dipilih" />}
+                {theme === t && <Check className="ml-auto size-4 text-accent" aria-label="selected" />}
               </Dropdown.Item>
             ))}
           </Dropdown.Section>
           <Dropdown.Section>
-            <Header className="label-caps px-2 pb-1 pt-2 text-muted">Warna</Header>
+            <Header className="label-caps px-2 pb-1 pt-2 text-muted">Color</Header>
             {(Object.keys(ACCENT_LABEL) as AccentPref[]).map((a) => (
               <Dropdown.Item key={a} id={`accent:${a}`} textValue={ACCENT_LABEL[a]}>
                 <span className={a === "blue" ? "size-3 rounded-full bg-[oklch(0.55_0.2_260)]" : "size-3 rounded-full bg-[oklch(0.18_0_0)] ring-1 ring-border"} aria-hidden />
                 <Label>{ACCENT_LABEL[a]}</Label>
-                {accent === a && <Check className="ml-auto size-4 text-accent" aria-label="dipilih" />}
+                {accent === a && <Check className="ml-auto size-4 text-accent" aria-label="selected" />}
               </Dropdown.Item>
             ))}
           </Dropdown.Section>

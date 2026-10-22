@@ -9,10 +9,12 @@ import { useSearchParams } from "react-router-dom"
 import { Dialog } from "@/components/ui/dialog"
 import { Page, PageHeader } from "@/components/ui/page"
 import { Segmented } from "@/components/ui/segmented"
-import { CATEGORY_LABEL, CATEGORY_ORDER, FACILITY_PRESETS, MODULES, MODULE_MAP, blockersForDisable, missingForEnable, type ModuleId } from "@/domain/modules"
+import { CATEGORY_LABEL, CATEGORY_ORDER, FACILITY_PRESETS, MODULES, blockersForDisable, missingForEnable, moduleText, type ModuleId } from "@/domain/modules"
+import { REGIONS } from "@/domain/region"
+import { ROLES } from "@/domain/roles"
 import { toast } from "@/lib/toast"
 import { useActions, useStore } from "@/store"
-import { inFlightWork, useEnabledModules } from "@/store/selectors"
+import { inFlightWork, useEnabledModules, useRegion } from "@/store/selectors"
 import { ModuleCard } from "./module-card"
 
 type Filter = "all" | "on" | "off"
@@ -22,6 +24,8 @@ export default function ModuleCenterPage() {
   const modules = useStore((s) => s.modules)
   const facilityType = useStore((s) => s.facility.type)
   const enabled = useEnabledModules()
+  const region = useRegion()
+  const name = (id: ModuleId) => moduleText(id, region).name
   const { enableModule, disableModule, toggleSetupItem } = useActions()
   const [filter, setFilter] = useState<Filter>("all")
   const [pending, setPending] = useState<Pending>()
@@ -45,13 +49,13 @@ export default function ModuleCenterPage() {
 
   const confirm = () => {
     if (!pending) return
-    const name = MODULE_MAP[pending.id].name
+    const label = name(pending.id)
     if (pending.kind === "enable") {
       enableModule(pending.id)
-      toast.success(`${name} aktif`, { description: pending.extra.length ? `Juga mengaktifkan ${pending.extra.map((m) => MODULE_MAP[m].name).join(", ")}.` : "Menu baru sudah muncul di sidebar." })
+      toast.success(`${label} turned on`, { description: pending.extra.length ? `Also turned on: ${pending.extra.map(name).join(", ")}.` : "The new menu item is now in the sidebar." })
     } else if (pending.blockers.length === 0) {
       disableModule(pending.id)
-      toast(`${name} dinonaktifkan`, { description: "Data tetap tersimpan dan kembali saat modul diaktifkan lagi." })
+      toast(`${label} turned off`, { description: "Its data is kept and comes back when the module is turned on again." })
     }
     setPending(undefined)
   }
@@ -59,14 +63,14 @@ export default function ModuleCenterPage() {
   return (
     <Page>
       <PageHeader
-        eyebrow="Pusat Modul"
-        title="Bangun sistem sesuai kebutuhan"
-        description="Aktifkan modul ketika tim siap. Modul yang nonaktif tidak tampil untuk siapa pun dan datanya tetap aman."
+        eyebrow={region === "uk" ? "Module Centre" : "Module Center"}
+        title="Build the system you need"
+        description={`Turn modules on when your team is ready. Modules that are off are hidden from everyone, and their data is kept. Market pack: ${REGIONS[region].name}.`}
         actions={
           <div className="w-56">
-            <ProgressBar value={onCount} maxValue={toggleable.length} aria-label="Modul aktif">
+            <ProgressBar value={onCount} maxValue={toggleable.length} aria-label="Modules on">
               <div className="mb-1 flex justify-between text-xs">
-                <Label className="text-xs">Modul aktif</Label>
+                <Label className="text-xs">Modules on</Label>
                 <span className="tabular font-semibold">
                   {onCount}/{toggleable.length}
                 </span>
@@ -83,12 +87,12 @@ export default function ModuleCenterPage() {
         <div className="mb-6 flex flex-col gap-3 rounded-2xl border border-accent/30 bg-accent-soft/50 p-4 sm:flex-row sm:items-center">
           <Lightbulb className="size-5 shrink-0 text-accent" aria-hidden />
           <div className="flex-1 text-sm">
-            <b>Tahap berikutnya untuk {preset.name}:</b> setelah modul awal berjalan lancar, faskes sejenis biasanya menambah{" "}
+            <b>Next step for your {preset.name[region].toLowerCase()}:</b> once the starting modules run smoothly, similar facilities usually add{" "}
             {suggestions.map((m, i) => (
               <span key={m}>
                 {i > 0 && ", "}
                 <button type="button" className="font-semibold text-accent underline-offset-2 hover:underline" onClick={() => request(m, true)}>
-                  {MODULE_MAP[m].name}
+                  {name(m)}
                 </button>
               </span>
             ))}
@@ -99,13 +103,13 @@ export default function ModuleCenterPage() {
 
       <div className="mb-4">
         <Segmented
-          label="Filter modul"
+          label="Filter modules"
           value={filter}
           onChange={setFilter}
           options={[
-            { value: "all", label: "Semua", count: MODULES.length },
-            { value: "on", label: "Aktif", count: enabled.size },
-            { value: "off", label: "Belum aktif", count: MODULES.length - enabled.size },
+            { value: "all", label: "All", count: MODULES.length },
+            { value: "on", label: "On", count: enabled.size },
+            { value: "off", label: "Off", count: MODULES.length - enabled.size },
           ]}
         />
       </div>
@@ -121,27 +125,29 @@ export default function ModuleCenterPage() {
                 {items.map((m) => {
                   const state = modules[m.id]
                   const on = enabled.has(m.id)
-                  const done = m.setup.filter((s) => state.setupDone.includes(s.id)).length
+                  const setup = moduleText(m.id, region).setup
+                  const done = setup.filter((s) => state.setupDone.includes(s.id)).length
                   return (
                     <ModuleCard
                       key={m.id}
                       module={m}
+                      region={region}
                       enabled={on}
                       enabledSet={enabled}
                       highlight={focus === m.id}
                       onToggle={(next) => request(m.id, next)}
                       badge={
-                        on && m.setup.length > 0 ? (
-                          <Chip size="sm" variant="soft" color={done === m.setup.length ? "success" : "warning"}>
-                            Persiapan {done}/{m.setup.length}
+                        on && setup.length > 0 ? (
+                          <Chip size="sm" variant="soft" color={done === setup.length ? "success" : "warning"}>
+                            Setup {done}/{setup.length}
                           </Chip>
                         ) : undefined
                       }
                       footer={
-                        on && m.setup.length > 0 ? (
+                        on && setup.length > 0 ? (
                           <div className="space-y-1.5 rounded-xl bg-surface-secondary p-3">
-                            <div className="text-xs font-semibold text-muted">Checklist persiapan</div>
-                            {m.setup.map((s) => (
+                            <div className="text-xs font-semibold text-muted">Go-live checklist</div>
+                            {setup.map((s) => (
                               <Checkbox key={s.id} isSelected={state.setupDone.includes(s.id)} onChange={() => toggleSetupItem(m.id, s.id)}>
                                 <Checkbox.Content>
                                   <Checkbox.Control>
@@ -167,15 +173,15 @@ export default function ModuleCenterPage() {
         <Dialog
           isOpen
           onOpenChange={(o) => !o && setPending(undefined)}
-          title={pending.kind === "enable" ? `Aktifkan ${MODULE_MAP[pending.id].name}?` : pending.blockers.length ? `${MODULE_MAP[pending.id].name} masih dibutuhkan` : `Nonaktifkan ${MODULE_MAP[pending.id].name}?`}
+          title={pending.kind === "enable" ? `Turn on ${name(pending.id)}?` : pending.blockers.length ? `${name(pending.id)} is still required` : `Turn off ${name(pending.id)}?`}
           footer={
             <>
               <Button variant="tertiary" onPress={() => setPending(undefined)}>
-                {pending.kind === "disable" && pending.blockers.length ? "Mengerti" : "Batal"}
+                {pending.kind === "disable" && pending.blockers.length ? "Got it" : "Cancel"}
               </Button>
               {!(pending.kind === "disable" && pending.blockers.length) && (
                 <Button variant={pending.kind === "enable" ? "primary" : "danger"} onPress={confirm}>
-                  {pending.kind === "enable" ? "Aktifkan" : "Nonaktifkan"}
+                  {pending.kind === "enable" ? "Turn on" : "Turn off"}
                 </Button>
               )}
             </>
@@ -183,30 +189,30 @@ export default function ModuleCenterPage() {
         >
           {pending.kind === "enable" ? (
             <div className="space-y-3 text-sm">
-              <p>{MODULE_MAP[pending.id].summary}</p>
+              <p>{moduleText(pending.id, region).summary}</p>
               {pending.extra.length > 0 && (
                 <div className="rounded-xl bg-warning-soft p-3 text-warning-soft-foreground">
-                  <b>Ikut diaktifkan</b> karena dibutuhkan:
+                  <b>Also turned on</b> because it is required:
                   <ul className="mt-1 list-inside list-disc">
                     {pending.extra.map((m) => (
-                      <li key={m}>{MODULE_MAP[m].name}</li>
+                      <li key={m}>{name(m)}</li>
                     ))}
                   </ul>
                 </div>
               )}
               <p className="flex items-center gap-1.5 text-muted">
                 <Puzzle className="size-4" aria-hidden />
-                Menu akan muncul untuk peran: {MODULE_MAP[pending.id].roles.length > 6 ? "semua staf" : MODULE_MAP[pending.id].roles.join(", ")}.
+                Visible to: {moduleText(pending.id, region).roles.length > 6 ? "all staff" : moduleText(pending.id, region).roles.map((r) => ROLES[r].label).join(", ")}.
               </p>
             </div>
           ) : pending.blockers.length ? (
             <div className="space-y-2 text-sm">
-              <p>Modul berikut membutuhkan {MODULE_MAP[pending.id].name}. Nonaktifkan dulu modul-modul ini:</p>
+              <p>These modules require {name(pending.id)}. Turn them off first:</p>
               <ul className="space-y-1">
                 {pending.blockers.map((m) => (
                   <li key={m}>
                     <a href={`#/modules?focus=${m}`} onClick={() => setPending(undefined)} className="inline-flex items-center gap-1 font-medium text-accent hover:underline">
-                      {MODULE_MAP[m].name}
+                      {name(m)}
                       <ArrowUpRight className="size-3.5" aria-hidden />
                     </a>
                   </li>
@@ -216,17 +222,17 @@ export default function ModuleCenterPage() {
           ) : (
             <div className="space-y-3 text-sm">
               <p>
-                Menu {MODULE_MAP[pending.id].name} akan hilang untuk semua pengguna. <b>Data tidak dihapus</b> — semuanya kembali saat modul diaktifkan lagi.
+                {name(pending.id)} will disappear for every user. <b>No data is deleted</b> — everything comes back when the module is turned on again.
               </p>
               {pending.work.length > 0 && (
                 <div className="rounded-xl bg-warning-soft p-3 text-warning-soft-foreground">
-                  <b>Masih ada pekerjaan berjalan:</b>
+                  <b>Work still in progress:</b>
                   <ul className="mt-1 list-inside list-disc">
                     {pending.work.map((w) => (
                       <li key={w}>{w}</li>
                     ))}
                   </ul>
-                  <p className="mt-1">Selesaikan atau alihkan dulu — setelah dinonaktifkan, staf tidak bisa membukanya.</p>
+                  <p className="mt-1">Finish or hand it over first — once the module is off, staff cannot open this work.</p>
                 </div>
               )}
             </div>

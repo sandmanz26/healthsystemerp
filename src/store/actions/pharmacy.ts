@@ -1,11 +1,10 @@
 /**
  * Prescriptions, dispensing (FEFO) and inventory.
  */
+import { FREQ_MAP } from "@/domain/catalog"
 import type { PrescriptionItem, PurchaseStatus, StockMovement } from "@/domain/types"
 import { uid } from "@/lib/id"
-import { addCharge, audit, findEncounter, isOn, notify, nowIso, patientName, type Draft, type SetFn } from "../helpers"
-
-const FREQ_HOURS: Record<string, number[]> = { "1x1": [8], "2x1": [8, 20], "3x1": [6, 14, 22], "4x1": [6, 12, 18, 24], "Tiap 8 jam": [6, 14, 22], "Tiap 12 jam": [8, 20] }
+import { addCharge, audit, findEncounter, isOn, notify, nowIso, patientName, queueSync, regionOf, type Draft, type SetFn } from "../helpers"
 
 /** Takes stock from the batches that expire first. Returns the quantity it could not cover. */
 function takeFefo(d: Draft, itemId: string, qty: number, ref: string): number {
@@ -22,7 +21,7 @@ function takeFefo(d: Draft, itemId: string, qty: number, ref: string): number {
   d.movements.unshift({ id: uid("mv"), at: nowIso(), itemId, qty: -(qty - left), reason: "dispense", ref } satisfies StockMovement)
   const stock = item.batches.reduce((s, b) => s + b.qty, 0)
   if (stock < item.minStock)
-    notify(d, { level: "warning", title: "Stok di bawah minimum", body: `${item.name}: sisa ${stock} ${item.unit} (min ${item.minStock}).`, href: "/inventory", roles: ["pharmacist", "admin"] })
+    notify(d, { level: "warning", title: "Below par level", body: `${item.name}: ${stock} ${item.unit} on hand (par ${item.minStock}).`, href: "/inventory", roles: ["pharmacist", "admin"] })
   return left
 }
 
@@ -33,7 +32,8 @@ export function pharmacyActions(set: SetFn) {
       set((d) => {
         const enc = findEncounter(d, encounterId)
         d.prescriptions.push({ id, encounterId, patientId: enc.patientId, items, status: "new", prescribedBy: d.session.userId, prescribedAt: nowIso() })
-        audit(d, "Menulis resep", `${patientName(d, enc.patientId)}: ${items.length} item`)
+        audit(d, "Signed medication order", `${patientName(d, enc.patientId)}: ${items.length} item(s)`)
+        if (enc.kind === "outpatient") queueSync(d, regionOf(d) === "us" ? "surescripts" : "eps", regionOf(d) === "us" ? "NewRx" : "EPS prescription", enc.id)
       })
       return id
     },
@@ -45,7 +45,7 @@ export function pharmacyActions(set: SetFn) {
         rx.status = "reviewed"
         rx.reviewedBy = d.session.userId
         rx.reviewNote = note
-        audit(d, "Menelaah resep", patientName(d, rx.patientId))
+        audit(d, "Verified order", patientName(d, rx.patientId))
       })
     },
 
@@ -67,12 +67,12 @@ export function pharmacyActions(set: SetFn) {
           const item = d.inventory.find((i) => i.id === line.itemId)
           if (!item) continue
           const short = takeFefo(d, line.itemId, line.qty, rx.id)
-          if (short > 0) shortages.push(`${item.name} kurang ${short} ${item.unit}`)
-          addCharge(d, enc, { category: "obat", description: item.name, qty: line.qty - short, price: item.price, ref: rx.id })
+          if (short > 0) shortages.push(`${item.name}: short ${short} ${item.unit}`)
+          addCharge(d, enc, { category: "pharmacy", description: item.name, revCode: line.route === "IV" || line.route === "SC" || line.route === "IM" ? "0636" : "0250", qty: line.qty - short, price: item.price, ref: rx.id })
           if (enc.kind === "inpatient" && isOn(d, "nursing")) {
             const today = new Date()
             today.setHours(0, 0, 0, 0)
-            for (const h of FREQ_HOURS[line.frequency] ?? []) {
+            for (const h of FREQ_MAP[line.frequency]?.hours ?? []) {
               const at = today.getTime() + h * 3600000
               if (at < Date.now()) continue
               d.mar.push({ id: uid("mar"), encounterId: enc.id, itemId: line.itemId, dose: line.dose, route: line.route, scheduledAt: new Date(at).toISOString(), status: "due" })
@@ -81,7 +81,7 @@ export function pharmacyActions(set: SetFn) {
         }
         rx.status = "dispensed"
         rx.dispensedAt = nowIso()
-        audit(d, "Menyerahkan obat", patientName(d, rx.patientId))
+        audit(d, "Dispensed", patientName(d, rx.patientId))
       })
       return { shortages }
     },
@@ -92,7 +92,7 @@ export function pharmacyActions(set: SetFn) {
         if (!rx) return
         rx.status = "cancelled"
         rx.reviewNote = reason
-        audit(d, "Membatalkan resep", `${patientName(d, rx.patientId)} — ${reason}`)
+        audit(d, "Discontinued order", `${patientName(d, rx.patientId)} — ${reason}`)
       })
     },
 
@@ -109,7 +109,7 @@ export function pharmacyActions(set: SetFn) {
           item.batches.push({ batch: batch ?? `ADJ${Date.now().toString().slice(-5)}`, expiry: new Date(Date.now() + 365 * 86400000).toISOString(), qty })
         }
         if (reason === "expire" || qty > 0) d.movements.unshift({ id: uid("mv"), at: nowIso(), itemId, qty, reason })
-        audit(d, reason === "expire" ? "Memusnahkan stok kedaluwarsa" : "Penyesuaian stok", `${item.name} (${qty > 0 ? "+" : ""}${qty})`)
+        audit(d, reason === "expire" ? "Wasted expired stock" : "Stock adjustment", `${item.name} (${qty > 0 ? "+" : ""}${qty})`)
       })
     },
 
@@ -117,7 +117,7 @@ export function pharmacyActions(set: SetFn) {
       const id = uid("pr")
       set((d) => {
         d.purchases.unshift({ id, createdAt: nowIso(), createdBy: d.session.userId, lines, status: "submitted", note })
-        audit(d, "Membuat permintaan pembelian", `${lines.length} item`)
+        audit(d, "Created purchase request", `${lines.length} line(s)`)
       })
       return id
     },
@@ -135,7 +135,7 @@ export function pharmacyActions(set: SetFn) {
             d.movements.unshift({ id: uid("mv"), at: nowIso(), itemId: line.itemId, qty: line.qty, reason: "receive", ref: pr.id })
           }
         }
-        audit(d, `Permintaan pembelian: ${status}`, pr.id)
+        audit(d, `Purchase request ${status}`, pr.id)
       })
     },
   }

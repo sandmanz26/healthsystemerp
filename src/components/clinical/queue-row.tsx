@@ -1,6 +1,6 @@
 /**
  * One patient in a queue: ticket, wristband-style identity, where they are going, and how
- * long they have waited (red past the 60-minute outpatient wait-time indicator).
+ * long they have waited (red past the wait-time threshold, 60 minutes by default).
  */
 import type { ReactNode } from "react"
 import { Link } from "react-router-dom"
@@ -14,7 +14,7 @@ import { MarkerDots } from "./wristband"
 interface QueueRowProps {
   ticket?: string
   patient: Patient
-  /** Second column: destination, doctor, complaint… */
+  /** Second column: destination, provider, chief complaint… */
   detail?: ReactNode
   badges?: ReactNode
   /** Minutes waited; omitted when no longer waiting. */
@@ -46,13 +46,13 @@ export function QueueRow({ ticket, patient, detail, badges, waited, waitLimit = 
           <MarkerDots patient={patient} />
         </div>
         <div className="num truncate text-[11.5px] text-muted">
-          {patient.gender === "female" ? "P" : "L"} · {ageLabel(patient.birthDate)} · RM {patient.mrn}
+          {patient.gender === "female" ? "F" : "M"} · {ageLabel(patient.birthDate)} · MRN {patient.mrn}
         </div>
       </div>
       <div className="col-span-2 min-w-0 text-sm md:col-span-1">{detail}</div>
       <div className="col-span-2 flex flex-wrap items-center gap-1.5 md:col-span-1 md:justify-end">
         {badges}
-        <span className={cn("num w-16 text-right text-sm", late ? "font-semibold text-danger" : "text-muted")} title="Lama menunggu">
+        <span className={cn("num w-16 text-right text-sm", late ? "font-semibold text-danger" : "text-muted")} title="Time waiting">
           {waited !== undefined ? formatDuration(waited) : ""}
         </span>
       </div>

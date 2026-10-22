@@ -71,7 +71,7 @@ interface SelectInputProps<V extends string> extends BaseProps {
   placeholder?: string
 }
 
-export function SelectInput<V extends string>({ label, description, error, value, onChange, options, placeholder = "Pilih…", isRequired, isDisabled, className }: SelectInputProps<V>) {
+export function SelectInput<V extends string>({ label, description, error, value, onChange, options, placeholder = "Select…", isRequired, isDisabled, className }: SelectInputProps<V>) {
   return (
     <Select
       className={className}
