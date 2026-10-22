@@ -120,6 +120,7 @@ export function PrescriptionSection({ encounter, patient, readOnly }: { encounte
                 <div key={i} className="grid gap-2 rounded-xl bg-surface-secondary p-3 md:grid-cols-[minmax(200px,2fr)_1fr_1fr_1fr_80px_80px_auto]">
                   <SelectInput
                     label="Medication"
+                    placeholder="Search formulary…"
                     value={l.itemId || null}
                     onChange={(v) => update(i, { itemId: v, dose: items.get(v)?.strength ?? "" })}
                     options={drugs.map((d) => ({ value: d.id, label: d.name, description: drugMeta(d, region) }))}

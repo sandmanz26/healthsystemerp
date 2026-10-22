@@ -12,9 +12,7 @@ import { Dialog } from "@/components/ui/dialog"
 import { Empty } from "@/components/ui/empty"
 import { TextInput } from "@/components/ui/fields"
 import { Panel } from "@/components/ui/panel"
-import { minutesSince } from "@/domain/clinical"
 import { groupEncounter } from "@/domain/finance"
-import type { Region } from "@/domain/region"
 import type { Bed, Encounter } from "@/domain/types"
 import { cn } from "@/lib/cn"
 import { dayKey, formatDate } from "@/lib/format"
@@ -22,42 +20,7 @@ import { toast } from "@/lib/toast"
 import { useNow } from "@/lib/use-now"
 import { useActions } from "@/store"
 import { usePatientMap, useRegion } from "@/store/selectors"
-
-export const BARRIERS: Record<Region, string[]> = {
-  us: [
-    "Awaiting SNF bed / payer authorization",
-    "Home health set-up pending",
-    "Pending test or imaging",
-    "Pending specialist consult",
-    "Awaiting DME delivery",
-    "Transportation",
-    "Family / caregiver meeting",
-    "Medically not ready",
-  ],
-  uk: [
-    "Awaiting package of care (social care)",
-    "Awaiting care home placement",
-    "Awaiting therapy assessment (PT/OT)",
-    "Awaiting TTO medications",
-    "Pending investigation",
-    "Awaiting specialist review",
-    "Continuing Healthcare assessment",
-    "Awaiting patient transport",
-  ],
-}
-
-/** Whole days since admission (day of admission = day 1). */
-export const losDays = (e: Encounter, now = Date.now()) => Math.max(1, Math.ceil(minutesSince(e.startedAt ?? e.createdAt, now) / 1440))
-export const obsHours = (e: Encounter, now = Date.now()) => Math.max(0, Math.round(minutesSince(e.startedAt ?? e.createdAt, now) / 60))
-/** Days from admission to EDD (planned LOS). */
-const plannedLos = (e: Encounter) => (e.dischargePlan ? Math.max(1, Math.round((new Date(e.dischargePlan.edd).getTime() - new Date(e.startedAt ?? e.createdAt).getTime()) / 86400000)) : undefined)
-
-export function readyLabel(region: Region) {
-  return region === "us" ? "Medically ready" : "No criteria to reside (NCTR)"
-}
-
-/** Medicare IM notice is overdue after 2 calendar days without delivery. */
-export const imOverdue = (e: Encounter, now = Date.now()) => e.dischargePlan?.imNotice === false && minutesSince(e.startedAt ?? e.createdAt, now) > 2 * 1440
+import { BARRIERS, imOverdue, losDays, obsHours, plannedLos, readyLabel } from "./inpatient-helpers"
 
 export function DischargePlanningBoard({ encounters, bedOf }: { encounters: Encounter[]; bedOf: (e: Encounter) => Bed | undefined }) {
   const region = useRegion()

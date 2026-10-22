@@ -16,7 +16,7 @@ import { useModuleEnabled, useRegion } from "@/store/selectors"
 import { DischargeSummary } from "./discharge-summary"
 
 /** Disposition labels. US wording follows UB-04 patient status; UK follows the NHS discharge destination data item. */
-export const DISPOSITION_LABEL: Record<Region, Record<Disposition, string>> = {
+const DISPOSITION_LABEL: Record<Region, Record<Disposition, string>> = {
   us: {
     home: "Discharged home / self-care",
     "home-health": "Home with home health",

@@ -8,21 +8,14 @@ import { useMemo, useState } from "react"
 import { Dialog } from "@/components/ui/dialog"
 import { SelectInput, TextInput } from "@/components/ui/fields"
 import { Segmented } from "@/components/ui/segmented"
-import type { AdmissionClass, BedType, Encounter } from "@/domain/types"
+import type { AdmissionClass, Encounter } from "@/domain/types"
 import { PatientBanner } from "@/features/patients/patient-banner"
 import { PatientPicker } from "@/features/patients/patient-picker"
 import { dayKey } from "@/lib/format"
 import { toast } from "@/lib/toast"
 import { useActions, useStore } from "@/store"
 import { useRegion, useUnitName } from "@/store/selectors"
-
-export const BED_TYPE_LABEL: Record<BedType, string> = {
-  "med-surg": "Med/Surg",
-  telemetry: "Telemetry",
-  icu: "ICU",
-  isolation: "Isolation",
-  private: "Private",
-}
+import { BED_TYPE_LABEL } from "./inpatient-helpers"
 
 /** Specialties that do not admit patients under their own name. */
 const NON_ADMITTING = ["Radiology", "Pathology", "Anesthesiology"]

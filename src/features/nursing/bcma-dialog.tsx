@@ -15,6 +15,7 @@ import type { MarEntry, MarStatus } from "@/domain/types"
 import { cn } from "@/lib/cn"
 import { formatTime } from "@/lib/format"
 import { toast } from "@/lib/toast"
+import { useNow } from "@/lib/use-now"
 import { useActions, useStore } from "@/store"
 import { useRegion, useSession, useStaffMap } from "@/store/selectors"
 
@@ -42,11 +43,12 @@ export function BcmaDialog({ entry, onClose }: { entry: MarEntry; onClose: () =>
   const [witness, setWitness] = useState<string | null>(null)
   const [note, setNote] = useState("")
 
+  const now = useNow(15_000)
   const bandOk = !!patient && norm(band) === norm(patient.mrn)
   const bandWrong = band.trim().length >= 4 && !bandOk
   const doseOk = !!item?.barcode && norm(dose) === norm(item.barcode)
   const doseWrong = dose.trim().length >= 4 && !doseOk
-  const offset = Math.round((Date.now() - new Date(entry.scheduledAt).getTime()) / 60000)
+  const offset = Math.round((now - new Date(entry.scheduledAt).getTime()) / 60000)
   const timeOk = Math.abs(offset) <= WINDOW_MIN
   const nurses = [...staff.values()].filter((s) => s.role === "nurse" && s.id !== user?.id)
   const needsWitness = !!item?.highAlert

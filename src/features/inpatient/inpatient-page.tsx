@@ -20,11 +20,13 @@ import { News2Chip } from "@/features/emr/clinical-widgets"
 import { cn } from "@/lib/cn"
 import { formatDate, formatDuration, formatPercent } from "@/lib/format"
 import { usePrefs } from "@/lib/prefs"
+import { useNow } from "@/lib/use-now"
 import { toast } from "@/lib/toast"
 import { useActions, useStore } from "@/store"
 import { usePatientMap, useRegion, useStaffMap, useUnitName } from "@/store/selectors"
-import { AdmitDialog, BED_TYPE_LABEL, TransferDialog } from "./admit-dialog"
-import { DischargePlanningBoard, imOverdue, losDays, obsHours } from "./discharge-planning"
+import { AdmitDialog, TransferDialog } from "./admit-dialog"
+import { DischargePlanningBoard } from "./discharge-planning"
+import { BED_TYPE_LABEL, imOverdue, losDays, obsHours } from "./inpatient-helpers"
 
 export default function InpatientPage() {
   const beds = useStore((s) => s.beds)
@@ -188,11 +190,12 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
   const us = region === "us"
   const patient = encounter ? patients.get(encounter.patientId) : undefined
   const latest = encounter ? [...encounter.vitals].sort((a, b) => b.at.localeCompare(a.at))[0] : undefined
-  const los = encounter ? losDays(encounter) : 0
+  const now = useNow()
+  const los = encounter ? losDays(encounter, now) : 0
   const score = latest ? news2(latest) : null
   const alarm = score && score.risk !== "low"
   const plan = encounter?.dischargePlan
-  const pastEdd = plan && new Date(plan.edd).getTime() < Date.now() - 12 * 3600000
+  const pastEdd = plan && new Date(plan.edd).getTime() < now - 12 * 3600000
 
   return (
     <article className={cn("rounded-[14px] border bg-surface p-3", alarm ? (score.risk === "high" ? "border-danger" : "border-warning") : "border-border")}>
@@ -260,7 +263,7 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
               <News2Chip vitals={latest} />
               {encounter.admissionClass === "observation" && (
                 <Chip size="sm" color="warning" variant="soft" className="num whitespace-nowrap">
-                  OBS {obsHours(encounter)} h
+                  OBS {obsHours(encounter, now)} h
                 </Chip>
               )}
               {plan?.medicallyReady && (
@@ -268,7 +271,7 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
                   {us ? "Ready" : "NCTR"}
                 </Chip>
               )}
-              {us && imOverdue(encounter) && (
+              {us && imOverdue(encounter, now) && (
                 <Chip size="sm" color="danger" variant="soft" className="whitespace-nowrap">
                   IM due
                 </Chip>
