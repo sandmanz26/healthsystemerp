@@ -4,7 +4,7 @@ import { Link } from "react-router-dom"
 import { Panel } from "@/components/ui/panel"
 
 /** A worklist preview on the home page: a few rows and a link to the full list. */
-export function WorkList({ title, description, to, linkLabel = "Buka", children, empty }: { title: string; description?: string; to: string; linkLabel?: string; children: ReactNode[]; empty: string }) {
+export function WorkList({ title, description, to, linkLabel = "Open", children, empty }: { title: string; description?: string; to: string; linkLabel?: string; children: ReactNode[]; empty: string }) {
   return (
     <Panel
       title={title}

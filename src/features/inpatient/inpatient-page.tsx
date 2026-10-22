@@ -1,8 +1,9 @@
 /**
  * Bed board. The single most-watched screen in an inpatient unit: who is where, which beds
- * are free or being cleaned, and who is waiting in the ER for a bed.
+ * are clean or waiting for EVS, who is boarding in the ED for a bed — and, on the discharge
+ * planning view, who can go home today.
  */
-import { Button, Dropdown, Label } from "@heroui/react"
+import { Button, Chip, Dropdown, Label } from "@heroui/react"
 import { BedDouble, BedSingle, Clock, MoreVertical, Plus, Sparkles } from "lucide-react"
 import { useMemo, useState } from "react"
 import { useNavigate } from "react-router-dom"
@@ -17,12 +18,13 @@ import { ageLabel, minutesSince, news2 } from "@/domain/clinical"
 import type { Bed, BedStatus, Encounter } from "@/domain/types"
 import { News2Chip } from "@/features/emr/clinical-widgets"
 import { cn } from "@/lib/cn"
-import { formatDuration, formatPercent } from "@/lib/format"
+import { formatDate, formatDuration, formatPercent } from "@/lib/format"
 import { usePrefs } from "@/lib/prefs"
 import { toast } from "@/lib/toast"
 import { useActions, useStore } from "@/store"
-import { usePatientMap, useStaffMap, useUnitName } from "@/store/selectors"
-import { AdmitDialog, TransferDialog } from "./admit-dialog"
+import { usePatientMap, useRegion, useStaffMap, useUnitName } from "@/store/selectors"
+import { AdmitDialog, BED_TYPE_LABEL, TransferDialog } from "./admit-dialog"
+import { DischargePlanningBoard, imOverdue, losDays, obsHours } from "./discharge-planning"
 
 export default function InpatientPage() {
   const beds = useStore((s) => s.beds)
@@ -34,6 +36,9 @@ export default function InpatientPage() {
   const setUnitFilter = usePrefs((s) => s.setUnitFilter)
   const [admitting, setAdmitting] = useState<{ request?: Encounter; bedId?: string } | null>(null)
   const [transferring, setTransferring] = useState<Encounter>()
+  const [view, setView] = useState<"beds" | "discharge">("beds")
+  const region = useRegion()
+  const us = region === "us"
 
   const wards = units.filter((u) => u.kind === "ward" || u.kind === "icu")
   const encById = useMemo(() => new Map(encounters.map((e) => [e.id, e])), [encounters])
@@ -41,28 +46,34 @@ export default function InpatientPage() {
   const visible = beds.filter((b) => savedWard === "all" || b.unitId === savedWard)
   const occupied = beds.filter((b) => b.status === "occupied").length
   const count = (s: BedStatus) => beds.filter((b) => b.status === s).length
+  const bedById = useMemo(() => new Map(beds.map((b) => [b.id, b])), [beds])
+  const inpatients = useMemo(
+    () => encounters.filter((e) => e.kind === "inpatient" && e.status === "in-progress" && (savedWard === "all" || e.unitId === savedWard)),
+    [encounters, savedWard],
+  )
+  const ready = inpatients.filter((e) => e.dischargePlan?.medicallyReady).length
 
   return (
     <Page>
       <PageHeader
-        title="Rawat Inap"
-        description="Bed board seluruh ruangan. Klik tempat tidur terisi untuk membuka rekam medis pasien."
+        title={us ? "Inpatient — bed board" : "Wards — bed state"}
+        description={us ? "Bed status across all units. Click an occupied bed to open the patient's chart." : "Bed state across all wards. Click an occupied bed to open the patient's record."}
         actions={
           <Button variant="primary" onPress={() => setAdmitting({})}>
-            <Plus className="size-4" aria-hidden /> Admisi terencana
+            <Plus className="size-4" aria-hidden /> {us ? "Direct admission" : "Elective admission"}
           </Button>
         }
       />
       <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-5">
-        <Stat label="BOR saat ini" value={formatPercent((occupied / beds.length) * 100)} hint={`${occupied} dari ${beds.length} TT`} icon={BedDouble} tone="accent" />
-        <Stat label="Kosong siap pakai" value={count("available")} icon={BedSingle} tone="success" />
-        <Stat label="Sedang dibersihkan" value={count("cleaning")} icon={Sparkles} tone={count("cleaning") ? "warning" : "default"} />
-        <Stat label="Menunggu kamar" value={requests.length} icon={Clock} tone={requests.length ? "danger" : "default"} />
-        <Stat label="Perbaikan / dipesan" value={count("maintenance") + count("reserved")} />
+        <Stat label={us ? "Occupancy" : "Bed occupancy"} value={formatPercent((occupied / beds.length) * 100)} hint={`${occupied} of ${beds.length} staffed beds`} icon={BedDouble} tone="accent" />
+        <Stat label="Clean / ready" value={count("available")} icon={BedSingle} tone="success" />
+        <Stat label="Dirty (EVS)" value={count("cleaning")} icon={Sparkles} tone={count("cleaning") ? "warning" : "default"} />
+        <Stat label={us ? "ED boarders" : "Awaiting a bed"} value={requests.length} icon={Clock} tone={requests.length ? "danger" : "default"} />
+        <Stat label={us ? "Medically ready" : "NCTR"} value={ready} hint={`${count("maintenance")} blocked · ${count("reserved")} assigned`} />
       </div>
 
       {requests.length > 0 && (
-        <Panel title="Permintaan rawat inap" description="Pasien IGD/poli yang menunggu tempat tidur" className="mb-6" flush>
+        <Panel title={us ? "Pending admissions" : "Decisions to admit"} description={us ? "ED and clinic patients with an admit order, waiting for a bed" : "Patients in A&E or clinic awaiting a ward bed (12-hour standard from arrival)"} className="mb-6" flush>
           <ul className="divide-y divide-separator">
             {requests.map((r) => (
               <RequestRow key={r.id} encounter={r} onAdmit={() => setAdmitting({ request: r })} />
@@ -71,16 +82,27 @@ export default function InpatientPage() {
         </Panel>
       )}
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         <Segmented
-          label="Ruangan"
+          label="View"
+          value={view}
+          onChange={setView}
+          options={[
+            { value: "beds", label: "Bed board" },
+            { value: "discharge", label: "Discharge planning", count: inpatients.length },
+          ]}
+        />
+        <Segmented
+          label={us ? "Unit" : "Ward"}
           value={savedWard}
           onChange={(v) => setUnitFilter("inpatient", v)}
-          options={[{ value: "all", label: "Semua", count: beds.length }, ...wards.map((w) => ({ value: w.id, label: w.name.replace(/ \(.*\)/, ""), count: beds.filter((b) => b.unitId === w.id && b.status === "occupied").length }))]}
+          options={[{ value: "all", label: "All", count: beds.length }, ...wards.map((w) => ({ value: w.id, label: w.name.replace(/ \(.*\)/, ""), count: beds.filter((b) => b.unitId === w.id && b.status === "occupied").length }))]}
         />
       </div>
 
-      {wards
+      {view === "discharge" && <DischargePlanningBoard encounters={inpatients} bedOf={(e) => (e.bedId ? bedById.get(e.bedId) : undefined)} />}
+
+      {view === "beds" && wards
         .filter((w) => savedWard === "all" || w.id === savedWard)
         .map((w) => {
           const wardBeds = visible.filter((b) => b.unitId === w.id)
@@ -89,7 +111,7 @@ export default function InpatientPage() {
               <h2 className="mb-3 flex items-baseline gap-2 text-sm font-semibold">
                 {unitName(w.id)}
                 <span className="tabular text-xs font-normal text-muted">
-                  {wardBeds.filter((b) => b.status === "occupied").length}/{wardBeds.length} terisi
+                  {wardBeds.filter((b) => b.status === "occupied").length}/{wardBeds.length} occupied
                 </span>
               </h2>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
@@ -107,7 +129,7 @@ export default function InpatientPage() {
             </section>
           )
         })}
-      {visible.length === 0 && <Empty title="Tidak ada tempat tidur" />}
+      {view === "beds" && visible.length === 0 && <Empty title="No beds" />}
 
       {admitting && <AdmitDialog request={admitting.request} bedId={admitting.bedId} onClose={() => setAdmitting(null)} />}
       {transferring && <TransferDialog encounter={transferring} onClose={() => setTransferring(undefined)} />}
@@ -122,17 +144,17 @@ function RequestRow({ encounter, onAdmit }: { encounter: Encounter; onAdmit: () 
     <li className="flex flex-wrap items-center gap-3 px-5 py-3">
       <div className="min-w-0 flex-1">
         <div className="font-medium">
-          {patient.name} <span className="text-sm font-normal text-muted">· {ageLabel(patient.birthDate)} · dari {unitName(encounter.unitId)}</span>
+          {patient.name} <span className="text-sm font-normal text-muted">· {ageLabel(patient.birthDate)} · from {unitName(encounter.unitId)}</span>
         </div>
         <div className="text-sm text-muted">
           {encounter.diagnoses.find((d) => d.primary)?.display ?? encounter.chiefComplaint}
           {encounter.dispositionNote && ` — ${encounter.dispositionNote}`}
         </div>
       </div>
-      <span className="tabular text-sm font-semibold text-danger">menunggu {formatDuration(minutesSince(encounter.endedAt ?? encounter.startedAt ?? encounter.createdAt))}</span>
+      <span className="tabular text-sm font-semibold text-danger">waiting {formatDuration(minutesSince(encounter.startedAt ?? encounter.createdAt))}</span>
       <PayerChip payer={encounter.payer} />
       <Button size="sm" variant="primary" onPress={onAdmit}>
-        Pilih tempat tidur
+        Assign bed
       </Button>
     </li>
   )
@@ -162,50 +184,54 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
   const patients = usePatientMap()
   const staff = useStaffMap()
   const { setBedStatus } = useActions()
+  const region = useRegion()
+  const us = region === "us"
   const patient = encounter ? patients.get(encounter.patientId) : undefined
   const latest = encounter ? [...encounter.vitals].sort((a, b) => b.at.localeCompare(a.at))[0] : undefined
-  const los = encounter ? Math.max(1, Math.ceil(minutesSince(encounter.startedAt ?? encounter.createdAt) / 1440)) : 0
+  const los = encounter ? losDays(encounter) : 0
   const score = latest ? news2(latest) : null
-  const alarm = score && score.risk !== "rendah"
+  const alarm = score && score.risk !== "low"
+  const plan = encounter?.dischargePlan
+  const pastEdd = plan && new Date(plan.edd).getTime() < Date.now() - 12 * 3600000
 
   return (
-    <article className={cn("rounded-[14px] border bg-surface p-3", alarm ? (score.risk === "tinggi" ? "border-danger" : "border-warning") : "border-border")}>
+    <article className={cn("rounded-[14px] border bg-surface p-3", alarm ? (score.risk === "high" ? "border-danger" : "border-warning") : "border-border")}>
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="num text-sm font-bold">{bed.code}</span>
-          <span className="label-caps text-muted">{bed.bedClass}</span>
+          <span className="label-caps text-muted">{BED_TYPE_LABEL[bed.bedType]}</span>
         </div>
         <div className="flex items-center gap-1">
           <BedStatusChip status={bed.status} />
           <Dropdown>
-            <Dropdown.Trigger aria-label={`Aksi ${bed.code}`} className="grid size-7 place-items-center rounded-lg hover:bg-surface-secondary">
+            <Dropdown.Trigger aria-label={`Actions for ${bed.code}`} className="grid size-7 place-items-center rounded-lg hover:bg-surface-secondary">
               <MoreVertical className="size-4" />
             </Dropdown.Trigger>
             <Dropdown.Popover placement="bottom end">
               <Dropdown.Menu
-                aria-label="Aksi tempat tidur"
+                aria-label="Bed actions"
                 onAction={(key) => {
                   if (key === "open" && encounter) onOpen(encounter)
                   else if (key === "transfer" && encounter) onTransfer(encounter)
                   else if (key === "admit") onAdmit()
                   else {
                     setBedStatus(bed.id, key as BedStatus)
-                    toast(`${bed.code}: status diperbarui`)
+                    toast(`${bed.code}: status updated`)
                   }
                 }}
               >
                 {encounter ? (
                   <>
-                    <Dropdown.Item id="open" textValue="Buka rekam medis"><Label>Buka rekam medis</Label></Dropdown.Item>
-                    <Dropdown.Item id="transfer" textValue="Pindah ruang"><Label>Pindah ruang</Label></Dropdown.Item>
+                    <Dropdown.Item id="open" textValue="Open chart"><Label>Open chart</Label></Dropdown.Item>
+                    <Dropdown.Item id="transfer" textValue="Transfer bed"><Label>Transfer bed</Label></Dropdown.Item>
                   </>
                 ) : (
                   <>
-                    {bed.status === "available" && <Dropdown.Item id="admit" textValue="Admisi ke sini"><Label>Admisi ke sini</Label></Dropdown.Item>}
-                    {bed.status !== "available" && <Dropdown.Item id="available" textValue="Siap pakai"><Label>Tandai siap pakai</Label></Dropdown.Item>}
-                    {bed.status !== "cleaning" && <Dropdown.Item id="cleaning" textValue="Dibersihkan"><Label>Tandai perlu dibersihkan</Label></Dropdown.Item>}
-                    {bed.status !== "reserved" && <Dropdown.Item id="reserved" textValue="Dipesan"><Label>Tandai dipesan</Label></Dropdown.Item>}
-                    {bed.status !== "maintenance" && <Dropdown.Item id="maintenance" textValue="Perbaikan"><Label>Tandai perbaikan</Label></Dropdown.Item>}
+                    {bed.status === "available" && <Dropdown.Item id="admit" textValue="Admit to this bed"><Label>Admit to this bed</Label></Dropdown.Item>}
+                    {bed.status !== "available" && <Dropdown.Item id="available" textValue="Mark clean / ready"><Label>Mark clean / ready</Label></Dropdown.Item>}
+                    {bed.status !== "cleaning" && <Dropdown.Item id="cleaning" textValue="Mark dirty (EVS)"><Label>Mark dirty (EVS request)</Label></Dropdown.Item>}
+                    {bed.status !== "reserved" && <Dropdown.Item id="reserved" textValue="Mark assigned"><Label>Mark assigned</Label></Dropdown.Item>}
+                    {bed.status !== "maintenance" && <Dropdown.Item id="maintenance" textValue="Mark blocked"><Label>Mark blocked</Label></Dropdown.Item>}
                   </>
                 )}
               </Dropdown.Menu>
@@ -227,11 +253,26 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
               <MarkerDots patient={patient} />
             </div>
             <div className="num truncate text-[11px] text-muted">
-              {patient.gender === "female" ? "P" : "L"} · {ageLabel(patient.birthDate)} · hari ke-{los}
+              {patient.gender === "female" ? "F" : "M"} · {ageLabel(patient.birthDate)} · <span className={cn(pastEdd && "font-semibold text-danger")}>LOS {los} d{plan && ` · EDD ${formatDate(plan.edd)}`}</span>
             </div>
             <div className="mt-0.5 line-clamp-1 text-xs">{encounter.diagnoses.find((d) => d.primary)?.display ?? encounter.chiefComplaint}</div>
             <div className="mt-1 flex items-center gap-1.5">
               <News2Chip vitals={latest} />
+              {encounter.admissionClass === "observation" && (
+                <Chip size="sm" color="warning" variant="soft" className="num whitespace-nowrap">
+                  OBS {obsHours(encounter)} h
+                </Chip>
+              )}
+              {plan?.medicallyReady && (
+                <Chip size="sm" color="success" variant="soft" className="whitespace-nowrap">
+                  {us ? "Ready" : "NCTR"}
+                </Chip>
+              )}
+              {us && imOverdue(encounter) && (
+                <Chip size="sm" color="danger" variant="soft" className="whitespace-nowrap">
+                  IM due
+                </Chip>
+              )}
               <span className="truncate text-[11px] text-muted">{staff.get(encounter.practitionerId ?? "")?.name.replace(/,.*$/, "")}</span>
             </div>
           </button>
@@ -239,10 +280,10 @@ function BedCard({ bed, encounter, onOpen, onTransfer, onAdmit }: BedCardProps) 
           <div className={cn("flex min-w-0 flex-1 items-center justify-center rounded-lg text-center", BLANKET[bed.status])}>
             {bed.status === "available" ? (
               <button type="button" onClick={onAdmit} className="label-caps h-full w-full rounded-lg hover:bg-success/10">
-                Kosong · admisi
+                Clean · admit
               </button>
             ) : (
-              <span className="label-caps rounded bg-surface px-2 py-1 text-muted">{bed.status === "cleaning" ? "Housekeeping" : bed.status === "reserved" ? "Dipesan" : "Perbaikan"}</span>
+              <span className="label-caps rounded bg-surface px-2 py-1 text-muted">{bed.status === "cleaning" ? "EVS cleaning" : bed.status === "reserved" ? "Assigned" : "Blocked"}</span>
             )}
           </div>
         )}
