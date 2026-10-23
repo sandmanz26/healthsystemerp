@@ -205,7 +205,7 @@ export default function ReportsPage() {
               {topDx.map((d) => (
                 <li key={d.code}>
                   <div className="flex items-baseline justify-between gap-2 text-sm">
-                    <span className="truncate">
+                    <span className="line-clamp-1 min-w-0">
                       <span className="num text-xs text-muted">{dxLabel} </span>
                       <b className="num">{d.code}</b> {d.display}
                     </span>

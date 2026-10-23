@@ -9,14 +9,12 @@ interface EmptyProps {
   action?: ReactNode
 }
 
-/** Empty state on a faint faint grid: "nothing charted yet". */
+/** Empty state: what is missing, why, and the one thing to do about it. */
 export function Empty({ icon: Icon = Inbox, title, description, action }: EmptyProps) {
   return (
-    <div className="bg-grid flex flex-col items-center justify-center gap-2 px-6 py-12 text-center">
-      <span className="grid size-11 place-items-center rounded-lg border border-border bg-surface text-muted">
-        <Icon className="size-5" aria-hidden />
-      </span>
-      <p className="font-display text-base font-semibold text-foreground">{title}</p>
+    <div className="flex flex-col items-center justify-center gap-1.5 px-6 py-10 text-center">
+      <Icon className="mb-1 size-5 text-muted" aria-hidden />
+      <p className="text-sm font-semibold text-foreground">{title}</p>
       {description && <p className="max-w-sm text-sm text-muted">{description}</p>}
       {action && <div className="mt-2">{action}</div>}
     </div>

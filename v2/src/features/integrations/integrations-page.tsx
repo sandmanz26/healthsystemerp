@@ -144,7 +144,7 @@ export default function IntegrationsPage() {
             const failed = mine.filter((j) => j.status === "failed").length
             const selected = iface === c.id
             return (
-              <button key={c.id} type="button" onClick={() => setIface(selected ? null : c.id)} className="rounded-[14px] text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus" aria-pressed={selected}>
+              <button key={c.id} type="button" onClick={() => setIface(selected ? null : c.id)} className="rounded-lg text-left focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-focus" aria-pressed={selected}>
                 <Card className={cn("h-full gap-2 p-4 transition hover:border-foreground/25", selected && "ring-2 ring-accent")}>
                   <div className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 font-semibold">

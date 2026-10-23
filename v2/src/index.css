@@ -184,7 +184,7 @@ h3,
 }
 
 /* Ornament removed: no chart-paper grid behind content. */
-.bg-grid {
+.{
   background-image: none;
 }
 

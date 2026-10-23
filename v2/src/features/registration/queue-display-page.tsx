@@ -29,7 +29,7 @@ export default function QueueDisplayPage() {
   }, [encounters, units, now])
 
   return (
-    <div className="dark bg-grid min-h-screen bg-background p-6 text-white sm:p-10" data-theme="dark">
+    <div className="dark min-h-screen bg-background p-6 text-white sm:p-10" data-theme="dark">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <Logo compact />

@@ -99,8 +99,7 @@ export default function OnboardingPage() {
         {step === 1 && (
           <div className="space-y-8">
             <div className="max-w-3xl">
-              <span className="label-caps text-muted">Step 1 · Market</span>
-              <h1 className="mt-3 text-[40px] font-semibold leading-[1.05] sm:text-5xl">Where does your organization deliver care?</h1>
+              <h1 className="text-[28px] font-semibold leading-tight sm:text-[32px]">Where does your organization deliver care?</h1>
               <p className="mt-4 text-muted">
                 The market pack sets the code systems, triage scale, payer model, national interfaces, privacy rules and units used on every screen. It is the one choice you
                 should not change casually — switching later rebuilds the demo data.
@@ -117,7 +116,7 @@ export default function OnboardingPage() {
                     role="radio"
                     aria-checked={active}
                     onClick={() => chooseRegion(r)}
-                    className={cn("flex flex-col gap-4 rounded-[18px] border bg-surface p-5 text-left transition", active ? "border-foreground shadow-[inset_4px_0_0_var(--accent)]" : "border-border hover:border-foreground/40")}
+                    className={cn("flex flex-col gap-4 rounded-lg border bg-surface p-5 text-left transition", active ? "border-foreground shadow-[inset_4px_0_0_var(--accent)]" : "border-border hover:border-foreground/40")}
                   >
                     <div className="flex items-start gap-3">
                       <span className={cn("num grid h-11 min-w-11 shrink-0 place-items-center rounded-lg px-2 text-sm font-bold", active ? "bg-foreground text-background" : "border border-dashed border-border text-muted")}>{info.short}</span>
@@ -157,9 +156,8 @@ export default function OnboardingPage() {
 
         {step === 2 && (
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-start">
-            <div className="bg-grid rounded-[20px] border border-border bg-surface p-8 lg:sticky lg:top-8">
-              <span className="label-caps text-muted">Step 2 · Your facility</span>
-              <h1 className="mt-3 text-[40px] font-semibold leading-[1.05] sm:text-5xl">Start with what you need today.</h1>
+            <div className="rounded-lg border border-border bg-surface p-8 lg:sticky lg:top-8">
+              <h1 className="text-[28px] font-semibold leading-tight sm:text-[32px]">Start with what you need today.</h1>
               <p className="mt-4 max-w-md text-muted">
                 Each module is one slot. Install what your team needs now and add the rest when you are ready. Modules that are not installed never appear on anyone’s screen.
               </p>
@@ -199,7 +197,7 @@ export default function OnboardingPage() {
                         key={p.id}
                         onClick={() => chooseType(p.id)}
                         aria-pressed={active}
-                        className={cn("flex items-center gap-4 rounded-[14px] border bg-surface p-4 text-left transition", active ? "border-foreground shadow-[inset_4px_0_0_var(--accent)]" : "border-border hover:border-foreground/40")}
+                        className={cn("flex items-center gap-4 rounded-lg border bg-surface p-4 text-left transition", active ? "border-foreground shadow-[inset_4px_0_0_var(--accent)]" : "border-border hover:border-foreground/40")}
                       >
                         <span className={cn("grid size-11 shrink-0 place-items-center rounded-lg", active ? "bg-foreground text-background" : "border border-dashed border-border text-muted")}>
                           <Icon className="size-5" aria-hidden />
@@ -235,7 +233,7 @@ export default function OnboardingPage() {
           <div className="space-y-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div>
-                <h1 className="text-4xl font-semibold">Starting modules · {preset.name[region]}</h1>
+                <h1 className="text-[28px] font-semibold leading-tight sm:text-[32px]">Starting modules · {preset.name[region]}</h1>
                 <p className="mt-2 max-w-2xl text-muted">
                   The modules switched on are our recommended starting set for {REGIONS[region].name}. Core modules (Patient Index, Settings & Access) are always on. Modules that are off <b>never appear</b> in anyone’s menu.
                 </p>

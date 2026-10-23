@@ -161,7 +161,7 @@ export default function BillingPage() {
             ]}
           />
         </div>
-        <DataTable label="Patient accounts" rows={rows} columns={columns} rowKey={(i) => i.id} onRowAction={(i) => setOpenId(i.id)} defaultSort={{ column: "balance", direction: "descending" }} empty={<Empty icon={Receipt} title="No accounts" />} />
+        <DataTable label="Patient accounts" rows={rows} columns={columns} rowKey={(i) => i.id} onRowAction={(i) => setOpenId(i.id)} defaultSort={{ column: "balance", direction: "descending" }} empty={<Empty icon={Receipt} title="No accounts in this list" description="Self-pay balances appear here once a visit is discharged with an amount owed." />} />
       </Panel>
       {selected && <AccountPanel invoice={selected} onClose={() => setOpenId(undefined)} />}
     </Page>

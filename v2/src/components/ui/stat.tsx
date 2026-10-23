@@ -27,10 +27,12 @@ interface StatProps {
  * container divided by hairlines; only a reading that needs action takes a status colour.
  */
 export function Stat({ label, value, hint, tone = "default", onClick }: StatProps) {
+  // A zero needs no action, so it never takes a status colour.
+  const shown = value === 0 ? "default" : tone
   const body = (
     <div className={cn("stat h-full px-5 py-4", onClick && "transition-colors hover:bg-surface-secondary")}>
       <div className="text-[13px] text-muted">{label}</div>
-      <div className={cn("num mt-1.5 text-[28px] font-semibold leading-none tracking-tight", VALUE[tone])}>{value}</div>
+      <div className={cn("num mt-1.5 text-[28px] font-semibold leading-none tracking-tight", VALUE[shown])}>{value}</div>
       {hint && <div className="mt-2 text-[13px] text-muted">{hint}</div>}
     </div>
   )

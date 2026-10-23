@@ -156,7 +156,7 @@ export default function RegistrationPage() {
                       <div className="num w-12 text-sm font-semibold">{a.time}</div>
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-sm font-medium">{p?.name}</div>
-                        <div className="truncate text-xs text-muted">
+                        <div className="line-clamp-1 text-xs text-muted">
                           {unitName(a.unitId)} · {sourceLabel(a.source, region)}
                         </div>
                       </div>

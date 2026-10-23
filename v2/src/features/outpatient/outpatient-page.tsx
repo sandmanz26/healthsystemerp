@@ -138,7 +138,7 @@ export default function OutpatientPage() {
             <Empty icon={Stethoscope} title="No patients waiting" description="This clinic's queue is clear for now." />
           </Panel>
         )}
-        <div className="grid grid-cols-2 gap-3">
+        <div className="stat-strip grid grid-cols-2">
           <Stat label="Waiting" value={waiting.length} tone="warning" onClick={() => setFilter("waiting")} />
           <Stat label="With provider" value={active.length} tone="accent" onClick={() => setFilter("active")} />
           <Stat label="Completed" value={done.filter((e) => e.status === "finished").length} tone="success" onClick={() => setFilter("done")} />
@@ -215,7 +215,7 @@ function NextUp({ encounter: e, now, isClinician, queueAfter, onCall, onOpen, on
   const waited = minutesSince(e.createdAt, now)
   const called = e.status === "called"
   return (
-    <section className="bg-grid relative flex flex-col gap-5 overflow-hidden rounded-[14px] border border-border bg-surface p-5 sm:flex-row sm:items-center">
+    <section className="relative flex flex-col gap-5 overflow-hidden rounded-lg border border-border bg-surface p-5 sm:flex-row sm:items-center">
       <div className="flex flex-col items-center gap-2">
         <span className="label-caps text-muted">{called ? "Now calling" : "Next up"}</span>
         <QueueTicket number={e.queueNumber} tone="accent" size="lg" />
